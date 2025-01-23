@@ -37,6 +37,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.2
   flutter_native_splash: ^2.4.4
+  flutter_svg: ^2.0.17
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_launcher_icons: "^0.14.3"
@@ -71,6 +73,9 @@ flutter_launcher_icons:
     image_path: "assets/AppIcon.png"
 # The following section is specific to Flutter packages.
 flutter:
+
+  assets:
+    - assets/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

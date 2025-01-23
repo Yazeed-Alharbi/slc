@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:slc/LLMTest.dart';
+import 'package:slc/features/authentication/screens/login.dart';
+import 'package:slc/features/authentication/screens/onborading.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,13 +14,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
             seedColor: const Color.fromARGB(255, 14, 0, 103)),
         useMaterial3: true,
       ),
-      home: LLMTest(),
+      home: Onborading(),
     );
   }
 }
