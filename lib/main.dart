@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slc/LLMTest.dart';
 import 'package:slc/features/authentication/screens/login.dart';
 import 'package:slc/features/authentication/screens/onborading.dart';
+import 'package:slc/features/authentication/screens/register.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/onboardingscreen': (context) => const Onborading(),
         '/loginscreen': (context) =>  LoginScreen(),
+        '/registerscreen': (context) =>  RegisterScreen(),
       },
     );
   }

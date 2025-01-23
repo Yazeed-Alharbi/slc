@@ -55,7 +55,6 @@ class Onborading extends StatelessWidget {
                   SLCButton(
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, "/loginscreen");
-                      
                     },
                     text: "Sign In",
                     backgroundColor: SLCColors.primaryColor,
@@ -67,7 +66,9 @@ class Onborading extends StatelessWidget {
                     width: 20,
                   ),
                   SLCButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(context, "/registerscreen");
+                      },
                       text: "Sign Up",
                       backgroundColor: Colors.white,
                       foregroundColor: SLCColors.primaryColor,

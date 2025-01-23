@@ -4,11 +4,13 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  RegisterScreen({super.key});
 
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +23,27 @@ class LoginScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
-              "Login",
+              "Create Account",
               style: TextStyle(
                   color: SLCColors.primaryColor,
                   fontSize: 28,
                   fontWeight: FontWeight.w800),
             ),
             const SizedBox(
-              height: 40,
+              height: 20,
             ),
             
-            Image.asset("assets/LoginIllustration.png", width: MediaQuery.of(context).size.width*0.6,),
+            Image.asset("assets/RegisterIllustration.png", width: MediaQuery.of(context).size.width*0.5,),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.05,
+            ),
+            SLCTextField(
+              labelText: "Name",
+              obscureText: false,
+              controller: nameController,
+            ),
+            const SizedBox(
+              height: 15,
             ),
             SLCTextField(
               labelText: "Email",
@@ -48,46 +58,41 @@ class LoginScreen extends StatelessWidget {
               obscureText: true,
               controller: passwordController,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                    style: TextButton.styleFrom(
-                      overlayColor: Colors.transparent,
-                    ),
-                    onPressed: () {},
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: SLCColors.primaryColor),
-                    )),
-              ],
+            
+            SizedBox(
+              height: 15,
+            ),
+             SLCTextField(
+              labelText: "Confirm Password",
+              obscureText: true,
+              controller: confirmPasswordController,
             ),
             SizedBox(
               height: 30,
             ),
             SLCButton(
                 onPressed: () {},
-                text: "Sign In",
+                text: "Sign Up",
                 backgroundColor: SLCColors.primaryColor,
                 foregroundColor: Colors.white),
                 SizedBox(
               height: 15,
             ),
+            
+           
             TextButton(
                 style: TextButton.styleFrom(
                   overlayColor: Colors.transparent,
                 ),
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, "/registerscreen");
+                  Navigator.pushReplacementNamed(context, "/loginscreen");
                 },
                 child: Text(
-                  "Create new account",
+                  "Already have an account",
                   style:
                       TextStyle(color: SLCColors.primaryColor,),
                 )),
-                SizedBox(
-              height: 30,
-            ),
+               
             
 
           ],
