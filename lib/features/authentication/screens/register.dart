@@ -22,6 +22,12 @@ class RegisterScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Image.asset("assets/RegisterIllustration.png", width: MediaQuery.of(context).size.width*0.5,),
+            
+            const SizedBox(
+              height: 20,
+            ),
+            
             const Text(
               "Create Account",
               style: TextStyle(
@@ -29,11 +35,6 @@ class RegisterScreen extends StatelessWidget {
                   fontSize: 28,
                   fontWeight: FontWeight.w800),
             ),
-            const SizedBox(
-              height: 20,
-            ),
-            
-            Image.asset("assets/RegisterIllustration.png", width: MediaQuery.of(context).size.width*0.5,),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.05,
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slc/LLMTest.dart';
+import 'package:slc/features/authentication/screens/forgotpassword.dart';
 import 'package:slc/features/authentication/screens/login.dart';
 import 'package:slc/features/authentication/screens/onborading.dart';
 import 'package:slc/features/authentication/screens/register.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/onboardingscreen': (context) => const Onborading(),
         '/loginscreen': (context) =>  LoginScreen(),
         '/registerscreen': (context) =>  RegisterScreen(),
+        '/forgotpassowrdscreen': (context) => ForgotPasswordScreen(),
       },
     );
   }

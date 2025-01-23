@@ -4,8 +4,8 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class ForgotPasswordScreen extends StatelessWidget {
+  ForgotPasswordScreen({super.key});
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -20,20 +20,28 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(
-              "assets/LoginIllustration.png",
-              width: MediaQuery.of(context).size.width * 0.6,
-            ),
+            Image.asset("assets/ForgotPasswordIllustration.png", width: MediaQuery.of(context).size.width*0.6,),
             
             const SizedBox(
               height: 40,
             ),
+            
             const Text(
-              "Login",
+              "Forgot Password?",
               style: TextStyle(
                   color: SLCColors.primaryColor,
                   fontSize: 28,
                   fontWeight: FontWeight.w800),
+            ),
+            SizedBox(
+              height: 15,
+            ),
+            const Text(
+              "No worries, we'll send you reset instructions.",
+              style: TextStyle(
+                  
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500),
             ),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.05,
@@ -46,36 +54,17 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(
               height: 15,
             ),
-            SLCTextField(
-              labelText: "Password",
-              obscureText: true,
-              controller: passwordController,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                    style: TextButton.styleFrom(
-                      overlayColor: Colors.transparent,
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, "/forgotpassowrdscreen");
-                    },
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: SLCColors.primaryColor),
-                    )),
-              ],
-            ),
+            
+          
             SizedBox(
               height: 30,
             ),
             SLCButton(
                 onPressed: () {},
-                text: "Sign In",
+                text: "Reset Password",
                 backgroundColor: SLCColors.primaryColor,
                 foregroundColor: Colors.white),
-            SizedBox(
+                SizedBox(
               height: 15,
             ),
             TextButton(
@@ -83,17 +72,18 @@ class LoginScreen extends StatelessWidget {
                   overlayColor: Colors.transparent,
                 ),
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, "/registerscreen");
+                  Navigator.pushReplacementNamed(context, "/loginscreen");
                 },
                 child: Text(
-                  "Create new account",
-                  style: TextStyle(
-                    color: SLCColors.primaryColor,
-                  ),
+                  "Back to login",
+                  style:
+                      TextStyle(color: SLCColors.primaryColor,),
                 )),
-            SizedBox(
+                SizedBox(
               height: 30,
             ),
+            
+
           ],
         ),
       ),
