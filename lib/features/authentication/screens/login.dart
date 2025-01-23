@@ -22,7 +22,7 @@ class LoginScreen extends StatelessWidget {
           children: [
             Image.asset(
               "assets/LoginIllustration.png",
-              width: MediaQuery.of(context).size.width * 0.6,
+              width: MediaQuery.of(context).size.width * 0.7,
             ),
             
             const SizedBox(

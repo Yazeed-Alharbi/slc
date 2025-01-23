@@ -4,6 +4,7 @@ import 'package:slc/features/authentication/screens/forgotpassword.dart';
 import 'package:slc/features/authentication/screens/login.dart';
 import 'package:slc/features/authentication/screens/onborading.dart';
 import 'package:slc/features/authentication/screens/register.dart';
+import 'package:slc/features/authentication/screens/verifyemail.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/loginscreen': (context) =>  LoginScreen(),
         '/registerscreen': (context) =>  RegisterScreen(),
         '/forgotpassowrdscreen': (context) => ForgotPasswordScreen(),
+        '/verifyemailscreen': (context) => VerifyEmailScreen(),
       },
     );
   }

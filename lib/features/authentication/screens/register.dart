@@ -22,12 +22,13 @@ class RegisterScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset("assets/RegisterIllustration.png", width: MediaQuery.of(context).size.width*0.5,),
-            
+            Image.asset(
+              "assets/RegisterIllustration.png",
+              width: MediaQuery.of(context).size.width * 0.5,
+            ),
             const SizedBox(
               height: 20,
             ),
-            
             const Text(
               "Create Account",
               style: TextStyle(
@@ -59,11 +60,10 @@ class RegisterScreen extends StatelessWidget {
               obscureText: true,
               controller: passwordController,
             ),
-            
             SizedBox(
               height: 15,
             ),
-             SLCTextField(
+            SLCTextField(
               labelText: "Confirm Password",
               obscureText: true,
               controller: confirmPasswordController,
@@ -72,15 +72,15 @@ class RegisterScreen extends StatelessWidget {
               height: 30,
             ),
             SLCButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, "/verifyemailscreen");
+                },
                 text: "Sign Up",
                 backgroundColor: SLCColors.primaryColor,
                 foregroundColor: Colors.white),
-                SizedBox(
+            SizedBox(
               height: 15,
             ),
-            
-           
             TextButton(
                 style: TextButton.styleFrom(
                   overlayColor: Colors.transparent,
@@ -90,12 +90,10 @@ class RegisterScreen extends StatelessWidget {
                 },
                 child: Text(
                   "Already have an account",
-                  style:
-                      TextStyle(color: SLCColors.primaryColor,),
+                  style: TextStyle(
+                    color: SLCColors.primaryColor,
+                  ),
                 )),
-               
-            
-
           ],
         ),
       ),
