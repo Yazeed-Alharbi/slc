@@ -72,7 +72,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                   overlayColor: Colors.transparent,
                 ),
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, "/loginscreen");
+                  Navigator.pop(context);
                 },
                 child: Text(
                   "Back to login",

@@ -59,7 +59,7 @@ class LoginScreen extends StatelessWidget {
                       overlayColor: Colors.transparent,
                     ),
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, "/forgotpassowrdscreen");
+                      Navigator.pushNamed(context, "/forgotpassowrdscreen");
                     },
                     child: Text(
                       "Forgot Password?",
