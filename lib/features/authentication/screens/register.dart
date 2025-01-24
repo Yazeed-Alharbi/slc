@@ -77,7 +77,10 @@ class RegisterScreen extends StatelessWidget {
                 },
                 text: "Sign Up",
                 backgroundColor: SLCColors.primaryColor,
-                foregroundColor: Colors.white),
+                foregroundColor: Colors.white,
+                
+                ),
+                
             SizedBox(
               height: 15,
             ),

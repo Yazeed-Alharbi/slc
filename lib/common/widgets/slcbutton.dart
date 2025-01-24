@@ -7,7 +7,7 @@ class SLCButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final double width;
-  final double height;
+  final double? height; // Make height nullable to handle dynamic defaults
 
   const SLCButton({
     Key? key,
@@ -16,16 +16,18 @@ class SLCButton extends StatelessWidget {
     required this.backgroundColor,
     required this.foregroundColor,
     this.width = double.infinity,
-    this.height = 50,
+    this.height,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final buttonHeight = height ?? MediaQuery.of(context).size.height * 0.05;
+
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         elevation: 0,
-        minimumSize: Size(width, height),
+        minimumSize: Size(width, buttonHeight),
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
         overlayColor: backgroundColor.withOpacity(0.8),
