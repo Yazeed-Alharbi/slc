@@ -66,7 +66,7 @@ class SLCTextField extends StatelessWidget {
       decoration: InputDecoration(
         label: Text(labelText!),
         hintText: hintText,
-        fillColor: const Color.fromARGB(255, 239, 242, 255),
+        fillColor: Theme.of(context).colorScheme.surfaceTint,
         filled: true,
         enabledBorder: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),

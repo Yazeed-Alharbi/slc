@@ -30,12 +30,9 @@ class LoginScreen extends StatelessWidget {
                     const SizedBox(
                       height: 40,
                     ),
-                    const Text(
+                     Text(
                       "Login",
-                      style: TextStyle(
-                          color: SLCColors.primaryColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     SizedBox(
                       height: MediaQuery.of(context).size.height * 0.05,

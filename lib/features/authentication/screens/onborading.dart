@@ -32,11 +32,7 @@ class Onborading extends StatelessWidget {
                 child: Text(
                   "Your Personal Study Assistant",
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: SLCColors.primaryColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 28,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
               SizedBox(
@@ -45,11 +41,7 @@ class Onborading extends StatelessWidget {
               Text(
                 "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  color: const Color.fromARGB(255, 0, 0, 0),
-                  fontWeight: FontWeight.normal,
-                  fontSize: 16,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.04,
@@ -75,7 +67,7 @@ class Onborading extends StatelessWidget {
                         Navigator.pushReplacementNamed(context, "/registerscreen");
                       },
                       text: "Sign Up",
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       foregroundColor: SLCColors.primaryColor,
                       width: MediaQuery.of(context).size.width * 0.4,
                       height: MediaQuery.of(context).size.height * 0.05),

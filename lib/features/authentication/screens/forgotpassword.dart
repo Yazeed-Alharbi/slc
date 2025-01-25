@@ -28,12 +28,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                       height: 40,
                     ),
                     
-                    const Text(
+                     Text(
                       "Forgot Password?",
-                      style: TextStyle(
-                          color: SLCColors.primaryColor,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge
                     ),
                     SizedBox(
                       height: 15,

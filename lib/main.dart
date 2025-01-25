@@ -5,6 +5,7 @@ import 'package:slc/features/authentication/screens/login.dart';
 import 'package:slc/features/authentication/screens/onborading.dart';
 import 'package:slc/features/authentication/screens/register.dart';
 import 'package:slc/features/authentication/screens/verifyemail.dart';
+import 'package:slc/common/styles/theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,12 +28,14 @@ class MyApp extends StatelessWidget {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Flutter Demo',
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                  seedColor: const Color.fromARGB(255, 14, 0, 103)),
-              useMaterial3: true,
-              fontFamily: "Poppins",
-            ),
+            // theme: ThemeData(
+            //   colorScheme: ColorScheme.fromSeed(
+            //       seedColor: const Color.fromARGB(255, 14, 0, 103)),
+            //   useMaterial3: true,
+            //   fontFamily: "Poppins",
+            // ),
+            theme: lightMode,
+            darkTheme: darkMode,
             home: Onborading(),
             routes: {
               '/onboardingscreen': (context) => const Onborading(),

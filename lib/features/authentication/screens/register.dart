@@ -31,12 +31,9 @@ class RegisterScreen extends StatelessWidget {
                 const SizedBox(
                   height: 20,
                 ),
-                const Text(
+                 Text(
                   "Create Account",
-                  style: TextStyle(
-                      color: SLCColors.primaryColor,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800),
+                  style: Theme.of(context).textTheme.titleLarge
                 ),
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.05,
@@ -78,7 +75,7 @@ class RegisterScreen extends StatelessWidget {
                 ),
                 SLCButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, "/verifyemailscreen");
+                      Navigator.pushNamed(context, "/verifyemailscreen");
                     },
                     text: "Sign Up",
                     backgroundColor: SLCColors.primaryColor,
