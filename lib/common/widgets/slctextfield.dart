@@ -12,13 +12,13 @@ class SLCTextField extends StatelessWidget {
   final FocusNode? focusNode;
   final bool? autofocus;
   final int? maxLength;
-
   final bool? readOnly;
   final bool? enabled;
   final TextAlign? textAlign;
   final String? hintText;
   final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
+  final String? Function(String?)? validator;
 
   const SLCTextField({
     Key? key,
@@ -37,16 +37,15 @@ class SLCTextField extends StatelessWidget {
     this.hintText,
     this.inputFormatters,
     this.onChanged,
-    
+    this.validator,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      
+    return TextFormField(
       obscureText: obscureText,
       controller: controller,
-      keyboardType: keyboardType,  
+      keyboardType: keyboardType,
       textInputAction: textInputAction,
       focusNode: focusNode,
       autofocus: autofocus ?? false,
@@ -54,16 +53,33 @@ class SLCTextField extends StatelessWidget {
       readOnly: readOnly ?? false,
       enabled: enabled,
       textAlign: textAlign ?? TextAlign.start,
-      inputFormatters: inputFormatters, 
+      inputFormatters: inputFormatters,
       onChanged: onChanged,
       onTapOutside: (event) {
         if (onTapOutside != null) {
           onTapOutside!();
         } else {
-          FocusScope.of(context).unfocus(); 
+          FocusScope.of(context).unfocus();
         }
       },
       decoration: InputDecoration(
+        labelStyle: WidgetStateTextStyle.resolveWith((states) {
+          if (states.contains(WidgetState.error)) {
+            return const TextStyle(color: Colors.red);
+          }
+          return const TextStyle();
+        }),
+        errorStyle: TextStyle(
+          fontSize: Theme.of(context).textTheme.bodySmall!.fontSize,
+          color: Colors.red,
+        ),
+        errorBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderSide: BorderSide(color: Color.fromARGB(255, 255, 0, 0)),
+        ),
+        focusedErrorBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderSide: BorderSide(color: Color.fromARGB(255, 255, 0, 0))),
         label: Text(labelText!),
         hintText: hintText,
         fillColor: Theme.of(context).colorScheme.surfaceTint,
@@ -77,6 +93,7 @@ class SLCTextField extends StatelessWidget {
           borderSide: BorderSide(color: SLCColors.primaryColor),
         ),
       ),
+      validator: validator,
     );
   }
 }

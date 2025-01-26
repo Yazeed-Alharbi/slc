@@ -39,6 +39,7 @@ dependencies:
   flutter_native_splash: ^2.4.4
   flutter_svg: ^2.0.17
   google_fonts: ^6.2.1
+  another_flushbar: ^1.12.30
 
 dev_dependencies:
   flutter_launcher_icons: "^0.14.3"

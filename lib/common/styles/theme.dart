@@ -20,6 +20,7 @@ ThemeData lightMode = ThemeData(
     ),
     brightness: Brightness.light,
     colorScheme: const ColorScheme.light(
+      primary: SLCColors.primaryColor,
       surface: Color.fromARGB(255, 251, 253, 255),
       surfaceTint: Color.fromARGB(255, 239, 242, 255),
     ));
@@ -31,6 +32,7 @@ ThemeData darkMode = ThemeData(
     ),
     brightness: Brightness.dark,
     colorScheme: const ColorScheme.dark(
-      surface: Color.fromARGB(255, 27, 27, 27),
-      surfaceTint: Color.fromARGB(255, 40, 40, 40),
+      primary: SLCColors.primaryColor,
+      surface: Color.fromARGB(255, 23, 23, 23),
+      surfaceTint: Color.fromARGB(255, 41, 41, 41),
     ));
