@@ -5,7 +5,8 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
-import 'package:slc/common/widgets/slcflushbar.dart'; // Import the new CustomFlushbar class
+import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/features/authentication/screens/register.dart'; // Import the new CustomFlushbar class
 
 class VerifyEmailScreen extends StatefulWidget {
   VerifyEmailScreen({super.key});
@@ -109,6 +110,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    //final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'No email provided';
     return Scaffold(
         body: Padding(
       padding: SpacingStyles(context).defaultPadding,
@@ -135,7 +137,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               "We sent a verification code to",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
-            const Text(
+            Text(
               textAlign: TextAlign.center,
               "yazeed@gmail.com",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
