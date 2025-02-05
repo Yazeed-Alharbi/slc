@@ -6,8 +6,14 @@ import 'package:slc/features/authentication/screens/onborading.dart';
 import 'package:slc/features/authentication/screens/register.dart';
 import 'package:slc/features/authentication/screens/verifyemail.dart';
 import 'package:slc/common/styles/theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

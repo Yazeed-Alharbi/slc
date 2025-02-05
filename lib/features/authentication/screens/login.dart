@@ -5,6 +5,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/auth_services.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -46,12 +47,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  void _login() {
+  void _login() async{
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
+    await AuthenticationService().signin(
+      email: emailController.text,
+      password: passwordController.text);
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/auth_services.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -28,13 +29,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _validateAndRegister() {
+  void _validateAndRegister() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    Navigator.pushNamed(context, "/verifyemailscreen");
+    await AuthenticationService().signup(
+      email: emailController.text,
+      password: passwordController.text);
+    Navigator.pushNamed(context, "/verifyemailscreen",
+    //arguments: emailController.text
+    ); 
   }
 
   String? _validateName(String? value) {
