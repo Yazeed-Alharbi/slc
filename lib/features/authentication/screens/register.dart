@@ -114,83 +114,92 @@ class _RegisterScreenState extends State<RegisterScreen> {
       resizeToAvoidBottomInset: true,
       body: Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: _isLoading ? const SLCLoadingIndicator(text: "Creating Account...") : SingleChildScrollView(
-          reverse: true,
-          physics: const BouncingScrollPhysics(),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/RegisterIllustration.png",
-                  width: MediaQuery.of(context).size.width * 0.5,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "Create Account",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                SLCTextField(
-                  labelText: "Name",
-                  obscureText: false,
-                  controller: nameController,
-                  validator: _validateName,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Email",
-                  obscureText: false,
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: _validateEmail,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Password",
-                  obscureText: true,
-                  controller: passwordController,
-                  validator: _validatePassword,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Confirm Password",
-                  obscureText: true,
-                  controller: confirmPasswordController,
-                  validator: _validateConfirmPassword,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 30),
-                SLCButton(
-                  onPressed: _isFormValid ? _validateAndRegister : null,
-                  text: "Sign Up",
-                  backgroundColor: SLCColors.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                const SizedBox(height: 15),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    overlayColor: Colors.transparent,
+        child: _isLoading
+            ? const SLCLoadingIndicator(text: "Creating Account...")
+            : SingleChildScrollView(
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 200, // Fixed width
+                        height: 200, // Fixed height
+                        child: Image.asset(
+                          "assets/RegisterIllustration.png",
+                          fit: BoxFit
+                              .contain, // Ensures it scales uniformly inside the container
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Create Account",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05),
+                      SLCTextField(
+                        labelText: "Name",
+                        obscureText: false,
+                        controller: nameController,
+                        validator: _validateName,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Email",
+                        obscureText: false,
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: _validateEmail,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Password",
+                        obscureText: true,
+                        controller: passwordController,
+                        validator: _validatePassword,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Confirm Password",
+                        obscureText: true,
+                        controller: confirmPasswordController,
+                        validator: _validateConfirmPassword,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 30),
+                      SLCButton(
+                        onPressed: _isFormValid ? _validateAndRegister : null,
+                        text: "Sign Up",
+                        backgroundColor: SLCColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 15),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          overlayColor: Colors.transparent,
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(
+                              context, "/loginscreen");
+                        },
+                        child: Text(
+                          "Already have an account",
+                          style: TextStyle(
+                            color: SLCColors.primaryColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, "/loginscreen");
-                  },
-                  child: Text(
-                    "Already have an account",
-                    style: TextStyle(
-                      color: SLCColors.primaryColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

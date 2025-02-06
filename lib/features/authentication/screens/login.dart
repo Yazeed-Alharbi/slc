@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
     if (success) {
-      // Home screen should go here as a route or something 
+      // Home screen should go here as a route or something
     }
   }
 
@@ -90,99 +90,108 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: _isLoading ? 
-        const SLCLoadingIndicator(text: "Signing In...") : SingleChildScrollView(
-          reverse: true,
-          physics: const BouncingScrollPhysics(),
-          child: Form(
-            key: _formKey, // Attach the GlobalKey to the Form
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/LoginIllustration.png",
-                  width: MediaQuery.of(context).size.width * 0.7,
-                ),
-                const SizedBox(height: 40),
-
-                Text(
-                  "Login",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-
-                /// Email TextFormField with validation
-                SLCTextField(
-                  labelText: "Email",
-                  obscureText: false,
-                  controller: emailController,
-                  validator: _validateEmail,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 15),
-
-                /// Password TextFormField with validation
-                SLCTextField(
-                  labelText: "Password",
-                  obscureText: true,
-                  controller: passwordController,
-                  validator: _validatePassword,
-                  onChanged: (_) => _validateForm(),
-                ),
-
-                /// Forgot Password?
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        overlayColor: Colors.transparent,
-                      ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, "/forgotpassowrdscreen");
-                      },
-                      child: Text(
-                        "Forgot Password?",
-                        style: TextStyle(
-                          color: SLCColors.primaryColor,
-                          fontWeight: FontWeight.w700,
+        child: _isLoading
+            ? const SLCLoadingIndicator(text: "Signing In...")
+            : SingleChildScrollView(
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: Form(
+                  key: _formKey, // Attach the GlobalKey to the Form
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 200, // Fixed width
+                        height: 200, // Fixed height
+                        child: Image.asset(
+                          "assets/LoginIllustration.png",
+                          fit: BoxFit
+                              .contain, // Ensures it scales uniformly inside the container
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
+                      const SizedBox(height: 20),
 
-                /// Sign In Button
-                SLCButton(
-                  onPressed: _isFormValid ? _login : null,
-                  text: "Sign In",
-                  backgroundColor: SLCColors.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                const SizedBox(height: 15),
+                      Text(
+                        "Login",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05),
 
-                /// Create new account
-                TextButton(
-                  style: TextButton.styleFrom(
-                    overlayColor: Colors.transparent,
-                  ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, "/registerscreen");
-                  },
-                  child: Text(
-                    "Create new account",
-                    style: TextStyle(
-                      color: SLCColors.primaryColor,
-                      fontWeight: FontWeight.w700,
-                    ),
+                      /// Email TextFormField with validation
+                      SLCTextField(
+                        labelText: "Email",
+                        obscureText: false,
+                        controller: emailController,
+                        validator: _validateEmail,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+
+                      /// Password TextFormField with validation
+                      SLCTextField(
+                        labelText: "Password",
+                        obscureText: true,
+                        controller: passwordController,
+                        validator: _validatePassword,
+                        onChanged: (_) => _validateForm(),
+                      ),
+
+                      /// Forgot Password?
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              overlayColor: Colors.transparent,
+                            ),
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                  context, "/forgotpassowrdscreen");
+                            },
+                            child: Text(
+                              "Forgot Password?",
+                              style: TextStyle(
+                                color: SLCColors.primaryColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+
+                      /// Sign In Button
+                      SLCButton(
+                        onPressed: _isFormValid ? _login : null,
+                        text: "Sign In",
+                        backgroundColor: SLCColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 15),
+
+                      /// Create new account
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          overlayColor: Colors.transparent,
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(
+                              context, "/registerscreen");
+                        },
+                        child: Text(
+                          "Create new account",
+                          style: TextStyle(
+                            color: SLCColors.primaryColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 30),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

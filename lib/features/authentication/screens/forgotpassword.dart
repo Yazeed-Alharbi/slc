@@ -74,9 +74,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  "assets/ForgotPasswordIllustration.png",
-                  width: MediaQuery.of(context).size.width * 0.6,
+                Container(
+                  width: 200, // Fixed width
+                  height: 200, // Fixed height
+                  child: Image.asset(
+                    "assets/ForgotPasswordIllustration.png",
+                    fit: BoxFit
+                        .contain, // Ensures it scales uniformly inside the container
+                  ),
                 ),
                 const SizedBox(height: 40),
                 Text(
