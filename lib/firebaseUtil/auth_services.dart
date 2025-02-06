@@ -13,7 +13,7 @@ class AuthenticationService {
           .createUserWithEmailAndPassword(email: email, password: password);
       return true;
     } on FirebaseAuthException catch (e) {
-      String message = "An unexpected authentication error occurred."; // Default error message
+      String message = "An unexpected authentication error occurred.";
 
       switch (e.code) {
         case 'invalid-email':
@@ -32,7 +32,7 @@ class AuthenticationService {
           message = 'Network error. Please check your connection.';
           break;
         default:
-          message = e.message ?? message; // Use Firebase's message if available
+          message = e.message ?? message;
       }
 
       SLCFlushbar.show(
@@ -62,7 +62,7 @@ class AuthenticationService {
           .signInWithEmailAndPassword(email: email, password: password);
       return true;
     } on FirebaseAuthException catch (e) {
-      String message = "An unexpected authentication error occurred."; // Default error message
+      String message = "An unexpected authentication error occurred.";
 
       switch (e.code) {
         case 'invalid-email':
@@ -82,7 +82,7 @@ class AuthenticationService {
           message = 'Network error. Please check your connection.';
           break;
         default:
-          message = e.message ?? message; // Use Firebase's message if available
+          message = e.message ?? message;
       }
 
       SLCFlushbar.show(
@@ -100,5 +100,42 @@ class AuthenticationService {
       );
       return false;
     }
+  }
+
+  Future<void> resetPassword({
+    required BuildContext context,
+    required String email,
+  }) async {
+    String message =
+        "If an account exists with the email $email, reset instructions have been sent.";
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'invalid-email') {
+        message = "The email address is not valid.";
+        SLCFlushbar.show(
+          context: context,
+          message: message,
+          type: FlushbarType.error,
+        );
+        return;
+      }
+
+      if (e.code == 'network-request-failed') {
+        message = "Network error. Please check your internet connection.";
+        SLCFlushbar.show(
+          context: context,
+          message: message,
+          type: FlushbarType.error,
+        );
+        return;
+      }
+    }
+    SLCFlushbar.show(
+      context: context,
+      message: message,
+      type: FlushbarType.success,
+    );
   }
 }
