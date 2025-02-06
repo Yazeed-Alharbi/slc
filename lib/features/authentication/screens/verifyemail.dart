@@ -18,7 +18,7 @@ class VerifyEmailScreen extends StatefulWidget {
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late List<TextEditingController> _codeControllers;
   late Timer _resendTimer;
-  bool _isCodeValid = true;
+  bool _isCodeValid = false;
   bool _isResendEnabled = false;
   int _resendTimeout = 30;
 
@@ -108,6 +108,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
+  void _validateCodeForm() {
+    setState(() {
+      _isCodeValid = _codeControllers.every((controller) =>
+          controller.text.isNotEmpty &&
+          RegExp(r'^\d$').hasMatch(controller.text));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     //final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'No email provided';
@@ -164,6 +172,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         } else if (value.isEmpty && index > 0) {
                           FocusScope.of(context).previousFocus();
                         }
+                        _validateCodeForm();
                       },
                       textAlign: TextAlign.center,
                       labelText: "",
@@ -179,10 +188,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
             const SizedBox(height: 15),
             SLCButton(
-                onPressed: () {
-                  HapticFeedback.heavyImpact();
-                  _verifyCode();
-                },
+                onPressed: _isCodeValid
+                    ? () {
+                        HapticFeedback.heavyImpact();
+                        _verifyCode();
+                      }
+                    : null,
                 text: "Verify Email",
                 backgroundColor: SLCColors.primaryColor,
                 foregroundColor: Colors.white),

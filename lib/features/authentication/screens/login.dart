@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool _isFormValid = false;
 
   void _showFlushbar(String message, FlushbarType type) {
     SLCFlushbar.show(
@@ -46,16 +47,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     return null;
   }
+    void _validateForm() {
+  setState(() {
+    _isFormValid = _validateEmail(emailController.text) == null &&
+                   _validatePassword(passwordController.text) == null;
+  });
+}
 
-  void _login() async{
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (!isValid) {
+
+  void _login() async {
+    if (!_isFormValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    await AuthenticationService().signin(
-      email: emailController.text,
-      password: passwordController.text);
+    await AuthenticationService()
+        .signin(email: emailController.text, password: passwordController.text);
   }
 
   @override
@@ -96,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: false,
                   controller: emailController,
                   validator: _validateEmail,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 15),
 
@@ -105,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   controller: passwordController,
                   validator: _validatePassword,
+                  onChanged: (_) => _validateForm(),
                 ),
 
                 /// Forgot Password?
@@ -132,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 /// Sign In Button
                 SLCButton(
-                  onPressed: _login,
+                  onPressed: _isFormValid ? _login : null,
                   text: "Sign In",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,

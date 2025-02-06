@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  bool _isFormValid = false;
 
   void _showFlushbar(String message, FlushbarType type) {
     SLCFlushbar.show(
@@ -35,12 +36,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    await AuthenticationService().signup(
-      email: emailController.text,
-      password: passwordController.text);
-    Navigator.pushNamed(context, "/verifyemailscreen",
-    //arguments: emailController.text
-    ); 
+    await AuthenticationService()
+        .signup(email: emailController.text, password: passwordController.text);
+    Navigator.pushNamed(
+      context, "/verifyemailscreen",
+      //arguments: emailController.text
+    );
   }
 
   String? _validateName(String? value) {
@@ -82,6 +83,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _validateEmail(emailController.text) == null &&
+          _validatePassword(passwordController.text) == null &&
+          _validateConfirmPassword(confirmPasswordController.text) == null &&
+          _validateName(nameController.text) == null ;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,6 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: false,
                   controller: nameController,
                   validator: _validateName,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 15),
                 SLCTextField(
@@ -119,6 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: _validateEmail,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 15),
                 SLCTextField(
@@ -126,6 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   controller: passwordController,
                   validator: _validatePassword,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 15),
                 SLCTextField(
@@ -133,10 +146,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   obscureText: true,
                   controller: confirmPasswordController,
                   validator: _validateConfirmPassword,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 30),
                 SLCButton(
-                  onPressed: _validateAndRegister,
+                  onPressed: _isFormValid ? _validateAndRegister : null,
                   text: "Sign Up",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,

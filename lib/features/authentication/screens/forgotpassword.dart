@@ -16,6 +16,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
+  bool _isFormValid = false;
 
   void _resetPassword() {
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -46,6 +47,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return "Please enter a valid email.";
     }
     return null;
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _validateEmail(emailController.text) == null;
+    });
   }
 
   @override
@@ -87,11 +94,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   obscureText: false,
                   controller: emailController,
                   validator: _validateEmail,
+                  onChanged: (_) => _validateForm(),
                 ),
                 const SizedBox(height: 15),
                 const SizedBox(height: 30),
                 SLCButton(
-                  onPressed: _resetPassword,
+                  onPressed: _isFormValid ? _resetPassword : null,
                   text: "Reset Password",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,
