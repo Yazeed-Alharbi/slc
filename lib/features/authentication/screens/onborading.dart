@@ -20,13 +20,11 @@ class Onborading extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: MediaQuery.of(context).size.height*0.3,
+                height: MediaQuery.of(context).size.height * 0.3,
                 child: Image.asset(
-                
-                "assets/StudyIllustration.png",
+                  "assets/StudyIllustration.png",
+                ),
               ),
-              ),
-              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
@@ -39,10 +37,9 @@ class Onborading extends StatelessWidget {
                 height: MediaQuery.of(context).size.height * 0.03,
               ),
               Text(
-                "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall
-              ),
+                  "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.04,
               ),
@@ -57,20 +54,20 @@ class Onborading extends StatelessWidget {
                     backgroundColor: SLCColors.primaryColor,
                     foregroundColor: Colors.white,
                     width: MediaQuery.of(context).size.width * 0.4,
-                    height: MediaQuery.of(context).size.height * 0.05,
                   ),
                   SizedBox(
                     width: 20,
                   ),
                   SLCButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, "/registerscreen");
-                      },
-                      text: "Sign Up",
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      foregroundColor: SLCColors.primaryColor,
-                      width: MediaQuery.of(context).size.width * 0.4,
-                      height: MediaQuery.of(context).size.height * 0.05),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(
+                          context, "/registerscreen");
+                    },
+                    text: "Sign Up",
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    foregroundColor: SLCColors.primaryColor,
+                    width: MediaQuery.of(context).size.width * 0.4,
+                  ),
                 ],
               )
             ],
