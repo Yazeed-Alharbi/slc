@@ -118,7 +118,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'No email provided';
+    final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'No email provided';
     return Scaffold(
         body: Padding(
       padding: SpacingStyles(context).defaultPadding,
@@ -147,7 +147,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
             Text(
               textAlign: TextAlign.center,
-              "yazeed@gmail.com",
+              email,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
             const SizedBox(

@@ -3,6 +3,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool _isLoading = false;
   bool _isFormValid = false;
 
   void _showFlushbar(String message, FlushbarType type) {
@@ -47,21 +49,33 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     return null;
   }
-    void _validateForm() {
-  setState(() {
-    _isFormValid = _validateEmail(emailController.text) == null &&
-                   _validatePassword(passwordController.text) == null;
-  });
-}
 
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _validateEmail(emailController.text) == null &&
+          _validatePassword(passwordController.text) == null;
+    });
+  }
 
   void _login() async {
     if (!_isFormValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    await AuthenticationService()
-        .signin(email: emailController.text, password: passwordController.text);
+    setState(() {
+      _isLoading = true;
+    });
+    bool success = await AuthenticationService().signin(
+      context: context,
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    setState(() {
+      _isLoading = false;
+    });
+    if (success) {
+      // Home screen should go here as a route or something 
+    }
   }
 
   @override
@@ -76,7 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: SingleChildScrollView(
+        child: _isLoading ? 
+        const SLCLoadingIndicator(text: "Signing In...") : SingleChildScrollView(
           reverse: true,
           physics: const BouncingScrollPhysics(),
           child: Form(

@@ -3,6 +3,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
@@ -20,6 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
   bool _isFormValid = false;
 
   void _showFlushbar(String message, FlushbarType type) {
@@ -36,12 +38,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    await AuthenticationService()
-        .signup(email: emailController.text, password: passwordController.text);
-    Navigator.pushNamed(
-      context, "/verifyemailscreen",
-      //arguments: emailController.text
+
+    setState(() {
+      _isLoading = true;
+    });
+    bool success = await AuthenticationService().signup(
+      context: context,
+      email: emailController.text,
+      password: passwordController.text,
     );
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.pushNamed(
+        context,
+        "/verifyemailscreen",
+        arguments: emailController.text,
+      );
+    }
   }
 
   String? _validateName(String? value) {
@@ -88,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isFormValid = _validateEmail(emailController.text) == null &&
           _validatePassword(passwordController.text) == null &&
           _validateConfirmPassword(confirmPasswordController.text) == null &&
-          _validateName(nameController.text) == null ;
+          _validateName(nameController.text) == null;
     });
   }
 
@@ -98,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       resizeToAvoidBottomInset: true,
       body: Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: SingleChildScrollView(
+        child: _isLoading ? const SLCLoadingIndicator(text: "Creating Account...") : SingleChildScrollView(
           reverse: true,
           physics: const BouncingScrollPhysics(),
           child: Form(
