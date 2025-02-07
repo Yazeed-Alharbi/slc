@@ -86,6 +86,7 @@ class SLCTextField extends StatelessWidget {
             borderSide: BorderSide(color: Color.fromARGB(255, 255, 0, 0))),
         label: Text(labelText!),
         hintText: hintText,
+        errorMaxLines: 3,
         fillColor: Theme.of(context).colorScheme.surfaceTint,
         filled: true,
         enabledBorder: const OutlineInputBorder(
