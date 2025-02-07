@@ -34,12 +34,6 @@ class MyApp extends StatelessWidget {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Flutter Demo',
-            // theme: ThemeData(
-            //   colorScheme: ColorScheme.fromSeed(
-            //       seedColor: const Color.fromARGB(255, 14, 0, 103)),
-            //   useMaterial3: true,
-            //   fontFamily: "Poppins",
-            // ),
             theme: lightMode,
             darkTheme: darkMode,
             home: Onborading(),
