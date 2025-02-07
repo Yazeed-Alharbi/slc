@@ -30,7 +30,7 @@ class SLCButton extends StatelessWidget {
         minimumSize: Size(width, buttonHeight),
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
-        overlayColor: backgroundColor.withOpacity(0.8),
+        overlayColor: backgroundColor.withAlpha((0.8 * 255).toInt()),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),

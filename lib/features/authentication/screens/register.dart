@@ -143,7 +143,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, "/loginscreen");
                   },
-                  child: Text(
+                  child: const Text(
                     "Already have an account",
                     style: TextStyle(
                       color: SLCColors.primaryColor,

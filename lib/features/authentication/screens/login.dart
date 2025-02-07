@@ -5,6 +5,8 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/features/authentication/screens/forgotpassword.dart';
+import 'package:slc/features/authentication/screens/register.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -112,9 +114,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         overlayColor: Colors.transparent,
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(context, "/forgotpassowrdscreen");
+                        // Navigator.pushNamed(context, "/forgotpassowrdscreen");
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration:
+                                Duration.zero, // No animation duration
+                            pageBuilder: (_, __, ___) => ForgotPasswordScreen(),
+                          ),
+                        );
                       },
-                      child: Text(
+                      child: const Text(
                         "Forgot Password?",
                         style: TextStyle(
                           color: SLCColors.primaryColor,
@@ -141,9 +151,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     overlayColor: Colors.transparent,
                   ),
                   onPressed: () {
-                    Navigator.pushReplacementNamed(context, "/registerscreen");
+                    // Navigator.popAndPushNamed(context, "/registerscreen");
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        transitionDuration:
+                            Duration.zero, // No animation duration
+                        // ignore: prefer_const_constructors
+                        pageBuilder: (_, __, ___) => RegisterScreen(),
+                      ),
+                    );
                   },
-                  child: Text(
+                  child: const Text(
                     "Create new account",
                     style: TextStyle(
                       color: SLCColors.primaryColor,

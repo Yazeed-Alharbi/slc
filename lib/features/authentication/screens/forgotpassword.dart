@@ -5,6 +5,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/features/authentication/screens/login.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -100,9 +101,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 TextButton(
                   style: TextButton.styleFrom(overlayColor: Colors.transparent),
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        transitionDuration:
+                            Duration.zero, // No animation duration
+                        pageBuilder: (_, __, ___) => const LoginScreen(),
+                      ),
+                    );
                   },
-                  child: Text(
+                  child: const Text(
                     "Back to login",
                     style: TextStyle(
                         color: SLCColors.primaryColor,
