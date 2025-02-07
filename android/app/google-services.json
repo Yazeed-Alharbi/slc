@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "245961985733",
+    "project_id": "slc-sdp",
+    "storage_bucket": "slc-sdp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245961985733:android:176be92c2a865978f16aac",
+        "android_client_info": {
+          "package_name": "com.example.slc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1-Yb9K_aLLfWVr8FZ2e2ot4qYyJtndp0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

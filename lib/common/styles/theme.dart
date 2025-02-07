@@ -23,7 +23,13 @@ ThemeData lightMode = ThemeData(
       primary: SLCColors.primaryColor,
       surface: Color.fromARGB(255, 251, 253, 255),
       surfaceTint: Color.fromARGB(255, 239, 242, 255),
-    ));
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        disabledBackgroundColor: SLCColors.disabledColor,
+      ),
+    ),
+    );
 
 ThemeData darkMode = ThemeData(
     textTheme: TextTheme(
@@ -35,4 +41,10 @@ ThemeData darkMode = ThemeData(
       primary: SLCColors.primaryColor,
       surface: Color.fromARGB(255, 23, 23, 23),
       surfaceTint: Color.fromARGB(255, 41, 41, 41),
-    ));
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        disabledBackgroundColor: const Color.fromARGB(255, 58, 58, 58),
+      ),
+    ),
+    );

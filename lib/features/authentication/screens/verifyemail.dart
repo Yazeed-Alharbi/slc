@@ -5,7 +5,8 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
-import 'package:slc/common/widgets/slcflushbar.dart'; // Import the new CustomFlushbar class
+import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/features/authentication/screens/register.dart'; // Import the new CustomFlushbar class
 
 class VerifyEmailScreen extends StatefulWidget {
   VerifyEmailScreen({super.key});
@@ -17,7 +18,7 @@ class VerifyEmailScreen extends StatefulWidget {
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late List<TextEditingController> _codeControllers;
   late Timer _resendTimer;
-  bool _isCodeValid = true;
+  bool _isCodeValid = false;
   bool _isResendEnabled = false;
   int _resendTimeout = 30;
 
@@ -107,8 +108,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
+  void _validateCodeForm() {
+    setState(() {
+      _isCodeValid = _codeControllers.every((controller) =>
+          controller.text.isNotEmpty &&
+          RegExp(r'^\d$').hasMatch(controller.text));
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final email = ModalRoute.of(context)?.settings.arguments as String? ??
+        'No email provided';
     return Scaffold(
         body: Padding(
       padding: SpacingStyles(context).defaultPadding,
@@ -118,9 +129,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(
-              "assets/VerifyEmailIllustration.png",
-              width: MediaQuery.of(context).size.width * 0.5,
+            Container(
+              width: 200, // Fixed width
+              height: 200, // Fixed height
+              child: Image.asset(
+                "assets/VerifyEmailIllustration.png",
+                fit: BoxFit
+                    .contain, // Ensures it scales uniformly inside the container
+              ),
             ),
             const SizedBox(
               height: 40,
@@ -135,9 +151,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               "We sent a verification code to",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
-            const Text(
+            Text(
               textAlign: TextAlign.center,
-              "yazeed@gmail.com",
+              email,
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
             const SizedBox(
@@ -162,6 +178,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         } else if (value.isEmpty && index > 0) {
                           FocusScope.of(context).previousFocus();
                         }
+                        _validateCodeForm();
                       },
                       textAlign: TextAlign.center,
                       labelText: "",
@@ -177,10 +194,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
             ),
             const SizedBox(height: 15),
             SLCButton(
-                onPressed: () {
-                  HapticFeedback.heavyImpact();
-                  _verifyCode();
-                },
+                onPressed: _isCodeValid
+                    ? () {
+                        HapticFeedback.heavyImpact();
+                        _verifyCode();
+                      }
+                    : null,
                 text: "Verify Email",
                 backgroundColor: SLCColors.primaryColor,
                 foregroundColor: Colors.white),

@@ -3,8 +3,10 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/auth_services.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -19,6 +21,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+  bool _isFormValid = false;
 
   void _showFlushbar(String message, FlushbarType type) {
     SLCFlushbar.show(
@@ -28,13 +32,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _validateAndRegister() {
+  void _validateAndRegister() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    Navigator.pushNamed(context, "/verifyemailscreen");
+
+    setState(() {
+      _isLoading = true;
+    });
+    bool success = await AuthenticationService().signup(
+      context: context,
+      email: emailController.text,
+      password: passwordController.text,
+    );
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.pushNamed(
+        context,
+        "/verifyemailscreen",
+        arguments: emailController.text,
+      );
+    }
   }
 
   String? _validateName(String? value) {
@@ -76,85 +99,116 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
+  void _validateForm() {
+    setState(() {
+      _isFormValid = _validateEmail(emailController.text) == null &&
+          _validatePassword(passwordController.text) == null &&
+          _validateConfirmPassword(confirmPasswordController.text) == null &&
+          _validateName(nameController.text) == null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: SingleChildScrollView(
-          reverse: true,
-          physics: const BouncingScrollPhysics(),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/RegisterIllustration.png",
-                  width: MediaQuery.of(context).size.width * 0.5,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  "Create Account",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                SLCTextField(
-                  labelText: "Name",
-                  obscureText: false,
-                  controller: nameController,
-                  validator: _validateName,
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Email",
-                  obscureText: false,
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: _validateEmail,
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Password",
-                  obscureText: true,
-                  controller: passwordController,
-                  validator: _validatePassword,
-                ),
-                const SizedBox(height: 15),
-                SLCTextField(
-                  labelText: "Confirm Password",
-                  obscureText: true,
-                  controller: confirmPasswordController,
-                  validator: _validateConfirmPassword,
-                ),
-                const SizedBox(height: 30),
-                SLCButton(
-                  onPressed: _validateAndRegister,
-                  text: "Sign Up",
-                  backgroundColor: SLCColors.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                const SizedBox(height: 15),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    overlayColor: Colors.transparent,
+        child: _isLoading
+            ? const SLCLoadingIndicator(text: "Creating Account...")
+            : SingleChildScrollView(
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 200, // Fixed width
+                        height: 200, // Fixed height
+                        child: Image.asset(
+                          "assets/RegisterIllustration.png",
+                          fit: BoxFit
+                              .contain, // Ensures it scales uniformly inside the container
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Create Account",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.03),
+                      SLCTextField(
+                        labelText: "Name",
+                        obscureText: false,
+                        controller: nameController,
+                        validator: _validateName,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Email",
+                        obscureText: false,
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: _validateEmail,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Password",
+                        obscureText: true,
+                        controller: passwordController,
+                        validator: _validatePassword,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 15),
+                      SLCTextField(
+                        labelText: "Confirm Password",
+                        obscureText: true,
+                        controller: confirmPasswordController,
+                        validator: _validateConfirmPassword,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 30),
+                      SLCButton(
+                        onPressed: _isFormValid ? _validateAndRegister : null,
+                        text: "Sign Up",
+                        backgroundColor: SLCColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 10),
+                      SLCButton(
+                        onPressed: () {},
+                        text: "Continue with Google",
+                        backgroundColor: const Color.fromARGB(255, 87, 87, 87),
+                        foregroundColor: Colors.white,
+                        icon: Image.asset("assets/GoogleLogo.png",
+                            width: 25, height: 25),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          overlayColor: Colors.transparent,
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacementNamed(
+                              context, "/loginscreen");
+                        },
+                        child: Text(
+                          "Already have an account",
+                          style: TextStyle(
+                            color: SLCColors.primaryColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, "/loginscreen");
-                  },
-                  child: const Text(
-                    "Already have an account",
-                    style: TextStyle(
-                      color: SLCColors.primaryColor,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }

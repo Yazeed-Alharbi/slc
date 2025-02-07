@@ -14,19 +14,24 @@ class Onborading extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
             child: Padding(
-          padding: SpacingStyles(context).defaultPadding,
+          padding: EdgeInsets.fromLTRB(
+              SpacingStyles(context).defaultPadding.left,
+              SpacingStyles(context).defaultPadding.top,
+              SpacingStyles(context).defaultPadding.right,
+              MediaQuery.sizeOf(context).height * 0.1),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height*0.3,
+              Container(
+                width: 200, // Fixed width
+                height: 200, // Fixed height
                 child: Image.asset(
-                
-                "assets/StudyIllustration.png",
+                  "assets/StudyIllustration.png",
+                  fit: BoxFit
+                      .contain, // Ensures it scales uniformly inside the container
+                ),
               ),
-              ),
-              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
@@ -39,15 +44,14 @@ class Onborading extends StatelessWidget {
                 height: MediaQuery.of(context).size.height * 0.03,
               ),
               Text(
-                "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall
-              ),
+                  "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.04,
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   SLCButton(
                     onPressed: () {
@@ -56,21 +60,18 @@ class Onborading extends StatelessWidget {
                     text: "Sign In",
                     backgroundColor: SLCColors.primaryColor,
                     foregroundColor: Colors.white,
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    height: MediaQuery.of(context).size.height * 0.05,
-                  ),
-                  SizedBox(
-                    width: 20,
+                    width: MediaQuery.of(context).size.width * 0.35,
                   ),
                   SLCButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, "/registerscreen");
-                      },
-                      text: "Sign Up",
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      foregroundColor: SLCColors.primaryColor,
-                      width: MediaQuery.of(context).size.width * 0.4,
-                      height: MediaQuery.of(context).size.height * 0.05),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(
+                          context, "/registerscreen");
+                    },
+                    text: "Sign Up",
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    foregroundColor: SLCColors.primaryColor,
+                    width: MediaQuery.of(context).size.width * 0.35,
+                  )
                 ],
               )
             ],
