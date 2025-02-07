@@ -107,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             fontSize: 14, fontWeight: FontWeight.w500),
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05),
+                          height: MediaQuery.of(context).size.height * 0.03),
                       SLCTextField(
                         labelText: "Email",
                         obscureText: false,

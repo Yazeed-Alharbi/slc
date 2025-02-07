@@ -139,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05),
+                          height: MediaQuery.of(context).size.height * 0.03),
                       SLCTextField(
                         labelText: "Name",
                         obscureText: false,
@@ -179,7 +179,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 10),
+                      SLCButton(
+                        onPressed: () {},
+                        text: "Continue with Google",
+                        backgroundColor: const Color.fromARGB(255, 87, 87, 87),
+                        foregroundColor: Colors.white,
+                        icon: Image.asset("assets/GoogleLogo.png",
+                            width: 25, height: 25),
+                      ),
+                      const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(
                           overlayColor: Colors.transparent,

@@ -8,7 +8,7 @@ class SLCButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final double width;
-
+  final Widget? icon;
 
   const SLCButton({
     Key? key,
@@ -17,6 +17,7 @@ class SLCButton extends StatelessWidget {
     required this.backgroundColor,
     required this.foregroundColor,
     this.width = double.infinity,
+    this.icon,
   }) : super(key: key);
 
   @override
@@ -33,12 +34,22 @@ class SLCButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (icon != null) ...[
+            icon!,
+            const SizedBox(width: 8),
+          ],
+          Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
       ),
     );
   }
