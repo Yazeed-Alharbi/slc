@@ -125,7 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: Padding(
+      body: SafeArea(child:Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? const SLCLoadingIndicator(text: "Creating Account...")
@@ -215,7 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ),
-      ),
+      )),
     );
   }
 }

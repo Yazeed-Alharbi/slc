@@ -14,11 +14,7 @@ class Onborading extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
             child: Padding(
-          padding: EdgeInsets.fromLTRB(
-              SpacingStyles(context).defaultPadding.left,
-              SpacingStyles(context).defaultPadding.top,
-              SpacingStyles(context).defaultPadding.right,
-              MediaQuery.sizeOf(context).height * 0.1),
+          padding: SpacingStyles(context).defaultPadding,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,

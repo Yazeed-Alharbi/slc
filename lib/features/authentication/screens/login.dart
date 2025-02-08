@@ -89,7 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? const SLCLoadingIndicator(text: "Signing In...")
@@ -184,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-      ),
+      )),
     );
   }
 }

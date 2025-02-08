@@ -75,7 +75,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SafeArea(child:Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? SLCLoadingIndicator(text: "Sending reset instructions...")
@@ -140,7 +140,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-      ),
+      )),
     );
   }
 }
