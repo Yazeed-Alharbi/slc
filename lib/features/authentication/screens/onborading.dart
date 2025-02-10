@@ -63,7 +63,7 @@ class Onborading extends StatelessWidget {
                           context, "/registerscreen");
                     },
                     text: "Sign Up",
-                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     foregroundColor: SLCColors.primaryColor,
                     width: MediaQuery.of(context).size.width * 0.35,
                   )
