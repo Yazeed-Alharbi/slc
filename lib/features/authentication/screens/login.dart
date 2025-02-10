@@ -3,6 +3,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcgooglesigninbutton.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
@@ -70,7 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SafeArea(
+          child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? const SLCLoadingIndicator(text: "Signing In...")
@@ -78,43 +80,41 @@ class _LoginScreenState extends State<LoginScreen> {
                 reverse: true,
                 physics: const BouncingScrollPhysics(),
                 child: Form(
-                  key: _formKey, // Attach the GlobalKey to the Form
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Image.asset(
-                        "assets/LoginIllustration.png",
-                        width: MediaQuery.of(context).size.width * 0.7,
+                      Container(
+                        width: 200, // Fixed width
+                        height: 200, // Fixed height
+                        child: Image.asset(
+                          "assets/LoginIllustration.png",
+                          fit: BoxFit
+                              .contain, // Ensures it scales uniformly inside the container
+                        ),
                       ),
-                      const SizedBox(height: 40),
-
+                      const SizedBox(height: 10),
                       Text(
                         "Login",
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.05),
-
-                      /// Email TextFormField with validation
                       SLCTextField(
                         labelText: "Email",
                         obscureText: false,
                         controller: emailController,
-                        validator: Validators.validateEmail,
+                        validator: _validateEmail,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
-
-                      /// Password TextFormField with validation
                       SLCTextField(
                         labelText: "Password",
                         obscureText: true,
                         controller: passwordController,
-                        validator: Validators.validatePassword,
+                        validator: _validatePassword,
                         onChanged: (_) => _validateForm(),
                       ),
-
-                      /// Forgot Password?
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -137,17 +137,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                       const SizedBox(height: 30),
-
-                      /// Sign In Button
                       SLCButton(
                         onPressed: _isFormValid ? _login : null,
                         text: "Sign In",
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       ),
-                      const SizedBox(height: 15),
-
-                      /// Create new account
+                      const SizedBox(height: 10),
+                      SLCGoogleSignInButton(),
+                      const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(
                           overlayColor: Colors.transparent,
@@ -169,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-      ),
+      )),
     );
   }
 }

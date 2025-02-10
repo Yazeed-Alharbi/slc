@@ -118,9 +118,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = ModalRoute.of(context)?.settings.arguments as String? ?? 'No email provided';
+    final email = ModalRoute.of(context)?.settings.arguments as String? ??
+        'No email provided';
     return Scaffold(
-        body: Padding(
+        body: SafeArea(child:Padding(
       padding: SpacingStyles(context).defaultPadding,
       child: SingleChildScrollView(
         reverse: true,
@@ -128,9 +129,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(
-              "assets/VerifyEmailIllustration.png",
-              width: MediaQuery.of(context).size.width * 0.5,
+            Container(
+              width: 200, // Fixed width
+              height: 200, // Fixed height
+              child: Image.asset(
+                "assets/VerifyEmailIllustration.png",
+                fit: BoxFit
+                    .contain, // Ensures it scales uniformly inside the container
+              ),
             ),
             const SizedBox(
               height: 40,
@@ -217,6 +223,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           ],
         ),
       ),
-    ));
+    )));
   }
 }

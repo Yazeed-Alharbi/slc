@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/auth_services.dart'; // ✅ Import AuthenticationService
 
 class ForgotPasswordScreen extends StatefulWidget {
   ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -17,8 +18,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   bool _isFormValid = false;
+  bool _isLoading = false; // ✅ Loading state
 
-  void _resetPassword() {
+  /// ✅ Calls Firebase to send reset password email
+  void _resetPassword() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       SLCFlushbar.show(
@@ -26,15 +29,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         message: "Please fix the errors in red.",
         type: FlushbarType.error,
       );
-    } else {
-      SLCFlushbar.show(
-        context: context,
-        message: "Reset instructions has been sent to ${emailController.text}",
-        type: FlushbarType.success,
-      );
-      emailController.clear();
+      return;
     }
-    return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    await AuthenticationService().resetPassword(
+      context: context,
+      email: emailController.text,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    emailController.clear();
   }
 
   String? _validateEmail(String? value) {
@@ -64,65 +75,72 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: SafeArea(child:Padding(
         padding: SpacingStyles(context).defaultPadding,
-        child: SingleChildScrollView(
-          reverse: true,
-          physics: const BouncingScrollPhysics(),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.asset(
-                  "assets/ForgotPasswordIllustration.png",
-                  width: MediaQuery.of(context).size.width * 0.6,
-                ),
-                const SizedBox(height: 40),
-                Text(
-                  "Forgot Password?",
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  "No worries, we'll send you reset instructions.",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                SLCTextField(
-                  labelText: "Email",
-                  obscureText: false,
-                  controller: emailController,
-                  validator: _validateEmail,
-                  onChanged: (_) => _validateForm(),
-                ),
-                const SizedBox(height: 15),
-                const SizedBox(height: 30),
-                SLCButton(
-                  onPressed: _isFormValid ? _resetPassword : null,
-                  text: "Reset Password",
-                  backgroundColor: SLCColors.primaryColor,
-                  foregroundColor: Colors.white,
-                ),
-                const SizedBox(height: 15),
-                TextButton(
-                  style: TextButton.styleFrom(overlayColor: Colors.transparent),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    "Back to login",
-                    style: TextStyle(
-                        color: SLCColors.primaryColor,
-                        fontWeight: FontWeight.w700),
+        child: _isLoading
+            ? SLCLoadingIndicator(text: "Sending reset instructions...")
+            : SingleChildScrollView(
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 200,
+                        height: 200,
+                        child: Image.asset(
+                          "assets/ForgotPasswordIllustration.png",
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Forgot Password?",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        "No worries, we'll send you reset instructions.",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.03),
+                      SLCTextField(
+                        labelText: "Email",
+                        obscureText: false,
+                        controller: emailController,
+                        validator: _validateEmail,
+                        onChanged: (_) => _validateForm(),
+                      ),
+                      const SizedBox(height: 30),
+                      SLCButton(
+                        onPressed: _isFormValid ? _resetPassword : null,
+                        text: "Reset Password",
+                        backgroundColor: SLCColors.primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                      const SizedBox(height: 15),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                            overlayColor: Colors.transparent),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Back to login",
+                          style: TextStyle(
+                              color: SLCColors.primaryColor,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 30),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+      )),
     );
   }
 }

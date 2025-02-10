@@ -21,8 +21,15 @@ class Onborading extends StatelessWidget {
             children: [
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.3,
-                child: Image.asset(
+                Container(
+                  width: 200, // Fixed width
+                  height: 200, // Fixed height
+                  child: Image.asset(
+                    "assets/StudyIllustration.png",
+                  ),
                   "assets/StudyIllustration.png",
+                  fit: BoxFit
+                      .contain, // Ensures it scales uniformly inside the container
                 ),
               ),
               Padding(
@@ -44,7 +51,7 @@ class Onborading extends StatelessWidget {
                 height: MediaQuery.of(context).size.height * 0.04,
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   SLCButton(
                     onPressed: () {
@@ -53,10 +60,7 @@ class Onborading extends StatelessWidget {
                     text: "Sign In",
                     backgroundColor: SLCColors.primaryColor,
                     foregroundColor: Colors.white,
-                    width: MediaQuery.of(context).size.width * 0.4,
-                  ),
-                  SizedBox(
-                    width: 20,
+                    width: MediaQuery.of(context).size.width * 0.35,
                   ),
                   SLCButton(
                     onPressed: () {
@@ -66,8 +70,8 @@ class Onborading extends StatelessWidget {
                     text: "Sign Up",
                     backgroundColor: Theme.of(context).colorScheme.surface,
                     foregroundColor: SLCColors.primaryColor,
-                    width: MediaQuery.of(context).size.width * 0.4,
-                  ),
+                    width: MediaQuery.of(context).size.width * 0.35,
+                  )
                 ],
               )
             ],
