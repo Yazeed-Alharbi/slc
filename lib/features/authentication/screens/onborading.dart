@@ -19,17 +19,12 @@ class Onborading extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.3,
-                Container(
-                  width: 200, // Fixed width
-                  height: 200, // Fixed height
-                  child: Image.asset(
-                    "assets/StudyIllustration.png",
-                  ),
+              Container(
+                width: 200, // Fixed width
+                height: 200, // Fixed height
+                child: Image.asset(
                   "assets/StudyIllustration.png",
-                  fit: BoxFit
-                      .contain, // Ensures it scales uniformly inside the container
+                  fit: BoxFit.contain,
                 ),
               ),
               Padding(
