@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:slc/common/styles/colors.dart';
 
 class SLCButton extends StatelessWidget {
   final VoidCallback? onPressed;

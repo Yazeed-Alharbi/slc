@@ -6,7 +6,6 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
-import 'package:slc/features/authentication/screens/register.dart'; // Import the new CustomFlushbar class
 
 class VerifyEmailScreen extends StatefulWidget {
   VerifyEmailScreen({super.key});

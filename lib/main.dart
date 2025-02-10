@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:slc/LLMTest.dart';
+import 'package:slc/common/layout/main_layout.dart';
 import 'package:slc/features/authentication/screens/forgotpassword.dart';
 import 'package:slc/features/authentication/screens/login.dart';
 import 'package:slc/features/authentication/screens/onborading.dart';
@@ -8,6 +8,7 @@ import 'package:slc/features/authentication/screens/verifyemail.dart';
 import 'package:slc/common/styles/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +37,7 @@ class MyApp extends StatelessWidget {
             title: 'Flutter Demo',
             theme: lightMode,
             darkTheme: darkMode,
-            home: Onborading(),
+            home: MainLayout(), // Change to Onboarding() to return to the onboarding flow
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),

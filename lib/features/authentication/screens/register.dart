@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:another_flushbar/flushbar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
