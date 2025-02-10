@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: "Email",
                         obscureText: false,
                         controller: emailController,
-                        validator: _validateEmail,
+                        validator: Validators.validateEmail,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
@@ -112,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: "Password",
                         obscureText: true,
                         controller: passwordController,
-                        validator: _validatePassword,
+                        validator: Validators.validatePassword,
                         onChanged: (_) => _validateForm(),
                       ),
                       Row(
