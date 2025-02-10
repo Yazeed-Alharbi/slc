@@ -14,19 +14,19 @@ class Onborading extends StatelessWidget {
       body: Center(
         child: SingleChildScrollView(
             child: Padding(
-          padding: EdgeInsets.fromLTRB(
-              SpacingStyles(context).defaultPadding.left,
-              SpacingStyles(context).defaultPadding.top,
-              SpacingStyles(context).defaultPadding.right,
-              MediaQuery.sizeOf(context).height * 0.1),
+          padding: SpacingStyles(context).defaultPadding,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 200, // Fixed width
-                height: 200, // Fixed height
-                child: Image.asset(
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.3,
+                Container(
+                  width: 200, // Fixed width
+                  height: 200, // Fixed height
+                  child: Image.asset(
+                    "assets/StudyIllustration.png",
+                  ),
                   "assets/StudyIllustration.png",
                   fit: BoxFit
                       .contain, // Ensures it scales uniformly inside the container

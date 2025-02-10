@@ -121,7 +121,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final email = ModalRoute.of(context)?.settings.arguments as String? ??
         'No email provided';
     return Scaffold(
-        body: Padding(
+        body: SafeArea(child:Padding(
       padding: SpacingStyles(context).defaultPadding,
       child: SingleChildScrollView(
         reverse: true,
@@ -223,6 +223,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           ],
         ),
       ),
-    ));
+    )));
   }
 }
