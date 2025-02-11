@@ -6,6 +6,15 @@ final TextStyle commonSmallBodyTextStyle = GoogleFonts.poppins(
   fontSize: 16,
   fontWeight: FontWeight.normal,
 );
+final TextStyle commonSmallHeadlineTextStyle = GoogleFonts.poppins(
+  fontSize: 18,
+  fontWeight: FontWeight.w500,
+);
+
+final TextStyle commonMediumHeadlineTextStyle = GoogleFonts.poppins(
+  fontSize: 20,
+  fontWeight: FontWeight.w700,
+);
 
 final TextStyle commonLargeTitleTextStyle = GoogleFonts.poppins(
   color: SLCColors.primaryColor,
@@ -17,6 +26,10 @@ ThemeData lightMode = ThemeData(
   scaffoldBackgroundColor: Color(0xFFF9F9F9),
   textTheme: TextTheme(
     bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.black),
+    headlineSmall: commonSmallHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(130, 0, 0, 0)),
+    headlineMedium: commonMediumHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(255, 0, 0, 0)),
     titleLarge: commonLargeTitleTextStyle,
   ),
   brightness: Brightness.light,
@@ -36,6 +49,10 @@ ThemeData darkMode = ThemeData(
   scaffoldBackgroundColor: Color.fromARGB(255, 23, 23, 23),
   textTheme: TextTheme(
     bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.white),
+    headlineSmall: commonSmallHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(130, 255, 255, 255)),
+    headlineMedium: commonMediumHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(255, 255, 255, 255)),
     titleLarge: commonLargeTitleTextStyle,
   ),
   brightness: Brightness.dark,

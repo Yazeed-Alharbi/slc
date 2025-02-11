@@ -9,7 +9,7 @@ class SpacingStyles {
     data = MediaQuery.of(context);
     defaultPadding = EdgeInsets.fromLTRB(
         data.size.width * 0.05,
-        0,
+        data.size.height * 0.025,
         data.size.width * 0.05,
         0);
   }
