@@ -111,18 +111,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 20,
                     ),
                     SLCEventCard(
-                        title: "SWE 387",
-                        location: "20-130",
-                        startTime: "09:00 AM",
-                        endTime: "09:50 AM"),
+                      title: "SWE 387",
+                      location: "20-130",
+                      startTime: TimeOfDay(hour: 9, minute: 0),
+                      endTime: TimeOfDay(hour: 9, minute: 50),
+                    ),
                     SizedBox(
                       height: 20,
                     ),
                     SLCEventCard(
                       title: "ICS 253",
                       location: "20-130",
-                      startTime: "09:00 AM",
-                      endTime: "09:50 AM",
+                      startTime: TimeOfDay(hour: 9, minute: 0),
+                      endTime: TimeOfDay(hour: 9, minute: 50),
                       color: EventCardColor.green,
                     ),
                     SizedBox(
@@ -131,8 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SLCEventCard(
                         title: "MATH 208",
                         location: "20-130",
-                        startTime: "09:00 AM",
-                        endTime: "09:50 AM",
+                        startTime: TimeOfDay(hour: 9, minute: 0),
+                        endTime: TimeOfDay(hour: 9, minute: 50),
                         color: EventCardColor.black),
                     SizedBox(
                       height: 20,
@@ -140,10 +141,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     SLCEventCard(
                       title: "Midterm",
                       location: "54",
-                      startTime: "08:00 PM",
-                      endTime: "09:50 PM",
+                      startTime: TimeOfDay(hour: 9, minute: 0),
+                      endTime: TimeOfDay(hour: 10, minute: 50),
                       color: EventCardColor.white,
-                      pinned: true,
+                      pinnedText: "ICS 253",
                     ),
                   ],
                 ),
