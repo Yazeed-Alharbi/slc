@@ -27,6 +27,7 @@ class SLCEventCard extends StatefulWidget {
 
 class _SLCEventCardState extends State<SLCEventCard> {
   bool _isTapped = false;
+
   String formatTimeOfDay(TimeOfDay time) {
     final now = DateTime.now();
     final dateTime =
@@ -54,12 +55,29 @@ class _SLCEventCardState extends State<SLCEventCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isPinned = widget.pinnedText != null;
+
+    final Color backgroundColor = isPinned
+        ? (Theme.of(context).brightness == Brightness.dark
+            ? Colors.black
+            : Colors.white)
+        : widget.color.backgroundColor;
+
+    final Color textColor = isPinned
+        ? (Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Colors.black)
+        : widget.color.textColor;
+
+    double _screenWidth = MediaQuery.sizeOf(context).width;
+
     return GestureDetector(
       onTap: widget.onTap,
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           boxShadow: const [
@@ -77,11 +95,14 @@ class _SLCEventCardState extends State<SLCEventCard> {
             ClipRRect(
               borderRadius: BorderRadius.circular(30),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 100),
+                duration: const Duration(milliseconds: 50),
                 decoration: BoxDecoration(
                   color: _isTapped
-                      ? widget.color.backgroundColor.withOpacity(0.7)
-                      : widget.color.backgroundColor,
+                      ? Color.alphaBlend(
+                          Color.fromARGB(255, 213, 213, 213)
+                              .withValues(alpha: 0.3),
+                          backgroundColor)
+                      : backgroundColor,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 width: double.infinity,
@@ -107,53 +128,56 @@ class _SLCEventCardState extends State<SLCEventCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           SizedBox(
-                            width: 100,
+                            width: _screenWidth * 0.25,
                             child: Text(
                               widget.title,
+                              textAlign: TextAlign.start,
                               style: TextStyle(
-                                  color: widget.color.textColor,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  overflow: TextOverflow.ellipsis),
+                                color: textColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                           SizedBox(
-                            width: 100,
+                            width: _screenWidth * 0.2,
                             child: Text(
                               widget.location ?? "",
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: widget.color.textColor,
+                                color: textColor,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                textAlign: TextAlign.end,
-                                formatTimeOfDay(
-                                    widget.startTime), // Formatted time
-                                style: TextStyle(
-                                  color: widget.color.textColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                          SizedBox(
+                            width: _screenWidth * 0.25,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  formatTimeOfDay(widget.startTime),
+                                  textAlign: TextAlign.end,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                textAlign: TextAlign.end,
-                                formatTimeOfDay(
-                                    widget.endTime), // Formatted time
-                                style: TextStyle(
-                                  color: widget.color.textColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                Text(
+                                  formatTimeOfDay(widget.endTime),
+                                  textAlign: TextAlign.end,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -162,7 +186,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
                 ),
               ),
             ),
-            widget.pinnedText != null
+            isPinned
                 ? Positioned(
                     top: -10,
                     left: 25,
@@ -173,10 +197,10 @@ class _SLCEventCardState extends State<SLCEventCard> {
                       ),
                       height: 25,
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Center(
                           child: Text(
-                            widget.pinnedText ?? "",
+                            widget.pinnedText!,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -185,7 +209,8 @@ class _SLCEventCardState extends State<SLCEventCard> {
                           ),
                         ),
                       ),
-                    ))
+                    ),
+                  )
                 : Container(),
           ],
         ),
@@ -197,8 +222,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
 enum EventCardColor {
   blue,
   green,
-  black,
-  white,
+  purple,
 }
 
 extension EventCardColorExtension on EventCardColor {
@@ -208,19 +232,12 @@ extension EventCardColorExtension on EventCardColor {
         return const Color(0xFF0013A2);
       case EventCardColor.green:
         return const Color(0xFF469D84);
-      case EventCardColor.black:
-        return Colors.black;
-      case EventCardColor.white:
-        return Colors.white;
+      case EventCardColor.purple:
+        return const Color(0xFF7300C5);
     }
   }
 
   Color get textColor {
-    switch (this) {
-      case EventCardColor.white:
-        return Colors.black;
-      default:
-        return Colors.white;
-    }
+    return Colors.white;
   }
 }
