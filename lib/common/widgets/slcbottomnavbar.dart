@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:slc/common/styles/colors.dart';
+import 'package:slc/common/styles/spcaing_styles.dart';
 
 class SLCBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -25,7 +26,9 @@ class SLCBottomNavBar extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 15.0),
+        padding: EdgeInsets.symmetric(
+            horizontal: SpacingStyles(context).defaultPadding.right,
+            vertical: 15.0),
         child: SafeArea(
           child: GNav(
             gap: 8,
