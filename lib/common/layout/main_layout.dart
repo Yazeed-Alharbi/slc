@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/widgets/slcbottomnavbar.dart';
 import 'package:slc/features/home/screens/home.dart';
+import 'package:slc/features/home/screens/courses.dart';
 
 class MainLayout extends StatefulWidget {
   @override
@@ -12,8 +13,8 @@ class _MainLayoutState extends State<MainLayout> {
 
   static List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
-    Center(child: Text('Page 2')),
-    Center(child: Text('Page 3')),
+    CoursesScreen(),
+    Center(child: Text('Page 5')),
     Center(child: Text('Page 4')),
   ];
 
@@ -34,5 +35,3 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 }
-
-
