@@ -11,26 +11,9 @@ class CoursesScreen extends StatefulWidget {
 }
 
 class _CoursesScreenState extends State<CoursesScreen> {
-  String greeting = "";
-
   @override
   void initState() {
     super.initState();
-  }
-
-  void _handleMenuSelection(String value) {
-    switch (value) {
-      case 'settings':
-        Navigator.pushNamed(context, '/settings');
-        break;
-      case 'logout':
-        _logoutUser();
-        break;
-    }
-  }
-
-  void _logoutUser() {
-    Navigator.pushReplacementNamed(context, '/loginscreen');
   }
 
   @override
