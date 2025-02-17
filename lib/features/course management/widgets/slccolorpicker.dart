@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:slc/common/widgets/slcolorpickeritem.dart';
+import 'package:slc/common/styles/colors.dart';
+
+import 'slcolorpickeritem.dart';
 
 class SLCColorPicker extends StatefulWidget {
-  final List<Color> colors;
+  final List<Color> colors = [
+    SLCColors.primaryColor,
+    SLCColors.pastelGreen,
+    SLCColors.neonPink,
+    SLCColors.electricBlue,
+    SLCColors.pastelPink
+  ];
   final Function(Color) onColorSelected;
 
-  const SLCColorPicker({
+  SLCColorPicker({
     Key? key,
-    required this.colors,
     required this.onColorSelected,
   }) : super(key: key);
 
@@ -25,7 +32,7 @@ class _SLCColorPickerState extends State<SLCColorPicker> {
       child: Row(
         children: widget.colors.map((color) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 5),
             child: SLCColorPickerItem(
               color: color,
               isSelected: selectedColor == color,
