@@ -37,7 +37,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
-                              ?.copyWith(fontSize: 30),
+                              ?.copyWith(fontSize: 25),
                           textAlign: TextAlign.start,
                         ),
                         SizedBox(
@@ -45,10 +45,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         ),
                         SLCCourseCard(
                           color: EventCardColor.blue,
-                          title: "SWE 387",
+                          title: "SWE 38729829892892",
                           name: "Software Project Management",
-                          notification1: "",
-                          notification2: "",
+                          notifications: ["Midterm", "Homework 3", "22", "33"],
                         ),
                         SizedBox(
                           height: 20,
@@ -57,8 +56,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           title: "ICS 253",
                           name: "Discrete Structures",
                           color: EventCardColor.green,
-                          notification1: "Midterm",
-                          notification2: "Homework 3",
+                          notifications: [],
                         ),
                         SizedBox(
                           height: 20,
@@ -67,8 +65,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           title: "MATH 208",
                           color: EventCardColor.black,
                           name: "Differential Equations & Linear Algebra",
-                          notification1: "",
-                          notification2: "",
+                          notifications: [],
                         ),
                         SizedBox(
                           height: 20,
@@ -77,8 +74,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           title: "SWE 316",
                           color: EventCardColor.yellow,
                           name: "Software Design And Construction",
-                          notification1: "",
-                          notification2: "",
+                          notifications: [],
                         ),
                         SizedBox(
                           height: 20,

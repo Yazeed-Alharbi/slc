@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class SLCCourseCard extends StatefulWidget {
   final String title;
   final String name;
-  final String notification1;
-  final String notification2;
+  final List<String> notifications; // Now accepts multiple notifications
   final EventCardColor color;
-  final String? pinnedText;
   final VoidCallback? onTap;
 
   const SLCCourseCard({
     super.key,
     required this.title,
     required this.name,
-    required this.notification1,
-    required this.notification2,
-    this.pinnedText,
+    required this.notifications,
     this.color = EventCardColor.blue,
     this.onTap,
   });
@@ -48,21 +43,23 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPinned = widget.pinnedText != null;
+    final Color backgroundColor = widget.color.backgroundColor;
+    final Color textColor = Colors.white;
 
-    final Color backgroundColor = isPinned
-        ? (Theme.of(context).brightness == Brightness.dark
-            ? Colors.black
-            : Colors.white)
-        : widget.color.backgroundColor;
+    double screenWidth = MediaQuery.sizeOf(context).width;
 
-    final Color textColor = isPinned
-        ? (Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black)
-        : widget.color.textColor;
+    final int notificationCount = widget.notifications.length;
+    final List<String> displayedNotifications = [];
+    int remainingNotificationCount = 0;
 
-    double _screenWidth = MediaQuery.sizeOf(context).width;
+    if (notificationCount == 1) {
+      displayedNotifications.add(widget.notifications[0]);
+    } else if (notificationCount == 2) {
+      displayedNotifications.addAll(widget.notifications.take(2));
+    } else if (notificationCount > 2) {
+      displayedNotifications.add(widget.notifications.first); // Show latest
+      remainingNotificationCount = notificationCount - 1; // Remaining count
+    }
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -92,8 +89,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                 decoration: BoxDecoration(
                   color: _isTapped
                       ? Color.alphaBlend(
-                          Color.fromARGB(255, 213, 213, 213)
-                              .withValues(alpha: 0.3),
+                          Color.fromARGB(255, 213, 213, 213).withOpacity(0.3),
                           backgroundColor)
                       : backgroundColor,
                   borderRadius: BorderRadius.circular(30),
@@ -116,142 +112,54 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
+                          horizontal: 20, vertical: 15),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Stack(
+                          Row(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.menu_book,
-                                      color: textColor, size: 24),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    widget.title,
-                                    textAlign: TextAlign.start,
-                                    style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.w700,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                              Icon(Icons.menu_book, color: textColor, size: 24),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.title,
+                                  textAlign: TextAlign.start,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontSize: 25,
+                                    fontWeight: FontWeight.w700,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  Spacer(),
-                                  SizedBox(
-                                    width: 110,
-                                    height: 60,
-                                    child: Column(
-                                      children: [
-                                        if (widget.notification1.isNotEmpty)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 4, horizontal: 10),
-                                            decoration: BoxDecoration(
-                                              color: const Color.fromARGB(
-                                                  255,
-                                                  255,
-                                                  255,
-                                                  255), // Notification color
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 9, // Circle size
-                                                  height: 9,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors
-                                                        .white, // Outer circle color
-                                                    border: Border.all(
-                                                      color: widget.color
-                                                          .backgroundColor, // Border same as background
-                                                      width:
-                                                          5, // Thickness of the hollow part
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: 12,
-                                                ),
-                                                Text(
-                                                  widget.notification1,
-                                                  style: TextStyle(
-                                                    color: widget
-                                                        .color.backgroundColor,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        const SizedBox(height: 8),
-                                        if (widget.notification2.isNotEmpty)
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 4, horizontal: 10),
-                                            decoration: BoxDecoration(
-                                              color: const Color.fromARGB(
-                                                  255,
-                                                  255,
-                                                  255,
-                                                  255), // Notification color
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 9, // Circle size
-                                                  height: 9,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors
-                                                        .white, // Outer circle color
-                                                    border: Border.all(
-                                                      color: widget.color
-                                                          .backgroundColor, // Border same as background
-                                                      width:
-                                                          5, // Thickness of the hollow part
-                                                    ),
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: 12,
-                                                ),
-                                                Text(
-                                                  widget.notification2,
-                                                  style: TextStyle(
-                                                    color: widget
-                                                        .color.backgroundColor,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  maxLines: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // Notifications section
+                              SizedBox(
+                                width: 110,
+                                height: 60,
+                                child: Column(
+                                  children: [
+                                    for (String notification
+                                        in displayedNotifications)
+                                      _buildNotificationBadge(notification),
+                                    if (remainingNotificationCount > 0)
+                                      _buildNotificationBadge(
+                                          "+$remainingNotificationCount more"),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-
-                          ////
-                          ///
-
-                          //
+                          const SizedBox(height: 8),
+                          // Name
                           SizedBox(
-                            width: 180,
+                            width: screenWidth * 0.45,
+                            height: 45,
                             child: Text(
                               widget.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: textColor.withOpacity(0.8),
                                 fontSize: 16,
@@ -262,65 +170,72 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                         ],
                       ),
                     ),
-                    //new
+                    // Bottom arrow button
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white, // White background
+                          color: Colors.white,
                           borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(
-                                40), // Adjusted to match the reference
+                            topLeft: Radius.circular(40),
                             bottomRight: Radius.circular(30),
                           ),
                         ),
-                        width: 150, // Adjust size to match design
+                        width: 150,
                         height: 50,
                         child: Center(
                           child: Icon(
                             Icons.arrow_forward,
-                            color: widget
-                                .color.backgroundColor, // Matches text color
+                            color: widget.color.backgroundColor,
                             size: 24,
                           ),
                         ),
                       ),
                     ),
-
-//shee
                   ],
                 ),
               ),
             ),
-            isPinned
-                ? Positioned(
-                    top: -10,
-                    left: 25,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: const Color(0xFF469D84),
-                      ),
-                      height: 25,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Center(
-                          child: Text(
-                            widget.pinnedText!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                : Container(),
+            // Pinned indicator
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+      margin: const EdgeInsets.only(bottom: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(
+                color: widget.color.backgroundColor,
+                width: 5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              color: widget.color.backgroundColor,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -338,7 +253,7 @@ extension EventCardColorExtension on EventCardColor {
       case EventCardColor.purple:
         return const Color(0xFF7300C5);
       case EventCardColor.black:
-        return const Color.fromARGB(255, 0, 0, 0);
+        return Colors.black;
       case EventCardColor.yellow:
         return const Color.fromARGB(255, 222, 171, 6);
     }
