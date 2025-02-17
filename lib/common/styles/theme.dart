@@ -43,9 +43,16 @@ ThemeData lightMode = ThemeData(
       disabledBackgroundColor: SLCColors.disabledColor,
     ),
   ),
+  timePickerTheme: TimePickerThemeData(
+    dayPeriodColor: SLCColors.primaryColor,
+  ),
 );
 
 ThemeData darkMode = ThemeData(
+  timePickerTheme: TimePickerThemeData(
+    dayPeriodColor: SLCColors.primaryColor,
+    backgroundColor: const Color.fromARGB(255, 23, 23, 23),
+  ),
   scaffoldBackgroundColor: Color.fromARGB(255, 23, 23, 23),
   textTheme: TextTheme(
     bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.white),

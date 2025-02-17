@@ -4,6 +4,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/features/course%20management/widgets/slccolorpicker.dart';
 import 'package:slc/features/course%20management/widgets/slcheadertextfield.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
+import 'package:slc/features/course%20management/widgets/slctimepicker.dart';
 
 import '../widgets/slcdaypicker.dart';
 
@@ -119,13 +120,12 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                     SizedBox(
                       height: 20,
                     ),
-                    SLCColorPicker(
-                        onColorSelected: (Color color) {
-                          setState(() {
-                            // handle color selection
-                            selectedColor = color;
-                          });
-                        }),
+                    SLCColorPicker(onColorSelected: (Color color) {
+                      setState(() {
+                        // handle color selection
+                        selectedColor = color;
+                      });
+                    }),
                     SizedBox(
                       height: screenheight * 0.05,
                     ),
@@ -140,6 +140,38 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                       onSelectionChanged: (selectedDays) {
                         print("Selected Days: $selectedDays");
                       },
+                    ),
+                    SizedBox(
+                      height: screenheight * 0.05,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              "Starts at",
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            SLCTimePicker(onTimeSelected: (time) {
+                              print(
+                                  "Start Time Selected: ${time.format(context)}");
+                            })
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              "Ends at",
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            SLCTimePicker(onTimeSelected: (time) {
+                              print(
+                                  "Start Time Selected: ${time.format(context)}");
+                            })
+                          ],
+                        )
+                      ],
                     ),
                   ],
                 ),
