@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/widgets/slcbottomnavbar.dart';
 import 'package:slc/features/home/screens/home.dart';
-import 'package:slc/features/home/screens/courses.dart';
+import 'package:slc/features/course%20management/screens/courses.dart';
 
 class MainLayout extends StatefulWidget {
   @override

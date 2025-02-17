@@ -7,6 +7,7 @@ import 'package:slc/features/authentication/screens/register.dart';
 import 'package:slc/features/authentication/screens/verifyemail.dart';
 import 'package:slc/common/styles/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'features/course management/screens/addcourse.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
               '/registerscreen': (context) => RegisterScreen(),
               '/forgotpassowrdscreen': (context) => ForgotPasswordScreen(),
               '/verifyemailscreen': (context) => VerifyEmailScreen(),
+              '/addcourse': (context) => AddCourseScreen(),
             },
           ),
         );
