@@ -16,7 +16,8 @@ class SLCDayPickerItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
         height: 60,
         width: 60,
         decoration: BoxDecoration(
