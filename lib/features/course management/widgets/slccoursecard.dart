@@ -136,9 +136,11 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                               const SizedBox(width: 12),
                               // Notifications section
                               SizedBox(
-                                width: 110,
-                                height: 60,
-                                child: Column(
+                                width: 110, // Keep a fixed width
+                                child: Wrap(
+                                  alignment: WrapAlignment.end,
+                                  spacing: 5, // Space between badges
+                                  runSpacing: 4, // Space between rows
                                   children: [
                                     for (String notification
                                         in displayedNotifications)

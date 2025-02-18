@@ -38,7 +38,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               curve: Curves.easeInOut,
               color: selectedColor,
               height: screenOrientation == Orientation.portrait
-                  ? screenheight * 0.3
+                  ? screenheight * 0.35
                   : screenheight * 0.5,
               width: double.infinity,
               child: Stack(
@@ -58,10 +58,11 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                   SafeArea(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                          horizontal:
-                              SpacingStyles(context).defaultPadding.right),
+                        horizontal: SpacingStyles(context).defaultPadding.right,
+                      ),
                       child: Column(
                         children: [
+                          // Keep this row at the top
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -85,15 +86,26 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                               ),
                             ],
                           ),
-                          SLCHeaderTextField(
-                            hintText: "Enter course name",
-                            fontSize: 35,
-                            fontWeight: FontWeight.w800,
-                          ),
-                          SLCHeaderTextField(
-                            hintText: "Enter course title",
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                          // Spacer to push content downward
+                          const SizedBox(height: 10),
+
+                          // Centering only the header text fields
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SLCHeaderTextField(
+                                  hintText: "Enter course name",
+                                  fontSize: 35,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                SLCHeaderTextField(
+                                  hintText: "Enter course title",
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
