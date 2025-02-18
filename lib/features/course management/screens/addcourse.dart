@@ -14,11 +14,12 @@ class AddCourseScreen extends StatefulWidget {
 }
 
 class _AddCourseScreenState extends State<AddCourseScreen> {
-  late Color selectedColor = SLCColors.primaryColor;
+  late Color selectedColor;
   @override
   void initState() {
+    selectedColor = SLCColors.navyBlue;
     // TODO: implement initState
-    selectedColor = SLCColors.primaryColor;
+
     super.initState();
   }
 
@@ -173,6 +174,24 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                         )
                       ],
                     ),
+                    SizedBox(
+                      height: screenheight * 0.05,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Location",
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        SLCTextField(
+                          labelText: "",
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),

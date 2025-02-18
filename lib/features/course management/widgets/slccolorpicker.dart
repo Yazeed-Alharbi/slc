@@ -5,11 +5,23 @@ import 'slcolorpickeritem.dart';
 
 class SLCColorPicker extends StatefulWidget {
   final List<Color> colors = [
-    SLCColors.primaryColor,
-    SLCColors.pastelGreen,
-    SLCColors.neonPink,
+    SLCColors.navyBlue,
+    SLCColors.tealGreen,
+    SLCColors.cyan,
+    SLCColors.lime,
+    SLCColors.darkMaroon,
+    SLCColors.deepViolet,
     SLCColors.electricBlue,
-    SLCColors.pastelPink
+    SLCColors.neonPink,
+    SLCColors.deepPurple,
+    SLCColors.skyBlue,
+    SLCColors.mutedRed,
+    SLCColors.olive,
+    SLCColors.sand,
+    SLCColors.goldenYellow,
+    SLCColors.sunsetOrange,
+    SLCColors.deepSeaBlue,
+    SLCColors.burntSienna
   ];
   final Function(Color) onColorSelected;
 
@@ -24,6 +36,15 @@ class SLCColorPicker extends StatefulWidget {
 
 class _SLCColorPickerState extends State<SLCColorPicker> {
   Color? selectedColor;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedColor = widget.colors.first; // Select the first color by default
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onColorSelected(selectedColor!); // Notify the parent widget
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
