@@ -8,7 +8,6 @@ import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -126,8 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-          child: Padding(
+      body: SafeArea(child:Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? const SLCLoadingIndicator(text: "Creating Account...")
@@ -139,56 +137,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      GNav(
-                          rippleColor: Colors.grey[800] ??
-                              Colors
-                                  .grey, // tab button ripple color when pressed
-                          hoverColor: Colors.grey[700] ??
-                              Colors.grey, // tab button hover color
-                          haptic: true, // haptic feedback
-                          tabBorderRadius: 15,
-                          tabActiveBorder: Border.all(
-                              color: Colors.black,
-                              width: 1), // tab button border
-                          tabBorder: Border.all(
-                              color: Colors.grey,
-                              width: 1), // tab button border
-                          tabShadow: [
-                            BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                blurRadius: 8)
-                          ], // tab button shadow
-                          curve: Curves.easeOutExpo, // tab animation curves
-                          duration: Duration(
-                              milliseconds: 900), // tab animation duration
-                          gap: 8, // the tab button gap between icon and text
-                          color: Colors.grey[800], // unselected icon color
-                          activeColor:
-                              Colors.purple, // selected icon and text color
-                          iconSize: 24, // tab button icon size
-                          tabBackgroundColor: Colors.purple.withOpacity(
-                              0.1), // selected tab background color
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 5), // navigation bar padding
-                          tabs: [
-                            GButton(
-                              icon: Icons.home,
-                              text: 'Home',
-                            ),
-                            GButton(
-                              icon: Icons.favorite_border,
-                              text: 'Likes',
-                            ),
-                            GButton(
-                              icon: Icons.search,
-                              text: 'Search',
-                            ),
-                            GButton(
-                              icon: Icons.person,
-                              text: 'Profile',
-                            )
-                          ]),
                       Container(
                         width: 200, // Fixed width
                         height: 200, // Fixed height
