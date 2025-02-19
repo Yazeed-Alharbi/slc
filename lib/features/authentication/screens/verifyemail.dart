@@ -6,7 +6,8 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
-import 'package:slc/features/authentication/screens/register.dart'; // Import the new CustomFlushbar class
+import 'package:slc/features/authentication/screens/register.dart';
+import 'package:slc/firebaseUtil/auth_services.dart'; // Import the new CustomFlushbar class
 
 class VerifyEmailScreen extends StatefulWidget {
   VerifyEmailScreen({super.key});
@@ -18,26 +19,50 @@ class VerifyEmailScreen extends StatefulWidget {
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   late List<TextEditingController> _codeControllers;
   late Timer _resendTimer;
+  late Timer _checkVerificationTimer;
   bool _isCodeValid = false;
   bool _isResendEnabled = false;
   int _resendTimeout = 30;
+  final AuthenticationService _authService = AuthenticationService();
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     _startResendTimer();
+    _startVerificationCheck();
   }
 
   @override
   void dispose() {
-    _disposeControllers();
     _resendTimer.cancel();
+    _checkVerificationTimer.cancel();
     super.dispose();
   }
 
   void _initializeControllers() {
     _codeControllers = List.generate(4, (_) => TextEditingController());
+  }
+
+  void _startVerificationCheck() {
+    // Check every 3 seconds if the email has been verified
+    _checkVerificationTimer = Timer.periodic(
+      const Duration(seconds: 3),
+      (timer) async {
+        if (await _authService.isEmailVerified()) {
+          timer.cancel();
+          if (mounted) {
+            SLCFlushbar.show(
+              context: context,
+              message: "Email verified successfully!",
+              type: FlushbarType.success,
+            );
+            // Navigate to your home screen or next screen
+            Navigator.pushReplacementNamed(context, "/homescreen");
+          }
+        }
+      },
+    );
   }
 
   void _disposeControllers() {
@@ -57,6 +82,23 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         timer.cancel(); // Stop the timer when it reaches 0
       }
     });
+  }
+
+  void _resendCode() async {
+    if (_isResendEnabled) {
+      await _authService.resendVerificationEmail(context);
+      setState(() {
+        _isResendEnabled = false;
+        _resendTimeout = 30;
+      });
+      _startResendTimer();
+
+      SLCFlushbar.show(
+        context: context,
+        message: "Verification email has been resent.",
+        type: FlushbarType.success,
+      );
+    }
   }
 
   void _verifyCode() {
@@ -92,22 +134,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     });
   }
 
-  void _resendCode() {
-    if (_isResendEnabled) {
-      _clearInputFields();
-      SLCFlushbar.show(
-        context: context,
-        message: "A new code has been sent.",
-        type: FlushbarType.success,
-      );
-      setState(() {
-        _isResendEnabled = false;
-        _resendTimeout = 30;
-      });
-      _startResendTimer();
-    }
-  }
-
   void _validateCodeForm() {
     setState(() {
       _isCodeValid = _codeControllers.every((controller) =>
@@ -121,7 +147,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final email = ModalRoute.of(context)?.settings.arguments as String? ??
         'No email provided';
     return Scaffold(
-        body: SafeArea(child:Padding(
+        body: SafeArea(
+            child: Padding(
       padding: SpacingStyles(context).defaultPadding,
       child: SingleChildScrollView(
         reverse: true,
