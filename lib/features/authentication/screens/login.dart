@@ -17,6 +17,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthenticationService _authService = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -52,12 +53,17 @@ class _LoginScreenState extends State<LoginScreen> {
       email: emailController.text,
       password: passwordController.text,
     );
+
+    if (success) {
+      bool isVerified = await _authService.isEmailVerified();
+      if (!mounted) return;
+      Navigator.pushNamed(
+          context, isVerified ? "/homescreen" : "/verifyemailscreen",
+          arguments: emailController.text);
+    }
     setState(() {
       _isLoading = false;
     });
-    if (success) {
-      // Home screen should go here as a route or something
-    }
   }
 
   @override

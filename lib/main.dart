@@ -37,13 +37,14 @@ class MyApp extends StatelessWidget {
             theme: lightMode,
             darkTheme: darkMode,
             home:
-                MainLayout(), // Change to Onboarding() to return to the onboarding flow
+                Onborading(), // Change to Onboarding() to return to the onboarding flow
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),
               '/registerscreen': (context) => RegisterScreen(),
               '/forgotpassowrdscreen': (context) => ForgotPasswordScreen(),
               '/verifyemailscreen': (context) => VerifyEmailScreen(),
+              '/homescreen': (context) => MainLayout(),
             },
           ),
         );

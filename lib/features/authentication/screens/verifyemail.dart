@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
@@ -14,17 +15,19 @@ class VerifyEmailScreen extends StatefulWidget {
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   final AuthenticationService _authService = AuthenticationService();
+  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   late Timer _checkVerificationTimer;
   late Timer _resendTimer;
   bool _isResendEnabled = false;
-  int _resendTimeout = 30;
+  int _resendTimeout = 60;
 
   @override
   void initState() {
     super.initState();
+    _loadResendCooldown();
+    _sendVerificationEmailIfNeeded();
     _startVerificationCheck();
-    _startResendTimer();
   }
 
   @override
@@ -32,6 +35,63 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     _checkVerificationTimer.cancel();
     _resendTimer.cancel();
     super.dispose();
+  }
+
+  void _loadResendCooldown() async {
+    String? lastSentTimeString =
+        await _secureStorage.read(key: 'last_verification_email');
+    int lastSentTime = int.tryParse(lastSentTimeString ?? '0') ?? 0;
+    int currentTime = DateTime.now().millisecondsSinceEpoch;
+
+    int elapsedTime = (currentTime - lastSentTime) ~/ 1000; // Convert ms to sec
+    int remainingTime = _resendTimeout - elapsedTime;
+
+    if (remainingTime > 0) {
+      setState(() {
+        _resendTimeout = remainingTime;
+        _isResendEnabled = false;
+      });
+      _startResendTimer();
+    } else {
+      setState(() {
+        _isResendEnabled = true;
+        _resendTimeout = 0;
+      });
+    }
+  }
+
+  /// Send verification email only if cooldown has passed
+  void _sendVerificationEmailIfNeeded() async {
+    String? lastSentTimeString =
+        await _secureStorage.read(key: 'last_verification_email');
+    int lastSentTime = int.tryParse(lastSentTimeString ?? '0') ?? 0;
+    int currentTime = DateTime.now().millisecondsSinceEpoch;
+
+    if (currentTime - lastSentTime > _resendTimeout * 1000) {
+      await _authService.resendVerificationEmail(context);
+      await _secureStorage.write(
+          key: 'last_verification_email', value: currentTime.toString());
+      setState(() {
+        _resendTimeout = 60;
+        _isResendEnabled = false;
+      });
+      _startResendTimer();
+    }
+  }
+
+  void _startResendTimer() {
+    if (_resendTimeout <= 0) return;
+
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendTimeout > 0) {
+        setState(() {
+          _resendTimeout--;
+          _isResendEnabled = (_resendTimeout == 0);
+        });
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   /// Periodically checks if the user has verified their email
@@ -54,27 +114,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     );
   }
 
-  /// Starts a 30-second timer during which "Resend" is disabled
-  void _startResendTimer() {
-    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_resendTimeout > 0) {
-        setState(() {
-          _resendTimeout--;
-          _isResendEnabled = _resendTimeout == 0;
-        });
-      } else {
-        timer.cancel();
-      }
-    });
-  }
-
-  /// Resends the verification email if allowed
+  /// Manually resend the verification email
   void _resendVerificationEmail() async {
     if (_isResendEnabled) {
       await _authService.resendVerificationEmail(context);
+      int currentTime = DateTime.now().millisecondsSinceEpoch;
+      await _secureStorage.write(
+          key: 'last_verification_email', value: currentTime.toString());
+
       setState(() {
+        _resendTimeout = 60; // Reset cooldown
         _isResendEnabled = false;
-        _resendTimeout = 30;
       });
       _startResendTimer();
 

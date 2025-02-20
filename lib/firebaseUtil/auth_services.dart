@@ -16,15 +16,12 @@ class AuthenticationService {
     required String fullName,
   }) async {
     try {
-      // Create the authentication account
+      // Create authentication account
       UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // Send verification email
-      await userCredential.user?.sendEmailVerification();
 
       // Create Firestore profile
       await _firestoreUtils.createNewStudent(
