@@ -34,32 +34,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _validateAndRegister() async {
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (!isValid) {
-      _showFlushbar("Please fix the errors in red.", FlushbarType.error);
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-    bool success = await AuthenticationService().signup(
-      context: context,
-      email: emailController.text,
-      password: passwordController.text,
-    );
-    setState(() {
-      _isLoading = false;
-    });
-
-    if (success) {
-      Navigator.pushNamed(
-        context,
-        "/verifyemailscreen",
-        arguments: emailController.text,
-      );
-    }
+  final isValid = _formKey.currentState?.validate() ?? false;
+  if (!isValid) {
+    _showFlushbar("Please fix the errors in red.", FlushbarType.error);
+    return;
   }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  bool success = await AuthenticationService().signup(
+    context: context,
+    email: emailController.text,
+    password: passwordController.text,
+    fullName: nameController.text, // Added this to match our schema
+  );
+
+  setState(() {
+    _isLoading = false;
+  });
+
+  if (success) {
+    Navigator.pushNamed(
+      context,
+      "/verifyemailscreen",
+      arguments: emailController.text,
+    );
+  }
+}
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
