@@ -2,23 +2,57 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
 
 class AuthenticationService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirestoreUtils _firestoreUtils = FirestoreUtils();
 
   Future<bool> signup({
     required BuildContext context,
     required String email,
     required String password,
+    required String fullName,
   }) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      // Create the authentication account
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Send verification email
+      await userCredential.user?.sendEmailVerification();
+
+      // Create Firestore profile
+      await _firestoreUtils.createNewStudent(
+        fullName: fullName,
+        email: email,
+      );
+
       return true;
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
       return false;
+    }
+  }
+
+// Add this method to check verification status
+  Future<bool> isEmailVerified() async {
+    User? user = _auth.currentUser;
+    await user?.reload(); // Refresh the user info
+    return user?.emailVerified ?? false;
+  }
+
+// Add this method to resend verification email
+  Future<void> resendVerificationEmail(BuildContext context) async {
+    try {
+      User? user = _auth.currentUser;
+      await user?.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      _showAuthError(context, e.code);
     }
   }
 
@@ -50,7 +84,18 @@ class AuthenticationService {
         idToken: googleAuth.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+
+      // Create Firestore profile for new Google Sign-In users
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        await _firestoreUtils.createNewStudent(
+          fullName: googleUser.displayName ?? '',
+          email: googleUser.email,
+          profilePicture: googleUser.photoUrl,
+        );
+      }
+
       return true;
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
