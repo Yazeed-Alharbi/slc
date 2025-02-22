@@ -25,8 +25,9 @@ class AuthenticationService {
 
       // Create Firestore profile
       await _firestoreUtils.createNewStudent(
-        fullName: fullName,
+        name: fullName,
         email: email,
+
       );
 
       return true;
@@ -87,9 +88,9 @@ class AuthenticationService {
       // Create Firestore profile for new Google Sign-In users
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
         await _firestoreUtils.createNewStudent(
-          fullName: googleUser.displayName ?? '',
+          name: googleUser.displayName ?? '',
           email: googleUser.email,
-          profilePicture: googleUser.photoUrl,
+          photoUrl: googleUser.photoUrl,
         );
       }
 

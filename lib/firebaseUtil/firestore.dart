@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/student.dart'; // Import Student model
 
 class FirestoreUtils {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -8,30 +9,37 @@ class FirestoreUtils {
   CollectionReference get students => _firestore.collection('students');
 
   Future<void> createNewStudent({
-    required String fullName,
     required String email,
-    String? profilePicture,
+    required String name,
+    String? photoUrl,
   }) async {
     try {
       final User? user = _auth.currentUser;
       if (user == null) throw Exception('No authenticated user found');
 
-      await students.doc(user.uid).set({
-        'full_name': fullName,
-        'email': email,
-        'profile_picture': profilePicture ?? '',
-        'join_date': FieldValue.serverTimestamp(),
-        'focus_sessions': 0,
-      });
+      final String uid = user.uid;
+      final student = Student(
+        uid: uid,
+        email: email,
+        name: name,
+        photoUrl: photoUrl,
+        enrolledCourseIds: [],
+        focusSessionIds: [],
+        friendIds: [],
+        communityIds: [],
+      );
+
+      await students.doc(uid).set(student.toJson());
     } catch (e) {
       throw Exception('Failed to create student profile: $e');
     }
   }
 
-  Future<Map<String, dynamic>?> getStudentData(String studentId) async {
+  Future<Student?> getStudentData(String studentId) async {
     try {
       final DocumentSnapshot doc = await students.doc(studentId).get();
-      return doc.data() as Map<String, dynamic>?;
+      if (!doc.exists) return null;
+      return Student.fromJson(doc.data() as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Failed to get student data: $e');
     }
@@ -46,13 +54,13 @@ class FirestoreUtils {
     }
   }
 
-  Future<void> incrementFocusSessions(String studentId) async {
+  Future<void> addFocusSession(String studentId, String sessionId) async {
     try {
       await students.doc(studentId).update({
-        'focus_sessions': FieldValue.increment(1),
+        'focusSessionIds': FieldValue.arrayUnion([sessionId]),
       });
     } catch (e) {
-      throw Exception('Failed to increment focus sessions: $e');
+      throw Exception('Failed to add focus session: $e');
     }
   }
 }
