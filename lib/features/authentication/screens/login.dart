@@ -33,6 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading;
+    });
+  }
+
   void _validateForm() {
     setState(() {
       _isFormValid = Validators.validateEmail(emailController.text) == null &&
@@ -45,9 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
     bool success = await AuthenticationService().signin(
       context: context,
       email: emailController.text,
@@ -61,9 +65,16 @@ class _LoginScreenState extends State<LoginScreen> {
           context, isVerified ? "/homescreen" : "/verifyemailscreen",
           arguments: emailController.text);
     }
-    setState(() {
-      _isLoading = false;
-    });
+    _setLoading(false);
+  }
+
+  void _handleGoogleSignInSuccess(bool success) {
+    if (success) {
+      print("Google sign-in successful, navigating to /homescreen...");
+      Navigator.pushReplacementNamed(context, "/homescreen");
+    } else {
+      _showFlushbar("Google sign-in failed.", FlushbarType.error);
+    }
   }
 
   @override
@@ -90,12 +101,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        width: 200, // Fixed width
-                        height: 200, // Fixed height
+                        width: 200,
+                        height: 200,
                         child: Image.asset(
                           "assets/LoginIllustration.png",
-                          fit: BoxFit
-                              .contain, // Ensures it scales uniformly inside the container
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -149,7 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         foregroundColor: Colors.white,
                       ),
                       const SizedBox(height: 10),
-                      SLCGoogleSignInButton(),
+                      SLCGoogleSignInButton(
+                        setLoading: _setLoading,
+                        onGoogleSignInSuccess: _handleGoogleSignInSuccess, // Pass callback
+                      ),
                       const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(
