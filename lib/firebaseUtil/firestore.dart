@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/student.dart'; // Import Student model
+import 'package:slc/models/Student.dart';
+
 
 class FirestoreUtils {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -42,6 +43,32 @@ class FirestoreUtils {
       return Student.fromJson(doc.data() as Map<String, dynamic>);
     } catch (e) {
       throw Exception('Failed to get student data: $e');
+    }
+  }
+
+  Future<Student> getOrCreateStudent() async {
+    final User? user = _auth.currentUser;
+    if (user == null) throw Exception('No authenticated user found');
+
+    final String uid = user.uid;
+    final DocumentSnapshot doc = await students.doc(uid).get();
+
+    if (doc.exists) {
+      return Student.fromJson(doc.data() as Map<String, dynamic>);
+    } else {
+      final Student newStudent = Student(
+        uid: uid,
+        email: user.email!,
+        name: user.displayName ?? "Default Name",
+        photoUrl: user.photoURL,
+        enrolledCourseIds: [],
+        focusSessionIds: [],
+        friendIds: [],
+        communityIds: [],
+      );
+
+      await students.doc(uid).set(newStudent.toJson());
+      return newStudent;
     }
   }
 

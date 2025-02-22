@@ -8,6 +8,8 @@ import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
 import 'package:slc/dartUtil/validators.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:slc/models/Student.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -61,17 +63,32 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       bool isVerified = await _authService.isEmailVerified();
       if (!mounted) return;
-      Navigator.pushNamed(
-          context, isVerified ? "/homescreen" : "/verifyemailscreen",
-          arguments: emailController.text);
+      if (isVerified) {
+        Student student = await FirestoreUtils().getOrCreateStudent();
+
+        Navigator.pushReplacementNamed(
+          context,
+          "/homescreen",
+          arguments: student,
+        );
+      } else {
+        Navigator.pushNamed(
+          context,
+          "/verifyemailscreen",
+          arguments: emailController.text,
+        );
+      }
     }
     _setLoading(false);
   }
 
-  void _handleGoogleSignInSuccess(bool success) {
-    if (success) {
-      print("Google sign-in successful, navigating to /homescreen...");
-      Navigator.pushReplacementNamed(context, "/homescreen");
+  void _handleGoogleSignInSuccess(Student? student) {
+    if (student != null) {
+      Navigator.pushReplacementNamed(
+        context,
+        "/homescreen",
+        arguments: student,
+      );
     } else {
       _showFlushbar("Google sign-in failed.", FlushbarType.error);
     }
@@ -161,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 10),
                       SLCGoogleSignInButton(
                         setLoading: _setLoading,
-                        onGoogleSignInSuccess: _handleGoogleSignInSuccess, // Pass callback
+                        onGoogleSignInSuccess: _handleGoogleSignInSuccess,
                       ),
                       const SizedBox(height: 10),
                       TextButton(

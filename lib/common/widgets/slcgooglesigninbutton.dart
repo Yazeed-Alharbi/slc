@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/models/Student.dart';
 
 class SLCGoogleSignInButton extends StatelessWidget {
   final Function(bool) setLoading;
-  final Function(bool) onGoogleSignInSuccess; // Callback to notify LoginScreen
+  final Function(Student?) onGoogleSignInSuccess; 
 
   const SLCGoogleSignInButton({
     Key? key,
     required this.setLoading,
-    required this.onGoogleSignInSuccess, // Accepts success callback
+    required this.onGoogleSignInSuccess, 
   }) : super(key: key);
 
   @override
@@ -17,10 +18,10 @@ class SLCGoogleSignInButton extends StatelessWidget {
     return SLCButton(
       onPressed: () async {
         setLoading(true);
-        bool success = await AuthenticationService().googleSignIn(context);
+        Student? student = await AuthenticationService().googleSignIn(context);
         setLoading(false);
         
-        onGoogleSignInSuccess(success); // Notify LoginScreen about success
+        onGoogleSignInSuccess(student);
       },
       text: "Continue with Google",
       backgroundColor: Theme.of(context).brightness == Brightness.light

@@ -7,6 +7,7 @@ import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/models/Student.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -64,9 +65,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _handleGoogleSignInSuccess(bool success) {
-    if (success) {
-      Navigator.pushReplacementNamed(context, "/homescreen");
+  void _handleGoogleSignInSuccess(Student? student) {
+    if (student != null) {
+      // ✅ Navigate to HomeScreen with the Student object
+      Navigator.pushReplacementNamed(
+        context,
+        "/homescreen",
+        arguments: student,
+      );
     } else {
       _showFlushbar("Google sign-in failed.", FlushbarType.error);
     }

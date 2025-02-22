@@ -5,6 +5,8 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:slc/models/Student.dart';
 
 class VerifyEmailScreen extends StatefulWidget {
   VerifyEmailScreen({Key? key}) : super(key: key);
@@ -107,7 +109,11 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               message: "Email verified successfully!",
               type: FlushbarType.success,
             );
-            Navigator.pushReplacementNamed(context, "/homescreen");
+
+            Student student = await FirestoreUtils().getOrCreateStudent();
+
+            Navigator.pushReplacementNamed(context, "/homescreen",
+                arguments: student);
           }
         }
       },
