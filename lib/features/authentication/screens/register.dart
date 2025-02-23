@@ -7,6 +7,7 @@ import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/models/Student.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -32,24 +33,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading;
+    });
+  }
+
   void _validateAndRegister() async {
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
+    _setLoading(true);
 
-    setState(() {
-      _isLoading = true;
-    });
     bool success = await AuthenticationService().signup(
       context: context,
       email: emailController.text,
       password: passwordController.text,
+      fullName: nameController.text,
     );
-    setState(() {
-      _isLoading = false;
-    });
+
+    _setLoading(false);
 
     if (success) {
       Navigator.pushNamed(
@@ -57,6 +62,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
         "/verifyemailscreen",
         arguments: emailController.text,
       );
+    }
+  }
+
+  void _handleGoogleSignInSuccess(Student? student) {
+    if (student != null) {
+      // ✅ Navigate to HomeScreen with the Student object
+      Navigator.pushReplacementNamed(
+        context,
+        "/homescreen",
+        arguments: student,
+      );
+    } else {
+      _showFlushbar("Google sign-in failed.", FlushbarType.error);
     }
   }
 
@@ -124,7 +142,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(child:Padding(
+      body: SafeArea(
+          child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
             ? const SLCLoadingIndicator(text: "Creating Account...")
@@ -192,7 +211,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         foregroundColor: Colors.white,
                       ),
                       const SizedBox(height: 10),
-                      SLCGoogleSignInButton(),
+                      SLCGoogleSignInButton(
+                        setLoading: _setLoading,
+                        onGoogleSignInSuccess:
+                            _handleGoogleSignInSuccess, // ✅ Pass callback
+                      ),
                       const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(

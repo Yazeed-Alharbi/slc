@@ -8,6 +8,8 @@ import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
 import 'package:slc/dartUtil/validators.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:slc/models/Student.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final AuthenticationService _authService = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -32,6 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading;
+    });
+  }
+
   void _validateForm() {
     setState(() {
       _isFormValid = Validators.validateEmail(emailController.text) == null &&
@@ -44,19 +53,44 @@ class _LoginScreenState extends State<LoginScreen> {
       _showFlushbar("Please fix the errors in red.", FlushbarType.error);
       return;
     }
-    setState(() {
-      _isLoading = true;
-    });
+    _setLoading(true);
     bool success = await AuthenticationService().signin(
       context: context,
       email: emailController.text,
       password: passwordController.text,
     );
-    setState(() {
-      _isLoading = false;
-    });
+
     if (success) {
-      // Home screen should go here as a route or something
+      bool isVerified = await _authService.isEmailVerified();
+      if (!mounted) return;
+      if (isVerified) {
+        Student student = await FirestoreUtils().getOrCreateStudent();
+
+        Navigator.pushReplacementNamed(
+          context,
+          "/homescreen",
+          arguments: student,
+        );
+      } else {
+        Navigator.pushNamed(
+          context,
+          "/verifyemailscreen",
+          arguments: emailController.text,
+        );
+      }
+    }
+    _setLoading(false);
+  }
+
+  void _handleGoogleSignInSuccess(Student? student) {
+    if (student != null) {
+      Navigator.pushReplacementNamed(
+        context,
+        "/homescreen",
+        arguments: student,
+      );
+    } else {
+      _showFlushbar("Google sign-in failed.", FlushbarType.error);
     }
   }
 
@@ -84,12 +118,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        width: 200, // Fixed width
-                        height: 200, // Fixed height
+                        width: 200,
+                        height: 200,
                         child: Image.asset(
                           "assets/LoginIllustration.png",
-                          fit: BoxFit
-                              .contain, // Ensures it scales uniformly inside the container
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -143,7 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         foregroundColor: Colors.white,
                       ),
                       const SizedBox(height: 10),
-                      SLCGoogleSignInButton(),
+                      SLCGoogleSignInButton(
+                        setLoading: _setLoading,
+                        onGoogleSignInSuccess: _handleGoogleSignInSuccess,
+                      ),
                       const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(

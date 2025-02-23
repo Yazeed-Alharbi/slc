@@ -2,23 +2,55 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:slc/models/Student.dart';
 
 class AuthenticationService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirestoreUtils _firestoreUtils = FirestoreUtils();
 
   Future<bool> signup({
     required BuildContext context,
     required String email,
     required String password,
+    required String fullName,
   }) async {
     try {
-      await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      // Create authentication account
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Create Firestore profile
+      await _firestoreUtils.createNewStudent(
+        name: fullName,
+        email: email,
+      );
+
       return true;
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
       return false;
+    }
+  }
+
+// Add this method to check verification status
+  Future<bool> isEmailVerified() async {
+    User? user = _auth.currentUser;
+    await user?.reload(); // Refresh the user info
+    return user?.emailVerified ?? false;
+  }
+
+// Add this method to resend verification email
+  Future<void> resendVerificationEmail(BuildContext context) async {
+    try {
+      User? user = _auth.currentUser;
+      await user?.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      _showAuthError(context, e.code);
     }
   }
 
@@ -36,11 +68,11 @@ class AuthenticationService {
     }
   }
 
-  Future<bool> googleSignIn(BuildContext context) async {
+  Future<Student?> googleSignIn(BuildContext context) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        return false;
+        return null; 
       }
 
       final GoogleSignInAuthentication googleAuth =
@@ -50,18 +82,23 @@ class AuthenticationService {
         idToken: googleAuth.idToken,
       );
 
-      await _auth.signInWithCredential(credential);
-      return true;
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+      final String uid = userCredential.user!.uid;
+
+      Student student = await _firestoreUtils.getOrCreateStudent();
+
+      return student; 
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
-      return false;
+      return null;
     } catch (e) {
       SLCFlushbar.show(
         context: context,
         message: "Google sign-in failed. Please try again.",
         type: FlushbarType.error,
       );
-      return false;
+      return null;
     }
   }
 

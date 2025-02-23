@@ -4,8 +4,11 @@ import 'package:slc/common/widgets/slcavatar.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/widgets/slceventcard.dart';
 import 'package:slc/common/widgets/slcquickactioncard.dart';
+import 'package:slc/models/Student.dart';
 
 class HomeScreen extends StatefulWidget {
+  final Student student;
+  const HomeScreen({Key? key, required this.student}) : super(key: key);
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -69,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       Text(
-                        "Yazeed Alharbi",
+                        widget.student.name,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ],
@@ -91,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     buttonBuilder: (context, showMenu) => GestureDetector(
                       onTap: showMenu,
                       child: SLCAvatar(
+                        imageUrl: widget.student.photoUrl,
                         size: 55,
                       ),
                     ),

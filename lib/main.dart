@@ -7,7 +7,8 @@ import 'package:slc/features/authentication/screens/register.dart';
 import 'package:slc/features/authentication/screens/verifyemail.dart';
 import 'package:slc/common/styles/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'features/course management/screens/addcourse.dart';
+import 'package:slc/features/course%20management/screens/addcourse.dart';
+import 'package:slc/models/Student.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -37,8 +38,9 @@ class MyApp extends StatelessWidget {
             title: 'Flutter Demo',
             theme: lightMode,
             darkTheme: darkMode,
-            home:
-                MainLayout(), // Change to Onboarding() to return to the onboarding flow
+            home: Onborading(), 
+
+            
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),
@@ -46,6 +48,17 @@ class MyApp extends StatelessWidget {
               '/forgotpassowrdscreen': (context) => ForgotPasswordScreen(),
               '/verifyemailscreen': (context) => VerifyEmailScreen(),
               '/addcourse': (context) => AddCourseScreen(),
+            },
+
+            
+            onGenerateRoute: (settings) {
+              if (settings.name == '/homescreen') {
+                final student = settings.arguments as Student;
+                return MaterialPageRoute(
+                  builder: (context) => MainLayout(student: student),
+                );
+              }
+              return null;
             },
           ),
         );
