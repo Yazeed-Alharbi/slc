@@ -7,7 +7,10 @@ class SLCButton extends StatelessWidget {
   final Color backgroundColor;
   final Color foregroundColor;
   final double width;
+  final double? height;
   final Widget? icon;
+  final double? fontSize;
+  final FontWeight? fontWeight;
 
   const SLCButton({
     Key? key,
@@ -16,7 +19,10 @@ class SLCButton extends StatelessWidget {
     required this.backgroundColor,
     required this.foregroundColor,
     this.width = double.infinity,
+    this.height,
     this.icon,
+    this.fontSize,
+    this.fontWeight,
   }) : super(key: key);
 
   @override
@@ -25,10 +31,10 @@ class SLCButton extends StatelessWidget {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         elevation: 0,
-        minimumSize: Size(width, 45),
+        minimumSize: Size(width, height ?? 45),
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
-        overlayColor: backgroundColor.withAlpha((0.8 * 255).toInt()),
+        overlayColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -44,8 +50,8 @@ class SLCButton extends StatelessWidget {
           Text(
             text,
             style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontWeight: fontWeight ?? FontWeight.bold,
+              fontSize: fontSize ?? 16,
             ),
           ),
         ],

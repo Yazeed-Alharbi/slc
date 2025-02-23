@@ -4,6 +4,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcavatar.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/features/course%20management/screens/coursepage.dart';
 import 'package:slc/features/course%20management/widgets/slccoursecard.dart';
 import 'package:slc/common/widgets/slciconbutton.dart';
 import 'package:slc/common/widgets/slcquickactioncard.dart';
@@ -64,6 +65,14 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           title: "SWE 38729829892892",
                           name: "Software Project Management",
                           notifications: ["Midterm", "Homework 3", "22", "33"],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CourseScreen(),
+                              ),
+                            );
+                          },
                         ),
                         SizedBox(
                           height: 20,

@@ -38,9 +38,7 @@ class MyApp extends StatelessWidget {
             title: 'Flutter Demo',
             theme: lightMode,
             darkTheme: darkMode,
-            home: Onborading(), 
-
-            
+            home: Onborading(),
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),
@@ -49,8 +47,6 @@ class MyApp extends StatelessWidget {
               '/verifyemailscreen': (context) => VerifyEmailScreen(),
               '/addcourse': (context) => AddCourseScreen(),
             },
-
-            
             onGenerateRoute: (settings) {
               if (settings.name == '/homescreen') {
                 final student = settings.arguments as Student;
