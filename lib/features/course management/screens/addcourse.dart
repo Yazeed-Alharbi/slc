@@ -5,6 +5,7 @@ import 'package:slc/features/course%20management/widgets/slccolorpicker.dart';
 import 'package:slc/features/course%20management/widgets/slcheadertextfield.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/features/course%20management/widgets/slctimepicker.dart';
+import 'package:slc/common/widgets/slcflushbar.dart';
 
 import '../widgets/slcdaypicker.dart';
 
@@ -15,12 +16,48 @@ class AddCourseScreen extends StatefulWidget {
 
 class _AddCourseScreenState extends State<AddCourseScreen> {
   late Color selectedColor;
+  String? courseName;
+  String? courseTitle;
+  List<String> selectedDays = [];
+  TimeOfDay? startTime;
+  TimeOfDay? endTime;
+  String? location; // This is optional
+
   @override
   void initState() {
     selectedColor = SLCColors.navyBlue;
-    // TODO: implement initState
-
     super.initState();
+  }
+
+  void _validateAndSave() {
+    if (courseName == null || courseName!.trim().isEmpty) {
+      _showError("Please enter the course name.");
+      return;
+    }
+    if (courseTitle == null || courseTitle!.trim().isEmpty) {
+      _showError("Please enter the course title.");
+      return;
+    }
+    if (selectedDays.isEmpty) {
+      _showError("Please select at least one day.");
+      return;
+    }
+    if (startTime == null) {
+      _showError("Please select a start time.");
+      return;
+    }
+    if (endTime == null) {
+      _showError("Please select an end time.");
+      return;
+    }
+
+    // ✅ All validations passed, proceed with saving
+    print("Course saved successfully!");
+    Navigator.pop(context);
+  }
+
+  void _showError(String message) {
+    SLCFlushbar.show(context: context, message: message, type: FlushbarType.error);
   }
 
   @override
@@ -28,6 +65,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     double screenheight = MediaQuery.sizeOf(context).height;
     double screenwidth = MediaQuery.sizeOf(context).width;
     Orientation screenOrientation = MediaQuery.orientationOf(context);
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -77,7 +115,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                                 ),
                               ),
                               IconButton(
-                                onPressed: () {},
+                                onPressed: _validateAndSave,
                                 icon: const Icon(
                                   Icons.check,
                                   color: Colors.white,
@@ -86,10 +124,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                               ),
                             ],
                           ),
-                          // Spacer to push content downward
                           const SizedBox(height: 10),
 
-                          // Centering only the header text fields
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -98,11 +134,21 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                                   hintText: "Enter course name",
                                   fontSize: 35,
                                   fontWeight: FontWeight.w800,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      courseName = value;
+                                    });
+                                  },
                                 ),
                                 SLCHeaderTextField(
                                   hintText: "Enter course title",
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      courseTitle = value;
+                                    });
+                                  },
                                 ),
                               ],
                             ),
@@ -123,84 +169,70 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: screenheight * 0.025,
-                    ),
-                    Text(
-                      "Color",
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
+                    SizedBox(height: screenheight * 0.025),
+                    Text("Color",
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    SizedBox(height: 20),
                     SLCColorPicker(onColorSelected: (Color color) {
                       setState(() {
-                        // handle color selection
                         selectedColor = color;
                       });
                     }),
-                    SizedBox(
-                      height: screenheight * 0.05,
-                    ),
-                    Text(
-                      "Days",
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
+                    SizedBox(height: screenheight * 0.05),
+                    Text("Days",
+                        style: Theme.of(context).textTheme.headlineSmall),
+                    SizedBox(height: 20),
                     SLCDayPicker(
-                      onSelectionChanged: (selectedDays) {
-                        print("Selected Days: $selectedDays");
+                      onSelectionChanged: (days) {
+                        setState(() {
+                          selectedDays = days;
+                        });
                       },
                     ),
-                    SizedBox(
-                      height: screenheight * 0.05,
-                    ),
+                    SizedBox(height: screenheight * 0.05),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           children: [
-                            Text(
-                              "Starts at",
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
+                            Text("Starts at",
+                                style:
+                                    Theme.of(context).textTheme.headlineSmall),
                             SLCTimePicker(onTimeSelected: (time) {
-                              print(
-                                  "Start Time Selected: ${time.format(context)}");
-                            })
+                              setState(() {
+                                startTime = time;
+                              });
+                            }),
                           ],
                         ),
                         Column(
                           children: [
-                            Text(
-                              "Ends at",
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
+                            Text("Ends at",
+                                style:
+                                    Theme.of(context).textTheme.headlineSmall),
                             SLCTimePicker(onTimeSelected: (time) {
-                              print(
-                                  "Start Time Selected: ${time.format(context)}");
-                            })
+                              setState(() {
+                                endTime = time;
+                              });
+                            }),
                           ],
                         )
                       ],
                     ),
-                    SizedBox(
-                      height: screenheight * 0.05,
-                    ),
+                    SizedBox(height: screenheight * 0.05),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Location",
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
+                        Text("Location",
+                            style: Theme.of(context).textTheme.headlineSmall),
+                        SizedBox(height: 20),
                         SLCTextField(
                           labelText: "",
+                          onChanged: (value) {
+                            setState(() {
+                              location = value; // Optional, so no validation
+                            });
+                          },
                         ),
                       ],
                     )

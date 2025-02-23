@@ -4,17 +4,20 @@ class SLCHeaderTextField extends StatelessWidget {
   final String hintText;
   final double fontSize;
   final FontWeight fontWeight;
+  final ValueChanged<String>? onChanged;
 
   const SLCHeaderTextField({
     Key? key,
     required this.hintText,
     this.fontSize = 20,
     this.fontWeight = FontWeight.normal,
+    this.onChanged,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onChanged: onChanged,
       onTapOutside: (event) => FocusScope.of(context).unfocus(),
       style: TextStyle(
         color: Colors.white,
