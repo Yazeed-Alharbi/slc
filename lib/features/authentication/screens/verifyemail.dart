@@ -5,6 +5,7 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/repositories/student_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/models/Student.dart';
 
@@ -18,6 +19,9 @@ class VerifyEmailScreen extends StatefulWidget {
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   final AuthenticationService _authService = AuthenticationService();
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  final StudentRepository _studentRepository = StudentRepository(
+    firestoreUtils: FirestoreUtils(),
+  );
 
   late Timer _checkVerificationTimer;
   late Timer _resendTimer;
@@ -110,10 +114,21 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
               type: FlushbarType.success,
             );
 
-            Student student = await FirestoreUtils().getOrCreateStudent();
-
-            Navigator.pushReplacementNamed(context, "/homescreen",
-                arguments: student);
+            // Use repository instead of direct FirestoreUtils access
+            Student? student = await _studentRepository.getOrCreateStudent();
+            if (student != null) {
+              Navigator.pushReplacementNamed(
+                context,
+                "/homescreen",
+                arguments: student,
+              );
+            } else {
+              SLCFlushbar.show(
+                context: context,
+                message: "Failed to load user data",
+                type: FlushbarType.error,
+              );
+            }
           }
         }
       },
