@@ -46,6 +46,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
     final result = await Navigator.pushNamed(context, "/addcourse");
 
     if (result == "success") {
+      setState(() {});
       if (mounted) {
         SLCFlushbar.show(
           context: context,
@@ -57,25 +58,6 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
 // Add this method to your _CoursesScreenState class
-
-  EventCardColor _getCardColor(CourseColor courseColor) {
-    switch (courseColor) {
-      case CourseColor.red:
-        return EventCardColor.red;
-      case CourseColor.green:
-        return EventCardColor.green;
-      case CourseColor.blue:
-        return EventCardColor.blue;
-      case CourseColor.yellow:
-        return EventCardColor.yellow;
-      case CourseColor.purple:
-        return EventCardColor.purple;
-      case CourseColor.orange:
-        return EventCardColor.orange;
-      case CourseColor.black:
-        return EventCardColor.black;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -190,12 +172,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         notifications.addAll(incompleteMaterials
                             .map((material) => material.name));
                       }
-                      print("Course: ${course.code}, Color: ${course.color}");
-                      print(
-                          "Mapped EventCardColor: ${_getCardColor(course.color)}");
 
                       return SLCCourseCard(
-                        color: _getCardColor(course.color),
+                        color: course.color,
                         title: course.code,
                         name: course.name,
                         notifications: notifications,

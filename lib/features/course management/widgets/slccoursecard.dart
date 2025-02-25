@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:slc/common/styles/colors.dart'; // Import SLCColors
 
 class SLCCourseCard extends StatefulWidget {
   final String title;
   final String name;
   final List<String> notifications; // Now accepts multiple notifications
-  final EventCardColor color;
+  final CourseColor color; // ✅ Use CourseColor instead of EventCardColor
   final VoidCallback? onTap;
 
   const SLCCourseCard({
@@ -12,7 +13,7 @@ class SLCCourseCard extends StatefulWidget {
     required this.title,
     required this.name,
     required this.notifications,
-    this.color = EventCardColor.blue,
+    required this.color,
     this.onTap,
   });
 
@@ -43,7 +44,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = widget.color.backgroundColor;
+    final Color backgroundColor = SLCColors.getCourseColor(widget.color); 
     final Color textColor = Colors.white;
 
     double screenWidth = MediaQuery.sizeOf(context).width;
@@ -189,7 +190,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                         child: Center(
                           child: Icon(
                             Icons.arrow_forward,
-                            color: widget.color.backgroundColor,
+                            color: backgroundColor,
                             size: 24,
                           ),
                         ),
@@ -199,7 +200,6 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                 ),
               ),
             ),
-            // Pinned indicator
           ],
         ),
       ),
@@ -223,7 +223,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
               shape: BoxShape.circle,
               color: Colors.white,
               border: Border.all(
-                color: widget.color.backgroundColor,
+                color: SLCColors.getCourseColor(widget.color), 
                 width: 5,
               ),
             ),
@@ -232,7 +232,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
           Text(
             text,
             style: TextStyle(
-              color: widget.color.backgroundColor,
+              color: SLCColors.getCourseColor(widget.color), 
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -240,32 +240,5 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
         ],
       ),
     );
-  }
-}
-
-enum EventCardColor { blue, green, purple, black, yellow, red, orange }
-
-extension EventCardColorExtension on EventCardColor {
-  Color get backgroundColor {
-    switch (this) {
-      case EventCardColor.blue:
-      return const Color(0xFF0013A2);
-      case EventCardColor.green:
-      return const Color(0xFF469D84);
-      case EventCardColor.purple:
-      return const Color(0xFF7300C5);
-      case EventCardColor.black:
-      return Colors.black;
-      case EventCardColor.yellow:
-      return const Color.fromARGB(255, 222, 171, 6);
-      case EventCardColor.red:
-      return const Color(0xFFD32F2F);
-      case EventCardColor.orange:
-      return const Color(0xFFFF9800);
-    }
-  }
-
-  Color get textColor {
-    return Colors.white;
   }
 }

@@ -1,29 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
-
 import 'slcolorpickeritem.dart';
 
 class SLCColorPicker extends StatefulWidget {
-  final List<Color> colors = [
-    SLCColors.navyBlue,
-    SLCColors.tealGreen,
-    SLCColors.cyan,
-    SLCColors.lime,
-    SLCColors.darkMaroon,
-    SLCColors.deepViolet,
-    SLCColors.electricBlue,
-    SLCColors.neonPink,
-    SLCColors.deepPurple,
-    SLCColors.skyBlue,
-    SLCColors.mutedRed,
-    SLCColors.olive,
-    SLCColors.sand,
-    SLCColors.goldenYellow,
-    SLCColors.sunsetOrange,
-    SLCColors.deepSeaBlue,
-    SLCColors.burntSienna
-  ];
-  final Function(Color) onColorSelected;
+  final List<CourseColor> colors = SLCColors.courseColorMap.keys.toList();
+
+  final Function(CourseColor) onColorSelected;
 
   SLCColorPicker({
     Key? key,
@@ -35,7 +17,7 @@ class SLCColorPicker extends StatefulWidget {
 }
 
 class _SLCColorPickerState extends State<SLCColorPicker> {
-  Color? selectedColor;
+  CourseColor? selectedColor;
 
   @override
   void initState() {
@@ -51,17 +33,20 @@ class _SLCColorPickerState extends State<SLCColorPicker> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: widget.colors.map((color) {
+        children: widget.colors.map((courseColor) {
+          Color colorValue =
+              SLCColors.getCourseColor(courseColor); // Get actual color
+
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5),
             child: SLCColorPickerItem(
-              color: color,
-              isSelected: selectedColor == color,
+              color: colorValue,
+              isSelected: selectedColor == courseColor,
               onTap: () {
                 setState(() {
-                  selectedColor = color;
+                  selectedColor = courseColor;
                 });
-                widget.onColorSelected(color);
+                widget.onColorSelected(courseColor); // Return `CourseColor`
               },
             ),
           );

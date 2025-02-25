@@ -61,26 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.pushReplacementNamed(context, '/loginscreen');
   }
 
-  // Convert CourseColor to EventCardColor
-  EventCardColor _getCardColor(CourseColor color) {
-    switch (color) {
-      case CourseColor.red:
-        return EventCardColor.red;
-      case CourseColor.green:
-        return EventCardColor.green;
-      case CourseColor.blue:
-        return EventCardColor.blue;
-      case CourseColor.yellow:
-        return EventCardColor.yellow;
-      case CourseColor.purple:
-        return EventCardColor.purple;
-      case CourseColor.orange:
-        return EventCardColor.orange;
-      case CourseColor.black:
-        return EventCardColor.black;
-    }
-  }
-
   // Check if course has a session today
   bool _isClassToday(CourseSchedule? schedule) {
     if (schedule == null || schedule.days.isEmpty) return false;
@@ -261,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
                                 child: SLCEventCard(
-                                  color: _getCardColor(course.color),
+                                  color: course.color,
                                   title: course.code,
                                   location: schedule.location,
                                   startTime: schedule.startTime,

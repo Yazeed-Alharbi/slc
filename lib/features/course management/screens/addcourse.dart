@@ -19,7 +19,7 @@ class AddCourseScreen extends StatefulWidget {
 }
 
 class _AddCourseScreenState extends State<AddCourseScreen> {
-  late Color selectedColor;
+  late CourseColor selectedColor;
   String? courseName;
   String? courseTitle;
   List<String> selectedDays = [];
@@ -30,7 +30,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
   @override
   void initState() {
-    selectedColor = SLCColors.navyBlue;
+    selectedColor = CourseColor.navyBlue;
     super.initState();
   }
 
@@ -48,7 +48,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
       _showError("Please select at least one day.");
       return;
     }
-    if (startTime == null || startTime == null) {
+    if (startTime == null || endTime == null) {
       _showError("Please select start and end times.");
       return;
     }
@@ -70,9 +70,6 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
         );
       }
 
-      // Convert UI color to CourseColor enum
-      CourseColor courseColor = _colorToEnum(selectedColor);
-
       // Get the current user
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
@@ -91,7 +88,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
         name: courseTitle!,
         code: courseName!,
         description: "Course Description",
-        color: courseColor,
+        color: selectedColor,
         days: selectedDays.isNotEmpty ? selectedDays : null,
         startTime: startTime,
         endTime: endTime,
@@ -100,7 +97,6 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
       // Print confirmation
       print("Course created with ID: ${newCourse.id}");
-
 
       // Navigate back to courses screen
       Navigator.pop(context, "success");
@@ -111,17 +107,6 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  CourseColor _colorToEnum(Color color) {
-    if (color == SLCColors.red) return CourseColor.red;
-    if (color == SLCColors.green) return CourseColor.green;
-    if (color == SLCColors.navyBlue) return CourseColor.blue;
-    if (color == SLCColors.yellow) return CourseColor.yellow;
-    if (color == SLCColors.purple) return CourseColor.purple;
-    if (color == SLCColors.orange) return CourseColor.orange;
-    if (color == Colors.black) return CourseColor.black;
-    return CourseColor.blue; // Default
   }
 
   void _showError(String message) {
@@ -143,7 +128,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeInOut,
-              color: selectedColor,
+              color: SLCColors.getCourseColor(selectedColor),
               height: screenOrientation == Orientation.portrait
                   ? screenheight * 0.35
                   : screenheight * 0.5,
@@ -245,7 +230,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                     Text("Color",
                         style: Theme.of(context).textTheme.headlineSmall),
                     SizedBox(height: 20),
-                    SLCColorPicker(onColorSelected: (Color color) {
+                    SLCColorPicker(onColorSelected: (CourseColor color) {
                       setState(() {
                         selectedColor = color;
                       });

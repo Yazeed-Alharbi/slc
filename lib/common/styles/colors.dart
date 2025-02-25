@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// All colors, including course and non-course colors.
 class SLCColors {
   static const Color primaryColor = Color(0xFF4F00FF);
   static const Color disabledColor = Color.fromARGB(255, 205, 205, 224);
@@ -42,12 +43,63 @@ class SLCColors {
   static const Color arcticBlue = Color(0xFF68A0B0);
 
   static const Color red = Color(0xFFFF0000);
-
   static const Color orange = Color(0xFFFF8C00);
-
   static const Color purple = Color(0xFF800080);
-
   static const Color yellow = Color(0xFFFFFF00);
-
   static const Color green = Color(0xFF008000);
+
+  /// 🎨 **Course Colors Only (Subset of SLCColors)**
+  static const Map<CourseColor, Color> courseColorMap = {
+    CourseColor.navyBlue: navyBlue,
+    CourseColor.tealGreen: tealGreen,
+    CourseColor.cyan: cyan,
+    CourseColor.lime: lime,
+    CourseColor.darkMaroon: darkMaroon,
+    CourseColor.deepViolet: deepViolet,
+    CourseColor.electricBlue: electricBlue,
+    CourseColor.neonPink: neonPink,
+    CourseColor.deepPurple: deepPurple,
+    CourseColor.skyBlue: skyBlue,
+    CourseColor.mutedRed: mutedRed,
+    CourseColor.olive: olive,
+    CourseColor.sand: sand,
+    CourseColor.goldenYellow: goldenYellow,
+    CourseColor.sunsetOrange: sunsetOrange,
+    CourseColor.deepSeaBlue: deepSeaBlue,
+    CourseColor.burntSienna: burntSienna,
+  };
+
+  /// Get color from `CourseColor` enum
+  static Color getCourseColor(CourseColor color) {
+    return courseColorMap[color] ?? navyBlue; 
+  }
+
+  /// Convert a string (e.g., `"navyBlue"`) to `CourseColor` enum
+  static CourseColor getCourseColorFromString(String colorName) {
+    return CourseColor.values.firstWhere(
+      (e) => e.name == colorName,
+      orElse: () => CourseColor.navyBlue, // Default color
+    );
+  }
+}
+
+/// **Enum for Course Colors (Only Colors Used in Courses)**
+enum CourseColor {
+  navyBlue,
+  tealGreen,
+  cyan,
+  lime,
+  darkMaroon,
+  deepViolet,
+  electricBlue,
+  neonPink,
+  deepPurple,
+  skyBlue,
+  mutedRed,
+  olive,
+  sand,
+  goldenYellow,
+  sunsetOrange,
+  deepSeaBlue,
+  burntSienna,
 }

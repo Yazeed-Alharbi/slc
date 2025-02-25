@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:slc/common/styles/colors.dart';
 import 'package:slc/models/Material.dart';
 import '../firebaseUtil/firestore.dart';
 import '../models/Course.dart';
@@ -25,7 +26,7 @@ class CourseRepository {
     required String code,
     required String name,
     required String description,
-    CourseColor color = CourseColor.blue,
+    required CourseColor color,
     List<String>? days,
     TimeOfDay? startTime,
     TimeOfDay? endTime,

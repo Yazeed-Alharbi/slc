@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:slc/common/styles/colors.dart'; // Import SLCColors
 
 class SLCEventCard extends StatefulWidget {
   final String title;
   final String? location;
   final TimeOfDay startTime;
   final TimeOfDay endTime;
-  final EventCardColor color;
+  final CourseColor color; // Use CourseColor instead of EventCardColor
   final String? pinnedText;
   final VoidCallback? onTap;
 
@@ -17,7 +18,7 @@ class SLCEventCard extends StatefulWidget {
     required this.startTime,
     required this.endTime,
     this.pinnedText,
-    this.color = EventCardColor.blue,
+    this.color = CourseColor.navyBlue, // Default color from CourseColor
     this.onTap,
   });
 
@@ -61,13 +62,13 @@ class _SLCEventCardState extends State<SLCEventCard> {
         ? (Theme.of(context).brightness == Brightness.dark
             ? Colors.black
             : Colors.white)
-        : widget.color.backgroundColor;
+        : SLCColors.getCourseColor(widget.color); // ✅ Get color from CourseColor
 
     final Color textColor = isPinned
         ? (Theme.of(context).brightness == Brightness.dark
             ? Colors.white
             : Colors.black)
-        : widget.color.textColor;
+        : Colors.white; // Keep white text color for consistency
 
     double _screenWidth = MediaQuery.sizeOf(context).width;
 
@@ -99,8 +100,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
                 decoration: BoxDecoration(
                   color: _isTapped
                       ? Color.alphaBlend(
-                          Color.fromARGB(255, 213, 213, 213)
-                              .withValues(alpha: 0.3),
+                          Color.fromARGB(255, 213, 213, 213).withOpacity(0.3),
                           backgroundColor)
                       : backgroundColor,
                   borderRadius: BorderRadius.circular(30),
@@ -216,40 +216,5 @@ class _SLCEventCardState extends State<SLCEventCard> {
         ),
       ),
     );
-  }
-}
-
-enum EventCardColor {
-  blue,
-  green,
-  purple,
-  yellow,
-  red,
-  orange,
-  black,
-}
-
-extension EventCardColorExtension on EventCardColor {
-  Color get backgroundColor {
-    switch (this) {
-      case EventCardColor.blue:
-        return const Color(0xFF0013A2);
-      case EventCardColor.green:
-        return const Color(0xFF469D84);
-      case EventCardColor.purple:
-        return const Color(0xFF7300C5);
-      case EventCardColor.yellow:
-        return const Color(0xFFFFC107);
-      case EventCardColor.red:
-        return const Color(0xFFDC3545);
-      case EventCardColor.orange:
-        return const Color(0xFFFF9800);
-      case EventCardColor.black:
-        return const Color(0xFF212529);
-    }
-  }
-
-  Color get textColor {
-    return Colors.white;
   }
 }

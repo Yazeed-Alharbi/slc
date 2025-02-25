@@ -23,35 +23,15 @@ class CourseScreen extends StatefulWidget {
 }
 
 class _CourseScreenState extends State<CourseScreen> {
-  late Color selectedColor;
+  late CourseColor selectedColor;
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
 
   @override
   void initState() {
+    selectedColor = widget.course.color;
     super.initState();
-    // Convert CourseColor enum to actual Color
-    selectedColor = _getColorFromEnum(widget.course.color);
-  }
-
-  Color _getColorFromEnum(CourseColor colorEnum) {
-    switch (colorEnum) {
-      case CourseColor.red:
-        return SLCColors.red;
-      case CourseColor.green:
-        return SLCColors.green;
-      case CourseColor.blue:
-        return SLCColors.navyBlue;
-      case CourseColor.yellow:
-        return SLCColors.yellow;
-      case CourseColor.purple:
-        return SLCColors.purple;
-      case CourseColor.orange:
-        return SLCColors.orange;
-      case CourseColor.black:
-        return Colors.black;
-      }
   }
 
   void _startFocusSession() async {
@@ -89,7 +69,7 @@ class _CourseScreenState extends State<CourseScreen> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeInOut,
-              color: selectedColor,
+              color: SLCColors.getCourseColor(selectedColor),
               height: screenOrientation == Orientation.portrait
                   ? screenheight * 0.35
                   : screenheight * 0.55,
@@ -172,10 +152,11 @@ class _CourseScreenState extends State<CourseScreen> {
                             width: screenwidth * 0.2,
                             text: "Start Focus Session",
                             backgroundColor: Colors.white,
-                            foregroundColor: selectedColor,
+                            foregroundColor:
+                                SLCColors.getCourseColor(selectedColor),
                             icon: Icon(
                               Icons.play_circle,
-                              color: selectedColor,
+                              color: SLCColors.getCourseColor(selectedColor),
                               size: 28,
                             ),
                           ),
@@ -197,14 +178,15 @@ class _CourseScreenState extends State<CourseScreen> {
                     "Progress: ${_calculateProgress()}%",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: selectedColor,
+                      color: SLCColors.getCourseColor(selectedColor),
                     ),
                   ),
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
                     value: _calculateProgress() / 100,
                     backgroundColor: Colors.grey[300],
-                    valueColor: AlwaysStoppedAnimation<Color>(selectedColor),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                        SLCColors.getCourseColor(selectedColor)),
                   ),
                 ],
               ),

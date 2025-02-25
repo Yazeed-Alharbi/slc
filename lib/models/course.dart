@@ -1,17 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:slc/models/Material.dart';
-
-
-enum CourseColor {
-  red,
-  green,
-  blue,
-  yellow,
-  purple,
-  orange,
-  black,
-}
+import 'package:slc/common/styles/colors.dart'; 
 
 class CourseSchedule {
   final List<String> days; // e.g., "MON", "WED"
@@ -78,7 +68,7 @@ class Course {
     List<String>? enrolledStudentIds,
     DateTime? createdAt,
     required this.createdBy,
-    this.color = CourseColor.blue,
+    required this.color,
     this.schedule,
   })  : materials = materials ?? [],
         enrolledStudentIds = enrolledStudentIds ?? [],
@@ -97,7 +87,10 @@ class Course {
       enrolledStudentIds: List<String>.from(json['enrolled_student_ids'] ?? []),
       createdAt: (json['created_at'] as Timestamp).toDate(),
       createdBy: json['created_by'] as String,
-      color: CourseColor.values[json['color'] ?? 0],
+      
+      // Convert stored string (e.g., "deepPurple") to CourseColor
+      color: SLCColors.getCourseColorFromString(json['color'] ?? "navyBlue"), 
+
       schedule: json['schedule'] != null
           ? CourseSchedule.fromJson(json['schedule'])
           : null,
@@ -113,11 +106,11 @@ class Course {
       'enrolled_student_ids': enrolledStudentIds,
       'created_at': Timestamp.fromDate(createdAt),
       'created_by': createdBy,
-      'color': color.index,
+      'color': color.name,
+
       'schedule': schedule?.toJson(),
     };
   }
-
   Course copyWith({
     String? id,
     String? code,
