@@ -34,8 +34,6 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     super.initState();
   }
 
-  
-
   void _validateAndSave() async {
     if (courseName == null || courseName!.trim().isEmpty) {
       _showError("Please enter the course name.");
@@ -44,6 +42,14 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
     if (courseTitle == null || courseTitle!.trim().isEmpty) {
       _showError("Please enter the course code.");
+      return;
+    }
+    if (selectedDays.isEmpty) {
+      _showError("Please select at least one day.");
+      return;
+    }
+    if (startTime == null || startTime == null) {
+      _showError("Please select start and end times.");
       return;
     }
 
@@ -82,10 +88,9 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
       print("User ID: ${user.uid}");
 
       final newCourse = await courseRepository.createCourse(
-        name: courseName!,
-        code: courseTitle!,
-        description:
-            "Course Description", 
+        name: courseTitle!,
+        code: courseName!,
+        description: "Course Description",
         color: courseColor,
         days: selectedDays.isNotEmpty ? selectedDays : null,
         startTime: startTime,
@@ -96,13 +101,9 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
       // Print confirmation
       print("Course created with ID: ${newCourse.id}");
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Course created successfully!")),
-      );
 
       // Navigate back to courses screen
-      Navigator.pop(context);
+      Navigator.pop(context, "success");
     } catch (e) {
       // Print error details
       print("Error creating course: $e");
@@ -200,7 +201,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SLCHeaderTextField(
-                                  hintText: "Enter course name",
+                                  hintText: "Enter course code",
                                   fontSize: 35,
                                   key: Key('course_name'),
                                   fontWeight: FontWeight.w800,

@@ -4,6 +4,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcavatar.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/features/course%20management/screens/coursepage.dart';
 import 'package:slc/features/course%20management/widgets/slccoursecard.dart';
 import 'package:slc/common/widgets/slciconbutton.dart';
@@ -40,6 +41,21 @@ class _CoursesScreenState extends State<CoursesScreen> {
   void initState() {
     super.initState();
   }
+
+  void _navigateToAddCourse() async {
+    final result = await Navigator.pushNamed(context, "/addcourse");
+
+    if (result == "success") {
+      if (mounted) {
+        SLCFlushbar.show(
+          context: context,
+          message: "Course added successfully!",
+          type: FlushbarType.success,
+        );
+      }
+    }
+  }
+
 // Add this method to your _CoursesScreenState class
 
   EventCardColor _getCardColor(CourseColor courseColor) {
@@ -83,7 +99,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 ),
                 SLCIconButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, "/addcourse");
+                      _navigateToAddCourse();
                     },
                     backgroundColor: SLCColors.primaryColor,
                     iconColor: Colors.white,
@@ -174,6 +190,9 @@ class _CoursesScreenState extends State<CoursesScreen> {
                         notifications.addAll(incompleteMaterials
                             .map((material) => material.name));
                       }
+                      print("Course: ${course.code}, Color: ${course.color}");
+                      print(
+                          "Mapped EventCardColor: ${_getCardColor(course.color)}");
 
                       return SLCCourseCard(
                         color: _getCardColor(course.color),
