@@ -14,7 +14,6 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -23,9 +22,9 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-     List<Widget> widgetOptions = <Widget>[
-      HomeScreen(student: widget.student), 
-      CoursesScreen(),
+    List<Widget> widgetOptions = <Widget>[
+      HomeScreen(student: widget.student),
+      CoursesScreen(student: widget.student),
       Center(child: Text('Page 3')),
       Center(child: Text('Page 4')),
     ];
