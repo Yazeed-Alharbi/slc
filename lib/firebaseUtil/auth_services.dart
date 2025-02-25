@@ -4,12 +4,22 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/models/Student.dart';
+import 'package:slc/repositories/student_repository.dart';
 
 class AuthenticationService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-  final FirestoreUtils _firestoreUtils = FirestoreUtils();
-
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
+  final StudentRepository _studentRepository;
+  AuthenticationService({
+    FirebaseAuth? auth,
+    GoogleSignIn? googleSignIn,
+    StudentRepository? studentRepository,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _studentRepository = studentRepository ??
+            StudentRepository(
+              firestoreUtils: FirestoreUtils(),
+            );
   Future<bool> signup({
     required BuildContext context,
     required String email,
@@ -24,10 +34,10 @@ class AuthenticationService {
         password: password,
       );
 
-      // Create Firestore profile
-      await _firestoreUtils.createNewStudent(
-        name: fullName,
+      // Create student profile using repository
+      await _studentRepository.createStudent(
         email: email,
+        name: fullName,
       );
 
       return true;
@@ -40,7 +50,7 @@ class AuthenticationService {
 // Add this method to check verification status
   Future<bool> isEmailVerified() async {
     User? user = _auth.currentUser;
-    await user?.reload(); // Refresh the user info
+    await user?.reload();
     return user?.emailVerified ?? false;
   }
 
@@ -71,24 +81,19 @@ class AuthenticationService {
   Future<Student?> googleSignIn(BuildContext context) async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return null; 
-      }
+      if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
+      final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      final UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
-      final String uid = userCredential.user!.uid;
+      final userCredential = await _auth.signInWithCredential(credential);
 
-      Student student = await _firestoreUtils.getOrCreateStudent();
-
-      return student; 
+      // Use repository to get or create student
+      return await _studentRepository.getOrCreateStudent();
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
       return null;
