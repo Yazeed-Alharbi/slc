@@ -186,6 +186,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                                 onPressed: _validateAndSave,
                                 icon: const Icon(
                                   Icons.check,
+                                  key: Key('submit_button'),
                                   color: Colors.white,
                                   size: 30,
                                 ),
@@ -201,6 +202,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                                 SLCHeaderTextField(
                                   hintText: "Enter course name",
                                   fontSize: 35,
+                                  key: Key('course_name'),
                                   fontWeight: FontWeight.w800,
                                   onChanged: (value) {
                                     setState(() {
@@ -211,6 +213,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                                 SLCHeaderTextField(
                                   hintText: "Enter course title",
                                   fontSize: 20,
+                                  key: Key('course_title'),
                                   fontWeight: FontWeight.w700,
                                   onChanged: (value) {
                                     setState(() {
@@ -266,11 +269,13 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                             Text("Starts at",
                                 style:
                                     Theme.of(context).textTheme.headlineSmall),
-                            SLCTimePicker(onTimeSelected: (time) {
-                              setState(() {
-                                startTime = time;
-                              });
-                            }),
+                            SLCTimePicker(
+                                key: ValueKey('start_time'),
+                                onTimeSelected: (time) {
+                                  setState(() {
+                                    startTime = time;
+                                  });
+                                }),
                           ],
                         ),
                         Column(
@@ -278,11 +283,13 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                             Text("Ends at",
                                 style:
                                     Theme.of(context).textTheme.headlineSmall),
-                            SLCTimePicker(onTimeSelected: (time) {
-                              setState(() {
-                                endTime = time;
-                              });
-                            }),
+                            SLCTimePicker(
+                                key: ValueKey('end_time'),
+                                onTimeSelected: (time) {
+                                  setState(() {
+                                    endTime = time;
+                                  });
+                                }),
                           ],
                         )
                       ],
