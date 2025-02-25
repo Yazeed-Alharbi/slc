@@ -8,6 +8,7 @@ import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
 import 'package:slc/dartUtil/validators.dart';
+import 'package:slc/repositories/student_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/models/Student.dart';
 
@@ -20,6 +21,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthenticationService _authService = AuthenticationService();
+  final StudentRepository _studentRepository = StudentRepository(
+    firestoreUtils: FirestoreUtils(),
+  );
   final _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -54,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     _setLoading(true);
-    bool success = await AuthenticationService().signin(
+    bool success = await _authService.signin(
       context: context,
       email: emailController.text,
       password: passwordController.text,
@@ -64,13 +68,17 @@ class _LoginScreenState extends State<LoginScreen> {
       bool isVerified = await _authService.isEmailVerified();
       if (!mounted) return;
       if (isVerified) {
-        Student student = await FirestoreUtils().getOrCreateStudent();
-
-        Navigator.pushReplacementNamed(
-          context,
-          "/homescreen",
-          arguments: student,
-        );
+        // Use repository instead of direct Firestore access
+        Student? student = await _studentRepository.getOrCreateStudent();
+        if (student != null) {
+          Navigator.pushReplacementNamed(
+            context,
+            "/homescreen",
+            arguments: student,
+          );
+        } else {
+          _showFlushbar("Failed to load user data", FlushbarType.error);
+        }
       } else {
         Navigator.pushNamed(
           context,
@@ -158,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Navigator.pushNamed(
                                   context, "/forgotpassowrdscreen");
                             },
-                            child: Text(
+                            child: const Text(
                               "Forgot Password?",
                               style: TextStyle(
                                 color: SLCColors.primaryColor,
@@ -189,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushReplacementNamed(
                               context, "/registerscreen");
                         },
-                        child: Text(
+                        child: const Text(
                           "Create new account",
                           style: TextStyle(
                             color: SLCColors.primaryColor,
