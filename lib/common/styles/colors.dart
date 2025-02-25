@@ -40,4 +40,14 @@ class SLCColors {
   static const Color charcoalBlack = Color(0xFF333333);
   static const Color burntSienna = Color(0xFFE97451);
   static const Color arcticBlue = Color(0xFF68A0B0);
+
+  static const Color red = Color(0xFFFF0000);
+
+  static const Color orange = Color(0xFFFF8C00);
+
+  static const Color purple = Color(0xFF800080);
+
+  static const Color yellow = Color(0xFFFFFF00);
+
+  static const Color green = Color(0xFF008000);
 }
