@@ -223,6 +223,10 @@ enum EventCardColor {
   blue,
   green,
   purple,
+  yellow,
+  red,
+  orange,
+  black,
 }
 
 extension EventCardColorExtension on EventCardColor {
@@ -234,6 +238,14 @@ extension EventCardColorExtension on EventCardColor {
         return const Color(0xFF469D84);
       case EventCardColor.purple:
         return const Color(0xFF7300C5);
+      case EventCardColor.yellow:
+        return const Color(0xFFFFC107);
+      case EventCardColor.red:
+        return const Color(0xFFDC3545);
+      case EventCardColor.orange:
+        return const Color(0xFFFF9800);
+      case EventCardColor.black:
+        return const Color(0xFF212529);
     }
   }
 

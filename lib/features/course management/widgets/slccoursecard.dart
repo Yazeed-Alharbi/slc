@@ -243,21 +243,25 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
   }
 }
 
-enum EventCardColor { blue, green, purple, black, yellow }
+enum EventCardColor { blue, green, purple, black, yellow, red, orange }
 
 extension EventCardColorExtension on EventCardColor {
   Color get backgroundColor {
     switch (this) {
       case EventCardColor.blue:
-        return const Color(0xFF0013A2);
+      return const Color(0xFF0013A2);
       case EventCardColor.green:
-        return const Color(0xFF469D84);
+      return const Color(0xFF469D84);
       case EventCardColor.purple:
-        return const Color(0xFF7300C5);
+      return const Color(0xFF7300C5);
       case EventCardColor.black:
-        return Colors.black;
+      return Colors.black;
       case EventCardColor.yellow:
-        return const Color.fromARGB(255, 222, 171, 6);
+      return const Color.fromARGB(255, 222, 171, 6);
+      case EventCardColor.red:
+      return const Color(0xFFD32F2F);
+      case EventCardColor.orange:
+      return const Color(0xFFFF9800);
     }
   }
 

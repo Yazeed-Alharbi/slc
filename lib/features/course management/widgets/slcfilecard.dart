@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
 
 // Enum should be declared outside the class
-enum FileType { PPT, PDF, DOC }
+enum FileType { PPT, PDF, DOC, XLS, ZIP, IMG, OTHER }
 
 class SLCFileCard extends StatelessWidget {
   final FileType fileType;
@@ -13,7 +13,7 @@ class SLCFileCard extends StatelessWidget {
     Key? key,
     required this.fileType,
     required this.fileName,
-    required this.fileSize,
+    required this.fileSize, required bool isCompleted, required Future<Null> Function() onPressed,
   }) : super(key: key);
 
   String getFileIcon() {
