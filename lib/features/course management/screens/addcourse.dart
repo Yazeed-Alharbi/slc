@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
@@ -6,6 +7,9 @@ import 'package:slc/features/course%20management/widgets/slcheadertextfield.dart
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/features/course%20management/widgets/slctimepicker.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:slc/models/Course.dart';
+import 'package:slc/repositories/course_repository.dart';
 
 import '../widgets/slcdaypicker.dart';
 
@@ -22,6 +26,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   TimeOfDay? startTime;
   TimeOfDay? endTime;
   String? location; // This is optional
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,35 +34,98 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     super.initState();
   }
 
-  void _validateAndSave() {
+  
+
+  void _validateAndSave() async {
     if (courseName == null || courseName!.trim().isEmpty) {
       _showError("Please enter the course name.");
       return;
     }
+
     if (courseTitle == null || courseTitle!.trim().isEmpty) {
-      _showError("Please enter the course title.");
-      return;
-    }
-    if (selectedDays.isEmpty) {
-      _showError("Please select at least one day.");
-      return;
-    }
-    if (startTime == null) {
-      _showError("Please select a start time.");
-      return;
-    }
-    if (endTime == null) {
-      _showError("Please select an end time.");
+      _showError("Please enter the course code.");
       return;
     }
 
-    // ✅ All validations passed, proceed with saving
-    print("Course saved successfully!");
-    Navigator.pop(context);
+    try {
+      setState(() => _isLoading = true);
+
+      // Create CourseSchedule if all schedule data is provided
+      CourseSchedule? schedule;
+      if (selectedDays.isNotEmpty &&
+          startTime != null &&
+          endTime != null &&
+          location != null) {
+        schedule = CourseSchedule(
+          days: selectedDays,
+          startTime: startTime!,
+          endTime: endTime!,
+          location: location!,
+        );
+      }
+
+      // Convert UI color to CourseColor enum
+      CourseColor courseColor = _colorToEnum(selectedColor);
+
+      // Get the current user
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _showError("You must be logged in to create a course");
+        return;
+      }
+
+      final courseRepository =
+          CourseRepository(firestoreUtils: FirestoreUtils());
+
+      // Print debug info
+      print("Creating course with name: $courseName, code: $courseTitle");
+      print("User ID: ${user.uid}");
+
+      final newCourse = await courseRepository.createCourse(
+        name: courseName!,
+        code: courseTitle!,
+        description:
+            "Course Description", 
+        color: courseColor,
+        days: selectedDays.isNotEmpty ? selectedDays : null,
+        startTime: startTime,
+        endTime: endTime,
+        location: location,
+      );
+
+      // Print confirmation
+      print("Course created with ID: ${newCourse.id}");
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Course created successfully!")),
+      );
+
+      // Navigate back to courses screen
+      Navigator.pop(context);
+    } catch (e) {
+      // Print error details
+      print("Error creating course: $e");
+      _showError("Failed to create course: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  CourseColor _colorToEnum(Color color) {
+    if (color == SLCColors.red) return CourseColor.red;
+    if (color == SLCColors.green) return CourseColor.green;
+    if (color == SLCColors.navyBlue) return CourseColor.blue;
+    if (color == SLCColors.yellow) return CourseColor.yellow;
+    if (color == SLCColors.purple) return CourseColor.purple;
+    if (color == SLCColors.orange) return CourseColor.orange;
+    if (color == Colors.black) return CourseColor.black;
+    return CourseColor.blue; // Default
   }
 
   void _showError(String message) {
-    SLCFlushbar.show(context: context, message: message, type: FlushbarType.error);
+    SLCFlushbar.show(
+        context: context, message: message, type: FlushbarType.error);
   }
 
   @override

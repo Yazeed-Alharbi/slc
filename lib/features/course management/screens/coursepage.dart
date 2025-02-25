@@ -3,19 +3,75 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
+import 'package:slc/models/Course.dart';
+import 'package:slc/models/course_enrollment.dart';
+import 'package:slc/repositories/course_repository.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
 
 class CourseScreen extends StatefulWidget {
+  final Course course;
+  final CourseEnrollment enrollment;
+
+  const CourseScreen({
+    Key? key,
+    required this.course,
+    required this.enrollment,
+  }) : super(key: key);
+
   @override
   _CourseScreenState createState() => _CourseScreenState();
 }
 
 class _CourseScreenState extends State<CourseScreen> {
   late Color selectedColor;
+  final CourseRepository _courseRepository = CourseRepository(
+    firestoreUtils: FirestoreUtils(),
+  );
 
   @override
   void initState() {
-    selectedColor = SLCColors.navyBlue;
     super.initState();
+    // Convert CourseColor enum to actual Color
+    selectedColor = _getColorFromEnum(widget.course.color);
+  }
+
+  Color _getColorFromEnum(CourseColor colorEnum) {
+    switch (colorEnum) {
+      case CourseColor.red:
+        return SLCColors.red;
+      case CourseColor.green:
+        return SLCColors.green;
+      case CourseColor.blue:
+        return SLCColors.navyBlue;
+      case CourseColor.yellow:
+        return SLCColors.yellow;
+      case CourseColor.purple:
+        return SLCColors.purple;
+      case CourseColor.orange:
+        return SLCColors.orange;
+      case CourseColor.black:
+        return Colors.black;
+      }
+  }
+
+  void _startFocusSession() async {
+    // Create a new focus session and link it to this course enrollment
+    final focusSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    try {
+      await _courseRepository.addFocusSession(
+        enrollmentId: widget.enrollment.id,
+        focusSessionId: focusSessionId,
+      );
+
+      // Navigate to focus session screen or show timer
+      // ...
+    } catch (e) {
+      // Show error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to start focus session: $e")),
+      );
+    }
   }
 
   @override
@@ -76,7 +132,7 @@ class _CourseScreenState extends State<CourseScreen> {
                                 ),
                               ),
                               IconButton(
-                                onPressed: () {}, // Add validation logic here
+                                onPressed: () {}, // Add options menu
                                 icon: const Icon(
                                   Icons.more_vert,
                                   color: Colors.white,
@@ -92,8 +148,8 @@ class _CourseScreenState extends State<CourseScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "SWE 387",
-                                style: TextStyle(
+                                widget.course.code,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 35,
                                   fontWeight: FontWeight.w800,
@@ -101,8 +157,8 @@ class _CourseScreenState extends State<CourseScreen> {
                                 ),
                               ),
                               Text(
-                                "Software Project Management",
-                                style: TextStyle(
+                                widget.course.name,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -112,7 +168,7 @@ class _CourseScreenState extends State<CourseScreen> {
                             ],
                           ),
                           SLCButton(
-                            onPressed: () {},
+                            onPressed: _startFocusSession,
                             width: screenwidth * 0.2,
                             text: "Start Focus Session",
                             backgroundColor: Colors.white,
@@ -130,6 +186,30 @@ class _CourseScreenState extends State<CourseScreen> {
                 ],
               ),
             ),
+
+            // Progress indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Progress: ${_calculateProgress()}%",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: selectedColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: _calculateProgress() / 100,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: AlwaysStoppedAnimation<Color>(selectedColor),
+                  ),
+                ],
+              ),
+            ),
+
             // Tabs Section
             Expanded(
               child: Column(
@@ -140,9 +220,9 @@ class _CourseScreenState extends State<CourseScreen> {
                     indicatorColor: SLCColors.primaryColor,
                     indicatorSize: TabBarIndicatorSize.tab,
                     unselectedLabelColor: SLCColors.coolGray,
-                    dividerColor: Color.fromARGB(147, 127, 127, 127),
-                    overlayColor: WidgetStateProperty.all(Colors.transparent),
-                    tabs: [
+                    dividerColor: const Color.fromARGB(147, 127, 127, 127),
+                    overlayColor: MaterialStateProperty.all(Colors.transparent),
+                    tabs: const [
                       Tab(text: "Files"),
                       Tab(text: "Notes"),
                       Tab(text: "Events"),
@@ -152,9 +232,12 @@ class _CourseScreenState extends State<CourseScreen> {
                   Expanded(
                     child: TabBarView(
                       children: [
-                        FilesTab(),
-                        Center(child: Text("Notes Content")),
-                        Center(child: Text("Events Content")),
+                        FilesTab(
+                          course: widget.course,
+                          enrollment: widget.enrollment,
+                        ),
+                        const Center(child: Text("Notes Content")),
+                        const Center(child: Text("Events Content")),
                       ],
                     ),
                   ),
@@ -165,5 +248,14 @@ class _CourseScreenState extends State<CourseScreen> {
         ),
       ),
     );
+  }
+
+  double _calculateProgress() {
+    if (widget.course.materials.isEmpty) return 0;
+
+    int completedCount = widget.enrollment.completedMaterialIds.length;
+    int totalCount = widget.course.materials.length;
+
+    return (completedCount / totalCount * 100).clamp(0, 100);
   }
 }
