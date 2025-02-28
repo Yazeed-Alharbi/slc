@@ -40,17 +40,13 @@ class CourseRepository {
     final courseId = _firestoreUtils.courses.doc().id;
     print("Generated course ID: $courseId");
 
-    // Create schedule if all schedule parameters are provided
     CourseSchedule? schedule;
-    if (days != null &&
-        startTime != null &&
-        endTime != null &&
-        location != null) {
+    if (days != null && startTime != null && endTime != null) {
       schedule = CourseSchedule(
         days: days,
         startTime: startTime,
         endTime: endTime,
-        location: location,
+        location: location ?? "",
       );
       print(
           "Schedule created: ${days.join(", ")} at ${startTime.hour}:${startTime.minute}");
