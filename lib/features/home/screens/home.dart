@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => CourseScreen(
-                                          course: course,
+                                          courseId: course.id,
                                           enrollment: cwp.enrollment,
                                         ),
                                       ),
@@ -325,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   MaterialPageRoute(
                                                     builder: (context) =>
                                                         CourseScreen(
-                                                      course: course,
+                                                      courseId: course.id,
                                                       enrollment: enrollment,
                                                     ),
                                                   ),

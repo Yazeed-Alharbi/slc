@@ -95,6 +95,30 @@ class CourseRepository {
     });
   }
 
+  /// Returns a stream that emits the course data whenever it changes in Firestore
+  Stream<Course?> streamCourse(String courseId) {
+    print("Starting stream for course: $courseId");
+
+    return _firestoreUtils.courses.doc(courseId).snapshots().map((doc) {
+      if (!doc.exists) {
+        print("Document doesn't exist for course: $courseId");
+        return null;
+      }
+
+      try {
+        final course = Course.fromJson({
+          ...doc.data() as Map<String, dynamic>,
+          'id': courseId,
+        });
+        print("Course streamed: ${course.name} (${course.code})");
+        return course;
+      } catch (e) {
+        print("Error parsing course data: $e");
+        throw e; // This will be caught by the StreamBuilder's error handler
+      }
+    });
+  }
+
   // Enroll a student in a course with progress tracking
   Future<CourseEnrollment> enrollStudent({
     required String courseId,
@@ -163,26 +187,23 @@ class CourseRepository {
     return _firestoreUtils.courseEnrollments
         .where('student_id', isEqualTo: studentId)
         .snapshots()
-        .asyncMap((snapshot) async {
-      print("Enrollment snapshot received: ${snapshot.docs.length} documents");
+        .asyncMap((enrollmentsSnapshot) async {
+      print(
+          "Got enrollments snapshot with ${enrollmentsSnapshot.docs.length} documents");
 
       final result = <CourseWithProgress>[];
 
-      for (var doc in snapshot.docs) {
-        print("Processing enrollment doc: ${doc.id}");
-
+      // Process each enrollment document
+      for (var enrollmentDoc in enrollmentsSnapshot.docs) {
         final enrollment = CourseEnrollment.fromJson({
-          ...doc.data() as Map<String, dynamic>,
-          'id': doc.id,
+          ...enrollmentDoc.data() as Map<String, dynamic>,
+          'id': enrollmentDoc.id,
         });
 
-        print("Enrollment courseId: ${enrollment.courseId}");
-
+        // Get the LATEST course data for each enrollment
         final courseDoc = await _firestoreUtils.getDocument(
           path: 'courses/${enrollment.courseId}',
         );
-
-        print("Course exists: ${courseDoc.exists}");
 
         if (courseDoc.exists) {
           final course = Course.fromJson({
@@ -190,18 +211,13 @@ class CourseRepository {
             'id': enrollment.courseId,
           });
 
-          print("Found course: ${course.name} (${course.code})");
-
           result.add(CourseWithProgress(
             course: course,
             enrollment: enrollment,
           ));
-        } else {
-          print("Warning: Course ${enrollment.courseId} not found!");
         }
       }
 
-      print("Returning ${result.length} courses with progress");
       return result;
     });
   }
