@@ -240,7 +240,6 @@ class CourseRepository {
     );
   }
 
-  // Update course details
   Future<void> updateCourse({
     required String courseId,
     String? code,
@@ -249,40 +248,68 @@ class CourseRepository {
     CourseColor? color,
   }) async {
     final updates = <String, dynamic>{};
+
+    // Add fields to updates only if they are provided
     if (code != null) updates['code'] = code;
     if (name != null) updates['name'] = name;
     if (description != null) updates['description'] = description;
-    if (color != null) updates['color'] = color.index;
+    if (color != null) {
+      // Store color as string representation to match how Course.fromJson expects it
+      updates['color'] = color.toString().split('.').last;
+    }
 
-    if (updates.isNotEmpty) {
+    if (updates.isEmpty) {
+      print("No updates provided for course: $courseId");
+      return;
+    }
+
+    try {
+      print("Updating course: $courseId with data: $updates");
       await _firestoreUtils.updateDocument(
         path: 'courses/$courseId',
         data: updates,
       );
+      print("Course update successful");
+    } catch (e) {
+      print("Error updating course: $e");
+      throw Exception('Failed to update course: $e');
     }
   }
 
-  // Update course schedule
   Future<void> updateCourseSchedule({
     required String courseId,
-    required List<String> days,
-    required TimeOfDay startTime,
-    required TimeOfDay endTime,
-    required String location,
+    List<String>? days,
+    TimeOfDay? startTime,
+    TimeOfDay? endTime,
+    String? location,
   }) async {
+    // Validate required fields for schedule
+    if (days == null || startTime == null || endTime == null) {
+      print(
+          "Missing required fields for updating schedule of course: $courseId");
+      throw Exception("Missing required fields for schedule update");
+    }
+
     final schedule = CourseSchedule(
       days: days,
       startTime: startTime,
       endTime: endTime,
-      location: location,
+      location: location ?? "",
     );
 
-    await _firestoreUtils.updateDocument(
-      path: 'courses/$courseId',
-      data: {
-        'schedule': schedule.toJson(),
-      },
-    );
+    try {
+      print("Updating schedule for course: $courseId");
+      await _firestoreUtils.updateDocument(
+        path: 'courses/$courseId',
+        data: {
+          'schedule': schedule.toJson(),
+        },
+      );
+      print("Schedule update successful");
+    } catch (e) {
+      print("Error updating course schedule: $e");
+      throw Exception('Failed to update course schedule: $e');
+    }
   }
 
   // Track student progress for a course

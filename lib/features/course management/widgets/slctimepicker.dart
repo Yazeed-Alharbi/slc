@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class SLCTimePicker extends StatefulWidget {
   final Function(TimeOfDay) onTimeSelected;
+  final TimeOfDay? initialTime;
 
   const SLCTimePicker({
     Key? key,
     required this.onTimeSelected,
+    this.initialTime,
   }) : super(key: key);
 
   @override
@@ -14,6 +16,19 @@ class SLCTimePicker extends StatefulWidget {
 
 class _SLCTimePickerState extends State<SLCTimePicker> {
   TimeOfDay? selectedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedTime = widget.initialTime;
+    
+    // Notify parent about the initial time if provided
+    if (selectedTime != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onTimeSelected(selectedTime!);
+      });
+    }
+  }
 
   Future<void> _selectTime(BuildContext context) async {
     TimeOfDay? pickedTime = await showTimePicker(
@@ -33,12 +48,6 @@ class _SLCTimePickerState extends State<SLCTimePicker> {
         }
       },
     );
-
-    if (pickedTime != null) {
-      setState(() {
-        selectedTime = pickedTime;
-      });
-    }
 
     if (pickedTime != null) {
       setState(() {

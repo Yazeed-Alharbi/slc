@@ -4,10 +4,12 @@ import 'slcdaypickeritem.dart';
 class SLCDayPicker extends StatefulWidget {
   final List<String> days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   final Function(List<String>) onSelectionChanged;
+  final List<String> initialSelection; // Add this parameter
 
   SLCDayPicker({
     Key? key,
     required this.onSelectionChanged,
+    this.initialSelection = const [], // Default to empty list
   }) : super(key: key);
 
   @override
@@ -15,7 +17,19 @@ class SLCDayPicker extends StatefulWidget {
 }
 
 class _SLCDayPickerState extends State<SLCDayPicker> {
-  List<String> selectedDays = [];
+  late List<String> selectedDays;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with the provided selection
+    selectedDays = List<String>.from(widget.initialSelection);
+    
+    // Notify parent about the initial selection
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onSelectionChanged(selectedDays);
+    });
+  }
 
   void toggleSelection(String day) {
     setState(() {

@@ -5,6 +5,7 @@ class SLCHeaderTextField extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final ValueChanged<String>? onChanged;
+  final TextEditingController controller;
 
   const SLCHeaderTextField({
     Key? key,
@@ -12,11 +13,13 @@ class SLCHeaderTextField extends StatelessWidget {
     this.fontSize = 20,
     this.fontWeight = FontWeight.normal,
     this.onChanged,
+    required this.controller,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return TextField(
+      controller: controller,
       onChanged: onChanged,
       onTapOutside: (event) => FocusScope.of(context).unfocus(),
       style: TextStyle(

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
+import 'package:slc/features/course%20management/widgets/courseform.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/repositories/course_repository.dart';
@@ -51,6 +54,34 @@ class _CourseScreenState extends State<CourseScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to start focus session: $e")),
       );
+    }
+  }
+
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'edit':
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                CourseFormScreen(
+              course: widget.course,
+            ),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 200),
+            reverseTransitionDuration: const Duration(milliseconds: 200),
+          ),
+        );
+        HapticFeedback.lightImpact();
+        break;
+      case 'delete':
+        break;
     }
   }
 
@@ -111,12 +142,28 @@ class _CourseScreenState extends State<CourseScreen> {
                                   size: 30,
                                 ),
                               ),
-                              IconButton(
-                                onPressed: () {}, // Add options menu
-                                icon: const Icon(
-                                  Icons.more_vert,
-                                  color: Colors.white,
-                                  size: 30,
+                              PullDownButton(
+                                itemBuilder: (context) => [
+                                  PullDownMenuItem(
+                                    onTap: () => _handleMenuSelection('edit'),
+                                    title: "Edit",
+                                    icon: Icons.edit,
+                                  ),
+                                  PullDownMenuItem(
+                                    onTap: () => _handleMenuSelection('delete'),
+                                    title: "Delete",
+                                    isDestructive: true,
+                                    icon: Icons.delete,
+                                  ),
+                                ],
+                                buttonBuilder: (context, showMenu) =>
+                                    GestureDetector(
+                                  onTap: showMenu, // Handle menu showing here
+                                  child: Icon(
+                                    Icons.more_vert,
+                                    color: Colors.white,
+                                    size: 30,
+                                  ),
                                 ),
                               ),
                             ],
