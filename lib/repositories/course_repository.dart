@@ -152,6 +152,40 @@ class CourseRepository {
     return enrollment;
   }
 
+  Future<void> deleteCourse(String courseId) async {
+    try {
+      print("Deleting course with ID: $courseId");
+
+      // First, get all enrollments for this course
+      final enrollmentsSnapshot = await _firestoreUtils.courseEnrollments
+          .where('course_id', isEqualTo: courseId)
+          .get();
+
+      print("Found ${enrollmentsSnapshot.docs.length} enrollments to delete");
+
+      // Delete all enrollments in a batch operation
+      final batch = FirebaseFirestore.instance.batch();
+
+      for (var doc in enrollmentsSnapshot.docs) {
+        batch.delete(doc.reference);
+        print("Marked enrollment ${doc.id} for deletion");
+      }
+
+      // Delete the course document
+      batch.delete(_firestoreUtils.courses.doc(courseId));
+      print("Marked course $courseId for deletion");
+
+      // Commit the batch operation
+      await batch.commit();
+      print("Successfully deleted course and all enrollments");
+
+      return;
+    } catch (e) {
+      print("Error deleting course: $e");
+      throw Exception('Failed to delete course: $e');
+    }
+  }
+
   // Unenroll a student from a course
   Future<void> unenrollStudent({
     required String courseId,

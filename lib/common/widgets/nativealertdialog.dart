@@ -11,7 +11,7 @@ class NativeAlertDialog {
     Color confirmTextColor = Colors.blue,
     VoidCallback? onConfirm,
     String? cancelText, // If null, only confirm button will be shown
-    Color cancelTextColor = Colors.grey,
+    Color cancelTextColor = Colors.blue,
   }) async {
     return await showAdaptiveDialog(
           context: context,
@@ -48,8 +48,7 @@ class NativeAlertDialog {
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
                       style: TextButton.styleFrom(
-                        foregroundColor:
-                            cancelTextColor, 
+                        foregroundColor: cancelTextColor,
                       ),
                       child: Text(cancelText),
                     ),

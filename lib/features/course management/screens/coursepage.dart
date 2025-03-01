@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
+import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
 import 'package:slc/features/course%20management/widgets/courseform.dart';
@@ -26,19 +28,21 @@ class CourseScreen extends StatefulWidget {
   _CourseScreenState createState() => _CourseScreenState();
 }
 
-class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderStateMixin {
+class _CourseScreenState extends State<CourseScreen>
+    with SingleTickerProviderStateMixin {
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
-  
+
   late TabController _tabController;
-  
+  bool _isDeleting = false; // Add this flag
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -47,6 +51,13 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    // If deleting, just show a full-screen loading indicator
+    if (_isDeleting) {
+      return const Scaffold(
+        body: Center(child: SLCLoadingIndicator(text: "Deleting course...")),
+      );
+    }
+
     return StreamBuilder<Course?>(
       stream: _courseRepository.streamCourse(widget.courseId),
       builder: (context, snapshot) {
@@ -83,9 +94,10 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
                 duration: const Duration(milliseconds: 150),
                 curve: Curves.easeInOut,
                 color: SLCColors.getCourseColor(course.color),
-                height: MediaQuery.of(context).orientation == Orientation.portrait
-                    ? MediaQuery.of(context).size.height * 0.35
-                    : MediaQuery.of(context).size.height * 0.55,
+                height:
+                    MediaQuery.of(context).orientation == Orientation.portrait
+                        ? MediaQuery.of(context).size.height * 0.35
+                        : MediaQuery.of(context).size.height * 0.55,
                 width: double.infinity,
                 child: Stack(
                   children: [
@@ -104,7 +116,8 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
                     SafeArea(
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: SpacingStyles(context).defaultPadding.right,
+                          horizontal:
+                              SpacingStyles(context).defaultPadding.right,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,12 +140,14 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
                                 PullDownButton(
                                   itemBuilder: (context) => [
                                     PullDownMenuItem(
-                                      onTap: () => _handleMenuSelection('edit', course),
+                                      onTap: () =>
+                                          _handleMenuSelection('edit', course),
                                       title: "Edit",
                                       icon: Icons.edit,
                                     ),
                                     PullDownMenuItem(
-                                      onTap: () => _handleMenuSelection('delete', course),
+                                      onTap: () => _handleMenuSelection(
+                                          'delete', course),
                                       title: "Delete",
                                       isDestructive: true,
                                       icon: Icons.delete,
@@ -199,7 +214,8 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
 
               // Progress indicator
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -233,7 +249,8 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
                       indicatorSize: TabBarIndicatorSize.tab,
                       unselectedLabelColor: SLCColors.coolGray,
                       dividerColor: const Color.fromARGB(147, 127, 127, 127),
-                      overlayColor: MaterialStateProperty.all(Colors.transparent),
+                      overlayColor:
+                          MaterialStateProperty.all(Colors.transparent),
                       tabs: const [
                         Tab(text: "Files"),
                         Tab(text: "Notes"),
@@ -310,46 +327,62 @@ class _CourseScreenState extends State<CourseScreen> with SingleTickerProviderSt
         HapticFeedback.lightImpact();
         break;
       case 'delete':
-        // Implement delete functionality
         _showDeleteConfirmation(course);
         break;
     }
   }
-  
-  void _showDeleteConfirmation(Course course) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Course'),
-          content: const Text('Are you sure you want to delete this course? This action cannot be undone.'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteCourse(course.id);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
+
+  Future<bool> _showDeleteConfirmation(Course course) async {
+    final String title = "Delete Course";
+    final String content =
+        "Are you sure you want to delete ${course.name} (${course.code})? This action cannot be undone.";
+
+    bool confirmDelete = await NativeAlertDialog.show(
+        context: context,
+        title: title,
+        content: content,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        confirmTextColor: Colors.red);
+    if (confirmDelete) {
+      _deleteCourse(course.id);
+    }
+    return confirmDelete;
   }
-  
+
   void _deleteCourse(String courseId) async {
     try {
-      // Add this method to your repository
-      // await _courseRepository.deleteCourse(courseId);
-      Navigator.of(context).pop(); // Return to courses list
+      // Set deleting flag to true to bypass StreamBuilder
+      setState(() {
+        _isDeleting = true;
+      });
+
+      // Delete the course
+      await _courseRepository.deleteCourse(courseId);
+
+      if (mounted) {
+        // Navigate back to course list with a "refresh" result
+        Navigator.of(context).pop('refresh');
+
+        // Show success message
+        SLCFlushbar.show(
+          context: context,
+          message: "Course deleted successfully",
+          type: FlushbarType.success,
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to delete course: $e")),
+        // Reset the deleting flag to show the normal UI again
+        setState(() {
+          _isDeleting = false;
+        });
+
+        // Show error message
+        SLCFlushbar.show(
+          context: context,
+          message: "Failed to delete course: $e",
+          type: FlushbarType.error,
         );
       }
     }
