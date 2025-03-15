@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -15,6 +16,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart' as picker;
 import 'package:path/path.dart' as path;
 import 'dart:math';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 class FilesTab extends StatefulWidget {
   final Course course;
@@ -36,6 +40,7 @@ class _FilesTabState extends State<FilesTab> {
   );
 
   bool _isLoading = false;
+  bool _isOpeningFile = false; // New separate state for file opening
   String _currentFileName = "";
   double _uploadProgress = 0.0;
 
@@ -74,12 +79,101 @@ class _FilesTabState extends State<FilesTab> {
     return FileType.OTHER;
   }
 
+  Future<void> _openFile(CourseMaterial material, String fileName) async {
+    try {
+      print("Starting to open file: $fileName");
+      setState(() {
+        _isOpeningFile = true; // Use this instead of _isLoading
+        _currentFileName = fileName;
+      });
+
+      // Download file to temporary storage
+      final tempDir = await getTemporaryDirectory();
+      final filePath = '${tempDir.path}/$fileName';
+      final file = File(filePath);
+
+      print("File path: $filePath");
+
+      // Check if file exists already
+      if (!await file.exists()) {
+        print("File doesn't exist, downloading from: ${material.downloadUrl}");
+        // Download file from URL
+        final response = await http.get(Uri.parse(material.downloadUrl));
+        await file.writeAsBytes(response.bodyBytes);
+        print("File downloaded, size: ${response.bodyBytes.length} bytes");
+      } else {
+        print("File already exists, size: ${await file.length()} bytes");
+      }
+
+      // Verify file exists and has content
+      if (!await file.exists() || await file.length() == 0) {
+        throw Exception("File download failed or file is empty");
+      }
+
+      print("Opening file with MIME type: ${_getMimeType(material.type)}");
+
+      // Open file with device's default app
+      final result = await OpenFile.open(
+        filePath,
+        type: _getMimeType(material.type),
+      );
+
+      print("OpenFile result: ${result.type} - ${result.message}");
+
+      if (result.type != ResultType.done) {
+        // Handle error
+        SLCFlushbar.show(
+          context: context,
+          message: "Could not open file: ${result.message}",
+          type: FlushbarType.error,
+        );
+      }
+    } catch (e) {
+      print("Error opening file: $e");
+      SLCFlushbar.show(
+        context: context,
+        message: "Error opening file: $e",
+        type: FlushbarType.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isOpeningFile = false); // Reset opening state
+      }
+    }
+  }
+
+// Helper to get MIME type for different file extensions
+  String _getMimeType(String extension) {
+    extension = extension.toLowerCase();
+
+    // Common MIME types map
+    final mimeTypes = {
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx':
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'ppt': 'application/vnd.ms-powerpoint',
+      'pptx':
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'jpg': 'image/jpeg',
+      'jpeg': 'image/jpeg',
+      'png': 'image/png',
+    };
+
+    return mimeTypes[extension] ?? 'application/octet-stream';
+  }
+
   Future<void> _uploadFile() async {
     try {
       // Pick multiple files
       picker.FilePickerResult? result =
           await picker.FilePicker.platform.pickFiles(
         allowMultiple: true,
+        type: picker.FileType.custom,
+        allowedExtensions: ['pdf', 'ppt', 'pptx', 'doc', 'docx'],
       );
 
       if (result == null || result.files.isEmpty) {
@@ -216,7 +310,7 @@ class _FilesTabState extends State<FilesTab> {
   // Get materials converted to files for UI
   List<Map<String, dynamic>> get _materialsAsFiles {
     return widget.course.materials
-        .map((material) => _materialToFile(material as CourseMaterial))
+        .map((material) => _materialToFile(material))
         .toList();
   }
 
@@ -224,165 +318,176 @@ class _FilesTabState extends State<FilesTab> {
   Widget build(BuildContext context) {
     final files = _materialsAsFiles;
 
-    return _isLoading
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SLCLoadingIndicator(text: "Uploading $_currentFileName"),
-                const SizedBox(height: 16),
-                Text(
-                  "${(_uploadProgress * 100).toStringAsFixed(1)}%",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
-                  child: LinearProgressIndicator(
-                    value: _uploadProgress,
-                    backgroundColor: Colors.grey[300],
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(SLCColors.primaryColor),
-                    borderRadius: BorderRadius.circular(4),
-                    minHeight: 8,
-                  ),
-                ),
-              ],
-            ),
-          )
-        : SingleChildScrollView(
-            child: Padding(
-              padding: SpacingStyles(context).defaultPadding,
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      SLCButton(
-                        width: MediaQuery.sizeOf(context).width * 0.2,
-                        onPressed: _uploadFile,
-                        icon: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                        ),
-                        text: "Upload File",
-                        backgroundColor: SLCColors.primaryColor,
-                        foregroundColor: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        height: 35,
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Show empty state if no files
-                  if (files.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.upload_file,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "No files uploaded yet",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Upload course materials using the button above",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // Show files if available
-                  if (files.isNotEmpty)
-                    Column(
-                      children: files.asMap().entries.map((entry) {
-                        int index = entry.key;
-                        Map<String, dynamic> file = entry.value;
-                        CourseMaterial material = file["material"];
-                        bool isCompleted = file["isCompleted"] ?? false;
-
-                        return Dismissible(
-                          key: Key(material.id),
-                          direction: DismissDirection.endToStart,
-                          confirmDismiss: (direction) async {
-                            bool confirm = await NativeAlertDialog.show(
-                              context: context,
-                              title: "Delete File",
-                              content:
-                                  "Are you sure you want to delete '${file["fileName"]}'?",
-                              confirmText: "Delete",
-                              confirmTextColor: Colors.red,
-                              cancelText: "Cancel",
-                            );
-                            if (confirm) {
-                              await _deleteFile(index);
-                            }
-                            return confirm;
-                          },
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            color: Colors.transparent,
-                            child: SizedBox(
-                              height: 60,
-                              child: Container(
-                                padding: const EdgeInsets.only(right: 20),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                alignment: Alignment.centerRight,
-                                child: const Icon(Icons.delete,
-                                    color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            child: SLCFileCard(
-                              fileType: file["fileType"],
-                              fileName: file["fileName"],
-                              fileSize: file["fileSize"],
-                              isCompleted: isCompleted,
-                              onPressed: () async {
-                                // Open file (implement file opening logic)
-                                print("Opening file: ${file["fileName"]}");
-
-                                // If not completed, mark as completed
-                                if (!isCompleted) {
-                                  await _markMaterialAsCompleted(material);
-                                }
-                              },
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                ],
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SLCLoadingIndicator(text: "Uploading $_currentFileName"),
+            const SizedBox(height: 16),
+            Text(
+              "${(_uploadProgress * 100).toStringAsFixed(1)}%",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
-          );
+            const SizedBox(height: 8),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.7,
+              child: LinearProgressIndicator(
+                value: _uploadProgress,
+                backgroundColor: Colors.grey[300],
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(SLCColors.primaryColor),
+                borderRadius: BorderRadius.circular(4),
+                minHeight: 8,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (_isOpeningFile) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SLCLoadingIndicator(text: "Opening $_currentFileName"),
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    } else {
+      return SingleChildScrollView(
+        child: Padding(
+          padding: SpacingStyles(context).defaultPadding,
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SLCButton(
+                    width: MediaQuery.sizeOf(context).width * 0.2,
+                    onPressed: _uploadFile,
+                    icon: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                    text: "Upload File",
+                    backgroundColor: SLCColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    height: 35,
+                  )
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Show empty state if no files
+              if (files.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.upload_file,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No files uploaded yet",
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Upload course materials using the button above",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+              // Show files if available
+              if (files.isNotEmpty)
+                Column(
+                  children: files.asMap().entries.map((entry) {
+                    int index = entry.key;
+                    Map<String, dynamic> file = entry.value;
+                    CourseMaterial material = file["material"];
+                    bool isCompleted = file["isCompleted"] ?? false;
+
+                    return Dismissible(
+                      key: Key(material.id),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (direction) async {
+                        bool confirm = await NativeAlertDialog.show(
+                          context: context,
+                          title: "Delete File",
+                          content:
+                              "Are you sure you want to delete '${file["fileName"]}'?",
+                          confirmText: "Delete",
+                          confirmTextColor: Colors.red,
+                          cancelText: "Cancel",
+                        );
+                        if (confirm) {
+                          await _deleteFile(index);
+                        }
+                        return confirm;
+                      },
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        color: Colors.transparent,
+                        child: SizedBox(
+                          height: 60,
+                          child: Container(
+                            padding: const EdgeInsets.only(right: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            alignment: Alignment.centerRight,
+                            child:
+                                const Icon(Icons.delete, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: SLCFileCard(
+                          fileType: file["fileType"],
+                          fileName: file["fileName"],
+                          fileSize: file["fileSize"],
+                          isCompleted: isCompleted,
+                          onPressed: () async {
+                            // Get material details
+                            CourseMaterial material = file["material"];
+                            String fileName = file["fileName"];
+
+                            // Open file
+                            await _openFile(material, fileName);
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 }

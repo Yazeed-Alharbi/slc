@@ -159,7 +159,41 @@ class CourseRepository {
     try {
       print("Deleting course with ID: $courseId");
 
-      // First, get all enrollments for this course
+      // First, get the course to access its materials
+      final course = await getCourse(courseId);
+      if (course == null) {
+        throw Exception('Course not found');
+      }
+      
+      // Delete all materials from Firebase Storage
+      print("Deleting ${course.materials.length} materials from Storage");
+      for (var material in course.materials) {
+        try {
+          // Method 1: Delete using the download URL 
+          await _firestoreUtils.deleteFileFromStorage(material.downloadUrl);
+          print("Deleted file: ${material.name}");
+        } catch (e) {
+          print("Error deleting file ${material.name}: $e");
+          // Continue with deletion of other files
+        }
+      }
+      
+      // Delete the entire course folder from Storage
+      try {
+        final storageRef = FirebaseStorage.instance.ref().child('courses/$courseId');
+        // List all files in the directory and delete them
+        final result = await storageRef.listAll();
+        for (var item in result.items) {
+          await item.delete();
+          print("Deleted storage item: ${item.name}");
+        }
+        print("All course files deleted from storage");
+      } catch (e) {
+        print("Error cleaning up storage: $e");
+        // Continue with Firestore deletion
+      }
+
+      // Get all enrollments for this course
       final enrollmentsSnapshot = await _firestoreUtils.courseEnrollments
           .where('course_id', isEqualTo: courseId)
           .get();
@@ -180,7 +214,7 @@ class CourseRepository {
 
       // Commit the batch operation
       await batch.commit();
-      print("Successfully deleted course and all enrollments");
+      print("Successfully deleted course, all enrollments, and all files");
 
       return;
     } catch (e) {

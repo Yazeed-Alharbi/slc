@@ -51,13 +51,11 @@ class FirestoreUtils {
 
   Future<void> deleteFileFromStorage(String downloadUrl) async {
     try {
-      // Create a reference from the download URL
-      Reference ref = _storage.refFromURL(downloadUrl);
+      final ref = FirebaseStorage.instance.refFromURL(downloadUrl);
       await ref.delete();
-      print("File deleted from storage: $downloadUrl");
     } catch (e) {
-      print("Error deleting file from storage: $e");
-      throw Exception("Failed to delete file from storage: $e");
+      print('Error deleting file from storage: $e');
+      throw e;
     }
   }
 

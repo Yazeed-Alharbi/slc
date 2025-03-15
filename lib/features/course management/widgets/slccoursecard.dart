@@ -44,7 +44,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = SLCColors.getCourseColor(widget.color); 
+    final Color backgroundColor = SLCColors.getCourseColor(widget.color);
     final Color textColor = Colors.white;
 
     double screenWidth = MediaQuery.sizeOf(context).width;
@@ -215,6 +215,7 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // Make row take minimum space needed
         children: [
           Container(
             width: 9,
@@ -223,20 +224,23 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
               shape: BoxShape.circle,
               color: Colors.white,
               border: Border.all(
-                color: SLCColors.getCourseColor(widget.color), 
+                color: SLCColors.getCourseColor(widget.color),
                 width: 5,
               ),
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: SLCColors.getCourseColor(widget.color), 
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              text,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: SLCColors.getCourseColor(widget.color),
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
+          )
         ],
       ),
     );
