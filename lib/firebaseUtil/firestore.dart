@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FirestoreUtils {
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
 
-  FirestoreUtils({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreUtils({FirebaseFirestore? firestore, FirebaseStorage? storage})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? FirebaseStorage.instance;
 
   // Collection References
   CollectionReference get students => _firestore.collection('students');
@@ -16,6 +21,45 @@ class FirestoreUtils {
 
   // Generic CRUD Operations
   // Add this debugging to your setDocument method
+  Future<String> uploadFileToStorage({
+    required File file,
+    required String courseId,
+  }) async {
+    try {
+      String fileName =
+          "${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}";
+      print("Uploading file with name: $fileName");
+
+      Reference ref =
+          _storage.ref().child("courses/$courseId/materials/$fileName");
+      print("Storage reference: ${ref.fullPath}");
+
+      UploadTask uploadTask = ref.putFile(file);
+
+      TaskSnapshot snapshot = await uploadTask;
+      print("File uploaded. Retrieving download URL...");
+
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      print("Download URL: $downloadUrl");
+
+      return downloadUrl;
+    } catch (e) {
+      print("Error in uploadFileToStorage: $e");
+      throw Exception("Failed to upload file: $e");
+    }
+  }
+
+  Future<void> deleteFileFromStorage(String downloadUrl) async {
+    try {
+      // Create a reference from the download URL
+      Reference ref = _storage.refFromURL(downloadUrl);
+      await ref.delete();
+      print("File deleted from storage: $downloadUrl");
+    } catch (e) {
+      print("Error deleting file from storage: $e");
+      throw Exception("Failed to delete file from storage: $e");
+    }
+  }
 
   Future<void> setDocument({
     required String path,

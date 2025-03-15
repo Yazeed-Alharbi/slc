@@ -7,13 +7,14 @@ import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/features/course%20management/widgets/slcfilecard.dart';
 import 'package:slc/models/Course.dart';
-import 'package:slc/models/Material.dart';
 import 'package:slc/models/course_enrollment.dart';
+import 'package:slc/models/Material.dart';
 import 'package:slc/repositories/course_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart' as picker;
 import 'package:path/path.dart' as path;
+import 'dart:math';
 
 class FilesTab extends StatefulWidget {
   final Course course;
@@ -35,6 +36,8 @@ class _FilesTabState extends State<FilesTab> {
   );
 
   bool _isLoading = false;
+  String _currentFileName = "";
+  double _uploadProgress = 0.0;
 
   // Helper method to convert CourseMaterial to file data for UI
   Map<String, dynamic> _materialToFile(CourseMaterial material) {
@@ -42,11 +45,20 @@ class _FilesTabState extends State<FilesTab> {
     return {
       "fileType": fileType,
       "fileName": material.name,
-      "fileSize": "N/A", // File size may not always be available
+      "fileSize": _formatFileSize(material.fileSize),
       "material": material, // Store the actual material for reference
       "isCompleted":
           widget.enrollment.completedMaterialIds.contains(material.id)
     };
+  }
+
+  // Helper method to format file size to human-readable format
+  String _formatFileSize(int bytes) {
+    if (bytes <= 0) return "0 B";
+
+    const suffixes = ["B", "KB", "MB", "GB", "TB"];
+    int i = (log(bytes) / log(1024)).floor();
+    return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
   }
 
   // Helper to determine FileType from Material
@@ -64,51 +76,89 @@ class _FilesTabState extends State<FilesTab> {
 
   Future<void> _uploadFile() async {
     try {
-      setState(() => _isLoading = true);
+      // Pick multiple files
+      picker.FilePickerResult? result =
+          await picker.FilePicker.platform.pickFiles(
+        allowMultiple: true,
+      );
 
-      // Pick file
-      picker.FilePickerResult? result = await picker.FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) {
-        setState(() => _isLoading = false);
+      if (result == null || result.files.isEmpty) {
         return;
       }
 
-      // Get file details
-      File file = File(result.files.single.path!);
-      String fileName = result.files.single.name;
-      String extension = path.extension(fileName).replaceAll('.', '');
+      setState(() => _isLoading = true);
 
-      // Create material object
-      final materialId = DateTime.now().millisecondsSinceEpoch.toString();
-      CourseMaterial material = CourseMaterial(
-        id: materialId,
-        name: fileName,
-        downloadUrl: '', // Will be updated after upload
-        type: extension,
-      );
+      // Iterate over each selected file
+      for (var pickedFile in result.files) {
+        if (pickedFile.path == null) continue;
 
-      // Upload file and add to course
-      await _courseRepository.addMaterial(
-        courseId: widget.course.id,
-        CourseMaterial: material,
-      );
+        // Get file details
+        File file = File(pickedFile.path!);
+        int fileSizeInBytes = await file.length();
+        String fileName = pickedFile.name;
+        String extension = path.extension(fileName).replaceAll('.', '');
 
+        // Update UI with current file name and reset progress
+        setState(() {
+          _currentFileName = fileName;
+          _uploadProgress = 0.0;
+        });
+
+        // Upload file to Firebase Storage with progress tracking
+        String downloadUrl = await _courseRepository.uploadFileToStorage(
+          file: file,
+          courseId: widget.course.id,
+          onProgress: (progress) {
+            // Important: Update the UI when progress changes
+            if (mounted) {
+              setState(() {
+                _uploadProgress = progress;
+              });
+            }
+          },
+        );
+
+        // Create CourseMaterial object
+        final materialId = DateTime.now().millisecondsSinceEpoch.toString();
+        CourseMaterial material = CourseMaterial(
+          id: materialId,
+          name: fileName,
+          fileSize: fileSizeInBytes,
+          downloadUrl: downloadUrl,
+          type: extension,
+        );
+
+        // Add material to Firestore
+        await _courseRepository.addMaterial(
+          courseId: widget.course.id,
+          CourseMaterial: material,
+        );
+      }
+
+      // Success message
       SLCFlushbar.show(
         context: context,
-        message: "File uploaded successfully",
+        message: "Files uploaded successfully",
         type: FlushbarType.success,
       );
 
-      // Refresh the state to show the new file
+      // Refresh UI to show the newly added files
       setState(() {});
     } catch (e) {
+      // Handle errors
       SLCFlushbar.show(
         context: context,
         message: "Error uploading file: $e",
         type: FlushbarType.error,
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _currentFileName = "";
+          _uploadProgress = 0.0;
+        });
+      }
     }
   }
 
@@ -165,7 +215,9 @@ class _FilesTabState extends State<FilesTab> {
 
   // Get materials converted to files for UI
   List<Map<String, dynamic>> get _materialsAsFiles {
-    return widget.course.materials.map(_materialToFile).toList();
+    return widget.course.materials
+        .map((material) => _materialToFile(material as CourseMaterial))
+        .toList();
   }
 
   @override
@@ -173,7 +225,34 @@ class _FilesTabState extends State<FilesTab> {
     final files = _materialsAsFiles;
 
     return _isLoading
-        ? const Center(child: SLCLoadingIndicator(text: "Processing file..."))
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SLCLoadingIndicator(text: "Uploading $_currentFileName"),
+                const SizedBox(height: 16),
+                Text(
+                  "${(_uploadProgress * 100).toStringAsFixed(1)}%",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: LinearProgressIndicator(
+                    value: _uploadProgress,
+                    backgroundColor: Colors.grey[300],
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(SLCColors.primaryColor),
+                    borderRadius: BorderRadius.circular(4),
+                    minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          )
         : SingleChildScrollView(
             child: Padding(
               padding: SpacingStyles(context).defaultPadding,

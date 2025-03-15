@@ -1,10 +1,13 @@
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
-import 'package:slc/models/Material.dart';
+import 'package:slc/models/Material.dart'; // Updated case to match the actual file
 import '../firebaseUtil/firestore.dart';
 import '../models/Course.dart';
 import '../models/course_enrollment.dart';
@@ -186,6 +189,38 @@ class CourseRepository {
     }
   }
 
+  Future<String> uploadFileToStorage({
+    required File file,
+    required String courseId,
+    Function(double)? onProgress,
+  }) async {
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('courses/$courseId/${file.path.split('/').last}');
+
+      // Create upload task
+      final uploadTask = storageRef.putFile(file);
+
+      // Listen to upload progress if callback provided
+      if (onProgress != null) {
+        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+          double progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          onProgress(progress);
+        });
+      }
+
+      // Wait for upload to complete
+      await uploadTask;
+
+      // Return download URL
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      print('Error uploading file: $e');
+      rethrow;
+    }
+  }
+
   // Unenroll a student from a course
   Future<void> unenrollStudent({
     required String courseId,
@@ -269,16 +304,35 @@ class CourseRepository {
     );
   }
 
-  // Remove CourseMaterial from a course
   Future<void> removeMaterial({
     required String courseId,
     required String materialId,
   }) async {
+    // Get the current course document
     final course = await getCourse(courseId);
     if (course == null) throw Exception('Course not found');
 
+    // Find the material object to delete using its ID
+    late CourseMaterial materialToDelete;
+    bool materialFound = false;
+    for (var material in course.materials) {
+      if (material.id == materialId) {
+        materialToDelete = material;
+        materialFound = true;
+        break;
+      }
+    }
+
+    if (!materialFound) {
+      throw Exception('Material not found');
+    }
+
+    // Delete the file from Firebase Storage using its download URL
+    await _firestoreUtils.deleteFileFromStorage(materialToDelete.downloadUrl);
+
+    // Update Firestore: Remove the file metadata from the course document
     final updatedMaterials = course.materials
-        .where((CourseMaterial) => CourseMaterial.id != materialId)
+        .where((m) => m.id != materialId)
         .map((m) => m.toJson())
         .toList();
 
