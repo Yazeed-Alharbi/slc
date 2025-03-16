@@ -7,6 +7,7 @@ import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
+import 'package:slc/features/course%20management/screens/eventstab.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
 import 'package:slc/features/course%20management/widgets/courseform.dart';
 import 'package:slc/models/Course.dart';
@@ -249,8 +250,7 @@ class _CourseScreenState extends State<CourseScreen>
                       indicatorSize: TabBarIndicatorSize.tab,
                       unselectedLabelColor: SLCColors.coolGray,
                       dividerColor: const Color.fromARGB(147, 127, 127, 127),
-                      overlayColor:
-                          MaterialStateProperty.all(Colors.transparent),
+                      overlayColor: WidgetStateProperty.all(Colors.transparent),
                       tabs: const [
                         Tab(text: "Files"),
                         Tab(text: "Notes"),
@@ -267,7 +267,10 @@ class _CourseScreenState extends State<CourseScreen>
                             enrollment: widget.enrollment,
                           ),
                           const Center(child: Text("Notes Content")),
-                          const Center(child: Text("Events Content")),
+                          EventsTab(
+                            course: course,
+                            enrollment: widget.enrollment,
+                          ),
                         ],
                       ),
                     ),
