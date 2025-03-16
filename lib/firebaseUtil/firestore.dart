@@ -18,9 +18,8 @@ class FirestoreUtils {
       _firestore.collection('focus_sessions');
   CollectionReference get courseEnrollments =>
       _firestore.collection('course_enrollments');
-
+  CollectionReference get events => _firestore.collection('events');
   // Generic CRUD Operations
-  // Add this debugging to your setDocument method
   Future<String> uploadFileToStorage({
     required File file,
     required String courseId,
