@@ -22,9 +22,6 @@ class CourseRepository {
   })  : _firestoreUtils = firestoreUtils,
         _auth = auth ?? FirebaseAuth.instance;
 
-  // Create a new course with all required fields
-  // Add debugging to createCourse method
-
   Future<Course> createCourse({
     required String code,
     required String name,
