@@ -224,7 +224,7 @@ class _CourseScreenState extends State<CourseScreen>
                       "Progress: ${_calculateProgress(course)}%",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: SLCColors.getCourseColor(course.color),
+                        color: SLCColors.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 4),

@@ -11,12 +11,13 @@ import 'package:slc/common/widgets/slciconbutton.dart';
 import 'package:slc/common/widgets/slcquickactioncard.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/repositories/course_repository.dart';
+import 'package:slc/repositories/event_repository.dart'; // Add this import
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/Student.dart';
+import 'package:slc/models/event.dart'; // Add this import
 import 'package:slc/common/widgets/slcloadingindicator.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:slc/features/course%20management/screens/coursepage.dart';
+import 'package:intl/intl.dart'; // Add this import for date formatting
 
 class CoursesScreen extends StatefulWidget {
   final Student student;
@@ -35,22 +36,24 @@ class _CoursesScreenState extends State<CoursesScreen>
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
+  // Add event repository
+  final EventRepository _eventRepository = EventRepository(
+    firestoreUtils: FirestoreUtils(),
+  );
+
   bool _isLoading = true;
   String? _errorMessage;
-  // Add these two variables
   Key _streamBuilderKey = UniqueKey();
   bool _needsRefresh = false;
 
   @override
   void initState() {
     super.initState();
-    // Register observer for app lifecycle changes
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    // Unregister observer
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -58,7 +61,6 @@ class _CoursesScreenState extends State<CoursesScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Reset the key when dependencies change (which happens on route changes)
     if (_needsRefresh) {
       setState(() {
         _streamBuilderKey = UniqueKey();
@@ -69,7 +71,6 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When app resumes from background, refresh the stream
     if (state == AppLifecycleState.resumed) {
       setState(() {
         _streamBuilderKey = UniqueKey();
@@ -79,10 +80,7 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   void _navigateToAddCourse() async {
     final result = await Navigator.pushNamed(context, "/addcourse");
-
-    // Mark for refresh
     _needsRefresh = true;
-
     if (result == "success") {
       if (mounted) {
         SLCFlushbar.show(
@@ -98,7 +96,6 @@ class _CoursesScreenState extends State<CoursesScreen>
   Widget build(BuildContext context) {
     double _screenWidth = MediaQuery.sizeOf(context).width;
     return PopScope(
-      // Force refresh when returning via system back button
       onPopInvoked: (didPop) {
         if (didPop) return;
         setState(() {
@@ -134,7 +131,6 @@ class _CoursesScreenState extends State<CoursesScreen>
               const SizedBox(height: 20),
               Expanded(
                 child: StreamBuilder<List<CourseWithProgress>>(
-                  // Add the key here to force rebuild
                   key: _streamBuilderKey,
                   stream: _courseRepository
                       .streamStudentCourses(widget.student.uid),
@@ -198,35 +194,72 @@ class _CoursesScreenState extends State<CoursesScreen>
                       );
                     }
 
-                    return ListView.separated(
-                      itemCount: coursesList.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 20),
-                      itemBuilder: (context, index) {
-                        final courseWithProgress = coursesList[index];
-                        final course = courseWithProgress.course;
+                    // Get all course IDs for events query
+                    final courseIds =
+                        coursesList.map((cwp) => cwp.course.id).toList();
 
-                        List<String> notifications = [];
-
-                        if (course.materials.isNotEmpty) {
-                          final incompleteMaterials = course.materials
-                              .where((material) => !courseWithProgress
-                                  .enrollment.completedMaterialIds
-                                  .contains(material.id))
-                              .take(3); // Limit to 3 notifications
-
-                          notifications.addAll(incompleteMaterials
-                              .map((material) => material.name));
+                    // Add nested StreamBuilder for events
+                    return StreamBuilder<List<Event>>(
+                      stream:
+                          _eventRepository.streamAllCoursesEvents(courseIds),
+                      builder: (context, eventsSnapshot) {
+                        if (eventsSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child:
+                                SLCLoadingIndicator(text: "Loading events..."),
+                          );
                         }
 
-                        return SLCCourseCard(
-                          color: course.color,
-                          title: course.code,
-                          name: course.name,
-                          notifications: notifications,
-                          onTap: () {
-                            _navigateToCourseScreen(
-                                course, courseWithProgress.enrollment);
+                        final allEvents = eventsSnapshot.data ?? [];
+
+                        return ListView.separated(
+                          itemCount: coursesList.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 20),
+                          itemBuilder: (context, index) {
+                            final courseWithProgress = coursesList[index];
+                            final course = courseWithProgress.course;
+
+                            // Filter events for this specific course
+                            final courseEvents = allEvents
+                                .where((event) => event.courseId == course.id)
+                                .toList();
+
+                            // Sort events by date (most recent first)
+                            courseEvents.sort(
+                                (a, b) => a.dateTime.compareTo(b.dateTime));
+
+                            // Create notifications from upcoming events (limit to 3)
+                            List<String> notifications = [];
+
+                            if (courseEvents.isNotEmpty) {
+                              // Get upcoming events (today or later)
+                              final now = DateTime.now();
+                              final upcomingEvents = courseEvents
+                                  .where((event) => event.dateTime.isAfter(
+                                      DateTime(now.year, now.month, now.day)))
+                                  .take(3)
+                                  .toList();
+
+                              if (upcomingEvents.isNotEmpty) {
+                                // Format events as notifications
+                                notifications = upcomingEvents.map((event) {
+                                  return event.title;
+                                }).toList();
+                              }
+                            }
+
+                            return SLCCourseCard(
+                              color: course.color,
+                              title: course.code,
+                              name: course.name,
+                              notifications: notifications,
+                              onTap: () {
+                                _navigateToCourseScreen(
+                                    course, courseWithProgress.enrollment);
+                              },
+                            );
                           },
                         );
                       },
@@ -241,7 +274,7 @@ class _CoursesScreenState extends State<CoursesScreen>
     );
   }
 
-  // Modify the navigation to CourseScreen to force refresh on return
+  // Unchanged navigation method
   void _navigateToCourseScreen(
       Course course, CourseEnrollment enrollment) async {
     await Navigator.push(
@@ -254,7 +287,6 @@ class _CoursesScreenState extends State<CoursesScreen>
       ),
     );
 
-    // Force refresh when returning from CourseScreen
     setState(() {
       _streamBuilderKey = UniqueKey();
     });

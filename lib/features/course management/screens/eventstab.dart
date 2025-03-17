@@ -5,6 +5,7 @@ import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
+import 'package:slc/features/course%20management/widgets/SLCEventItem.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/event.dart';
@@ -35,40 +36,38 @@ class _EventsTabState extends State<EventsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = SLCColors.getCourseColor(widget.course.color);
+    final themeColor = SLCColors.primaryColor;
 
     return Padding(
       padding: SpacingStyles(context).defaultPadding,
-      child: Column(
-        children: [
-          // Add button row at the top
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              SLCButton(
-                width: MediaQuery.sizeOf(context).width * 0.3,
-                onPressed: _showAddEventDialog,
-                icon: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                ),
-                text: "Add Event",
-                backgroundColor: themeColor,
-                foregroundColor: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                height: 40,
-              )
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Main content area
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: SLCLoadingIndicator(text: "Loading events..."))
-                : StreamBuilder<List<Event>>(
+      child: _isLoading
+          ? const Center(child: SLCLoadingIndicator(text: "Loading events..."))
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      SLCButton(
+                        width: MediaQuery.sizeOf(context).width * 0.3,
+                        onPressed: _showAddEventDialog,
+                        icon: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                        ),
+                        text: "Add Event",
+                        backgroundColor: SLCColors.primaryColor,
+                        foregroundColor: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        height: 35,
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  StreamBuilder<List<Event>>(
                     stream:
                         _eventRepository.streamCourseEvents(widget.course.id),
                     builder: (context, snapshot) {
@@ -97,54 +96,48 @@ class _EventsTabState extends State<EventsTab> {
                       final events = snapshot.data ?? [];
 
                       if (events.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.event_busy,
-                                size: 80,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "No events scheduled",
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: Colors.grey[700],
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Add a new event using the button above",
-                                style: TextStyle(
-                                  color: Colors.grey[500],
-                                  fontSize: 14,
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.event_busy,
+                                  size: 80,
+                                  color: Colors.grey[400],
                                 ),
-                              ),
-                              const SizedBox(height: 24),
-                              SLCButton(
-                                onPressed: _showAddEventDialog,
-                                text: "Add Your First Event",
-                                backgroundColor: themeColor,
-                                foregroundColor: Colors.white,
-                                width: 200,
-                                height: 46,
-                                fontSize: 16,
-                              ),
-                            ],
+                                const SizedBox(height: 16),
+                                Text(
+                                  "No events scheduled",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Colors.grey[700],
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Add a new event using the button above",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }
 
-                      return ListView.builder(
-                        itemCount: events.length,
-                        itemBuilder: (context, index) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(events.length, (index) {
                           final event = events[index];
 
-                          // Show date header if first event or different day
                           bool showDateHeader = index == 0 ||
                               !_isSameDay(
                                   events[index - 1].dateTime, event.dateTime);
@@ -166,123 +159,21 @@ class _EventsTabState extends State<EventsTab> {
                                   ),
                                 ),
                               ],
-
-                              // Event card
-                              Card(
-                                elevation: 2,
-                                margin: const EdgeInsets.only(bottom: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Time header with course color
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: themeColor.withOpacity(0.1),
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          topRight: Radius.circular(12),
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            size: 16,
-                                            color: themeColor,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            DateFormat('h:mm a')
-                                                .format(event.dateTime),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: themeColor,
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          IconButton(
-                                            icon: Icon(Icons.edit_outlined,
-                                                color: themeColor),
-                                            onPressed: () =>
-                                                _showEditEventDialog(event),
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red),
-                                            onPressed: () =>
-                                                _confirmDeleteEvent(event),
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Event content
-                                    Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            event.title,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          if (event.description.isNotEmpty) ...[
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              event.description,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[700],
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              SLCEventItem(
+                                themeColor: themeColor,
+                                event: event,
+                                onEdit: () => _showEditEventDialog(event),
+                                onDelete: () => _confirmDeleteEvent(event),
                               ),
                             ],
                           );
-                        },
+                        }),
                       );
                     },
                   ),
-          ),
-
-          // Loading overlay
-          if (_isLoading)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.3),
-                child: const Center(
-                  child: SLCLoadingIndicator(text: "Processing..."),
-                ),
+                ],
               ),
             ),
-        ],
-      ),
     );
   }
 
@@ -313,6 +204,7 @@ class _EventsTabState extends State<EventsTab> {
   Future<void> _showAddEventDialog() async {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
+    final locationController = TextEditingController(); // Add this line
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = TimeOfDay.now();
 
@@ -332,7 +224,6 @@ class _EventsTabState extends State<EventsTab> {
                       controller: titleController,
                       decoration: const InputDecoration(
                         labelText: "Title",
-                        hintText: "Event title",
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -340,13 +231,19 @@ class _EventsTabState extends State<EventsTab> {
                       controller: descriptionController,
                       decoration: const InputDecoration(
                         labelText: "Description",
-                        hintText: "Event description",
                       ),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
-
-                    // Date picker
+                    // Add location field here
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(
+                        labelText: "Location",
+                        hintText: "Enter event location (optional)"
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     ListTile(
                       title: const Text("Date"),
                       subtitle: Text(
@@ -367,8 +264,6 @@ class _EventsTabState extends State<EventsTab> {
                         }
                       },
                     ),
-
-                    // Time picker
                     ListTile(
                       title: const Text("Time"),
                       subtitle: Text(selectedTime.format(context)),
@@ -377,37 +272,7 @@ class _EventsTabState extends State<EventsTab> {
                         final picked = await showTimePicker(
                           context: context,
                           initialTime: selectedTime,
-                          initialEntryMode: TimePickerEntryMode
-                              .input, // Change this line to force keyboard input
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                timePickerTheme: TimePickerThemeData(
-                                  dialHandColor: SLCColors.getCourseColor(
-                                      widget.course.color),
-                                  hourMinuteTextColor:
-                                      MaterialStateColor.resolveWith((states) =>
-                                          states.contains(
-                                                  MaterialState.selected)
-                                              ? SLCColors.getCourseColor(
-                                                  widget.course.color)
-                                              : Colors.black),
-                                  dayPeriodTextColor:
-                                      MaterialStateColor.resolveWith((states) =>
-                                          states.contains(
-                                                  MaterialState.selected)
-                                              ? SLCColors.getCourseColor(
-                                                  widget.course.color)
-                                              : Colors.black),
-                                ),
-                                colorScheme: ColorScheme.light(
-                                  primary: SLCColors.getCourseColor(
-                                      widget.course.color),
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
+                          initialEntryMode: TimePickerEntryMode.input,
                         );
                         if (picked != null && picked != selectedTime) {
                           setState(() {
@@ -430,24 +295,25 @@ class _EventsTabState extends State<EventsTab> {
                 TextButton(
                   onPressed: () {
                     if (titleController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please enter a title")),
-                      );
+                      SLCFlushbar.show(
+                          context: context,
+                          message: "Please enter a title",
+                          type: FlushbarType.error);
                       return;
                     }
 
                     Navigator.of(context).pop({
                       'title': titleController.text,
                       'description': descriptionController.text,
+                      'location': locationController.text, // Add this line
                       'date': selectedDate,
                       'time': selectedTime,
                     });
                   },
-                  child: Text(
-                    "Save",
-                    style: TextStyle(
-                        color: SLCColors.getCourseColor(widget.course.color)),
-                  ),
+                  child: Text("Save",
+                      style: TextStyle(
+                        color: SLCColors.primaryColor,
+                      )),
                 ),
               ],
             );
@@ -460,6 +326,7 @@ class _EventsTabState extends State<EventsTab> {
       await _createEvent(
         title: result['title'],
         description: result['description'],
+        location: result['location'], // Add this line
         date: result['date'],
         time: result['time'],
       );
@@ -470,6 +337,8 @@ class _EventsTabState extends State<EventsTab> {
     final titleController = TextEditingController(text: event.title);
     final descriptionController =
         TextEditingController(text: event.description);
+    // Add location controller initialized with event location
+    final locationController = TextEditingController(text: event.location ?? "");
     DateTime selectedDate = event.dateTime;
     TimeOfDay selectedTime =
         TimeOfDay(hour: event.dateTime.hour, minute: event.dateTime.minute);
@@ -490,7 +359,6 @@ class _EventsTabState extends State<EventsTab> {
                       controller: titleController,
                       decoration: const InputDecoration(
                         labelText: "Title",
-                        hintText: "Event title",
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -498,13 +366,20 @@ class _EventsTabState extends State<EventsTab> {
                       controller: descriptionController,
                       decoration: const InputDecoration(
                         labelText: "Description",
-                        hintText: "Event description",
                       ),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
-
-                    // Date picker
+                    // Add location field here
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(
+                        labelText: "Location",
+                        hintText: "Enter event location (optional)"
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Existing fields follow
                     ListTile(
                       title: const Text("Date"),
                       subtitle: Text(
@@ -526,8 +401,6 @@ class _EventsTabState extends State<EventsTab> {
                         }
                       },
                     ),
-
-                    // Time picker
                     ListTile(
                       title: const Text("Time"),
                       subtitle: Text(selectedTime.format(context)),
@@ -536,37 +409,7 @@ class _EventsTabState extends State<EventsTab> {
                         final picked = await showTimePicker(
                           context: context,
                           initialTime: selectedTime,
-                          initialEntryMode: TimePickerEntryMode
-                              .input, // Change this line to force keyboard input
-                          builder: (context, child) {
-                            return Theme(
-                              data: Theme.of(context).copyWith(
-                                timePickerTheme: TimePickerThemeData(
-                                  dialHandColor: SLCColors.getCourseColor(
-                                      widget.course.color),
-                                  hourMinuteTextColor:
-                                      MaterialStateColor.resolveWith((states) =>
-                                          states.contains(
-                                                  MaterialState.selected)
-                                              ? SLCColors.getCourseColor(
-                                                  widget.course.color)
-                                              : Colors.black),
-                                  dayPeriodTextColor:
-                                      MaterialStateColor.resolveWith((states) =>
-                                          states.contains(
-                                                  MaterialState.selected)
-                                              ? SLCColors.getCourseColor(
-                                                  widget.course.color)
-                                              : Colors.black),
-                                ),
-                                colorScheme: ColorScheme.light(
-                                  primary: SLCColors.getCourseColor(
-                                      widget.course.color),
-                                ),
-                              ),
-                              child: child!,
-                            );
-                          },
+                          initialEntryMode: TimePickerEntryMode.input,
                         );
                         if (picked != null && picked != selectedTime) {
                           setState(() {
@@ -598,14 +441,14 @@ class _EventsTabState extends State<EventsTab> {
                     Navigator.of(context).pop({
                       'title': titleController.text,
                       'description': descriptionController.text,
+                      'location': locationController.text, // Add this line
                       'date': selectedDate,
                       'time': selectedTime,
                     });
                   },
                   child: Text(
                     "Save",
-                    style: TextStyle(
-                        color: SLCColors.getCourseColor(widget.course.color)),
+                    style: TextStyle(color: SLCColors.primaryColor),
                   ),
                 ),
               ],
@@ -620,6 +463,7 @@ class _EventsTabState extends State<EventsTab> {
         eventId: event.id,
         title: result['title'],
         description: result['description'],
+        location: result['location'], // Add this line
         date: result['date'],
         time: result['time'],
       );
@@ -644,13 +488,13 @@ class _EventsTabState extends State<EventsTab> {
   Future<void> _createEvent({
     required String title,
     required String description,
+    required String location, // Add this line
     required DateTime date,
     required TimeOfDay time,
   }) async {
     try {
       setState(() => _isLoading = true);
 
-      // Combine date and time
       final dateTime = DateTime(
         date.year,
         date.month,
@@ -663,6 +507,7 @@ class _EventsTabState extends State<EventsTab> {
         courseId: widget.course.id,
         title: title,
         description: description,
+        location: location, // Add this line
         dateTime: dateTime,
         createdBy: widget.enrollment.studentId,
       );
@@ -689,13 +534,13 @@ class _EventsTabState extends State<EventsTab> {
     required String eventId,
     required String title,
     required String description,
+    required String location, // Add this line
     required DateTime date,
     required TimeOfDay time,
   }) async {
     try {
       setState(() => _isLoading = true);
 
-      // Combine date and time
       final dateTime = DateTime(
         date.year,
         date.month,
@@ -708,6 +553,7 @@ class _EventsTabState extends State<EventsTab> {
         eventId: eventId,
         title: title,
         description: description,
+        location: location, // Add this line
         dateTime: dateTime,
       );
 

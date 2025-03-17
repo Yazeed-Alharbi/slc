@@ -6,7 +6,7 @@ class SLCEventCard extends StatefulWidget {
   final String title;
   final String? location;
   final TimeOfDay startTime;
-  final TimeOfDay endTime;
+  final TimeOfDay? endTime;
   final CourseColor color; // Use CourseColor instead of EventCardColor
   final String? pinnedText;
   final VoidCallback? onTap;
@@ -16,7 +16,7 @@ class SLCEventCard extends StatefulWidget {
     required this.title,
     this.location,
     required this.startTime,
-    required this.endTime,
+    this.endTime,
     this.pinnedText,
     this.color = CourseColor.navyBlue, // Default color from CourseColor
     this.onTap,
@@ -62,7 +62,8 @@ class _SLCEventCardState extends State<SLCEventCard> {
         ? (Theme.of(context).brightness == Brightness.dark
             ? Colors.black
             : Colors.white)
-        : SLCColors.getCourseColor(widget.color); // ✅ Get color from CourseColor
+        : SLCColors.getCourseColor(
+            widget.color); // ✅ Get color from CourseColor
 
     final Color textColor = isPinned
         ? (Theme.of(context).brightness == Brightness.dark
@@ -167,15 +168,17 @@ class _SLCEventCardState extends State<SLCEventCard> {
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                Text(
-                                  formatTimeOfDay(widget.endTime),
-                                  textAlign: TextAlign.end,
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                                widget.endTime != null
+                                    ? Text(
+                                        formatTimeOfDay(widget.endTime!),
+                                        textAlign: TextAlign.end,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      )
+                                    : Container(),
                               ],
                             ),
                           ),
@@ -193,7 +196,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        color: const Color(0xFF469D84),
+                        color: SLCColors.getCourseColor(widget.color),
                       ),
                       height: 25,
                       child: Padding(

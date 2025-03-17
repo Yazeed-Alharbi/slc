@@ -7,6 +7,7 @@ class Event {
   final String description;
   final DateTime dateTime;
   final String createdBy;
+  final String? location;
   final DateTime createdAt;
 
   Event({
@@ -16,6 +17,7 @@ class Event {
     required this.description,
     required this.dateTime,
     required this.createdBy,
+    this.location,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -27,6 +29,7 @@ class Event {
       description: json['description'] as String,
       dateTime: (json['date_time'] as Timestamp).toDate(),
       createdBy: json['created_by'] as String,
+      location: json['location'] as String?,
       createdAt: (json['created_at'] as Timestamp).toDate(),
     );
   }
@@ -39,6 +42,7 @@ class Event {
       'date_time': Timestamp.fromDate(dateTime),
       'created_by': createdBy,
       'created_at': Timestamp.fromDate(createdAt),
+      'location': location,
     };
   }
 }
