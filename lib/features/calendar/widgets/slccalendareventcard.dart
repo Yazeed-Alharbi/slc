@@ -101,6 +101,7 @@ class _SLCCalendarEventCardState extends State<SLCCalendarEventCard> {
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 12,
+                                fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -127,6 +128,7 @@ class _SLCCalendarEventCardState extends State<SLCCalendarEventCard> {
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
