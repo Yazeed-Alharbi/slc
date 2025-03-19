@@ -174,6 +174,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           _currentMonth.year, _currentMonth.month + (next ? 1 : -1), 1);
       _generateDatesForMonth(_currentMonth);
       _setInitialSelection();
+      _loadCalendarData();
     });
   }
 
