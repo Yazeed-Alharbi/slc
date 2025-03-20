@@ -1,25 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:open_file/open_file.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
-import 'package:slc/common/widgets/slcflushbar.dart';
-import 'package:slc/common/widgets/nativealertdialog.dart';
-import 'package:slc/common/widgets/slcloadingindicator.dart';
-import 'package:slc/features/course%20management/widgets/slcfilecard.dart';
 import 'package:slc/features/course%20management/widgets/slcnotecard.dart';
-import 'package:slc/models/Course.dart';
-import 'package:slc/models/course_enrollment.dart';
-import 'package:slc/models/Material.dart';
-import 'package:slc/repositories/course_repository.dart';
-import 'package:slc/firebaseUtil/firestore.dart';
-import 'dart:io';
-import 'package:file_picker/file_picker.dart' as picker;
-import 'package:path/path.dart' as path;
-import 'dart:math';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:slc/features/course%20management/screens/note_editor_page.dart';
 
 class NotesTab extends StatefulWidget {
   const NotesTab({
@@ -46,7 +30,9 @@ class _NotesTabState extends State<NotesTab> {
               children: [
                 SLCButton(
                   width: MediaQuery.sizeOf(context).width * 0.2,
-                  onPressed: () {},
+                  onPressed: () {
+                    _showCreateNoteDialog(context);
+                  },
                   icon: const Icon(
                     Icons.add,
                     color: Colors.white,
@@ -68,8 +54,15 @@ class _NotesTabState extends State<NotesTab> {
                 title: "Course Introduction",
                 createdAt: DateTime.now(),
                 onPressed: () async {
-                  // Handle note tap
-                  print("Note tapped!");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NoteEditorPage(
+                        noteId: "note1", // In a real app, use actual note IDs
+                        noteTitle: "Course Introduction",
+                      ),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 10),
@@ -118,6 +111,48 @@ class _NotesTabState extends State<NotesTab> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showCreateNoteDialog(BuildContext context) {
+    final titleController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Create New Note"),
+        content: TextField(
+          controller: titleController,
+          decoration: const InputDecoration(
+            hintText: "Enter note title",
+            labelText: "Title",
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              if (titleController.text.trim().isNotEmpty) {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NoteEditorPage(
+                      noteId: DateTime.now().millisecondsSinceEpoch.toString(),
+                      noteTitle: titleController.text.trim(),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text("Create"),
+          ),
+        ],
       ),
     );
   }
