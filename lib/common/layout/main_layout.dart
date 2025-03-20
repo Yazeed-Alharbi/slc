@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/widgets/slcbottomnavbar.dart';
+import 'package:slc/features/calendar/screens/calendar.dart';
 import 'package:slc/features/course%20management/screens/courses.dart';
 import 'package:slc/features/home/screens/home.dart';
 import 'package:slc/models/Student.dart';
@@ -26,7 +27,7 @@ class _MainLayoutState extends State<MainLayout> {
       HomeScreen(student: widget.student),
       CoursesScreen(student: widget.student),
       Center(child: Text('Page 3')),
-      Center(child: Text('Page 4')),
+      CalendarScreen(),
     ];
     return Scaffold(
       body: widgetOptions.elementAt(_selectedIndex),

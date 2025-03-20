@@ -43,7 +43,7 @@ class SLCBottomNavBar extends StatelessWidget {
               GButton(icon: Icons.home, text: 'Home'),
               GButton(icon: Icons.library_books, text: 'Courses'),
               GButton(icon: Icons.people_alt, text: 'Page 3'),
-              GButton(icon: Icons.calendar_month_rounded, text: 'Page 4'),
+              GButton(icon: Icons.calendar_month_rounded, text: 'Calendar'),
             ],
             selectedIndex: selectedIndex,
             onTabChange: onTabChange,
