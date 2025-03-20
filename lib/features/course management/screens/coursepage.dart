@@ -34,14 +34,16 @@ class _CourseScreenState extends State<CourseScreen>
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
-
   late TabController _tabController;
-  bool _isDeleting = false; // Add this flag
+  late final Stream<Course?> _courseStream;
+
+  bool _isDeleting = false; // flag
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _courseStream = _courseRepository.streamCourse(widget.courseId);
   }
 
   @override
@@ -52,235 +54,242 @@ class _CourseScreenState extends State<CourseScreen>
 
   @override
   Widget build(BuildContext context) {
-    // If deleting, just show a full-screen loading indicator
-    if (_isDeleting) {
-      return const Scaffold(
-        body: Center(child: SLCLoadingIndicator(text: "Deleting course...")),
-      );
-    }
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(viewInsets: EdgeInsets.zero),
+      child: StreamBuilder<Course?>(
+        stream: _courseStream,
+        builder: (context, snapshot) {
+          if (_isDeleting) {
+            return const Scaffold(
+              body: Center(
+                  child: SLCLoadingIndicator(text: "Deleting course...")),
+            );
+          }
 
-    return StreamBuilder<Course?>(
-      stream: _courseRepository.streamCourse(widget.courseId),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: SLCLoadingIndicator(text: "Loading course...")),
-          );
-        }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body:
+                  Center(child: SLCLoadingIndicator(text: "Loading course...")),
+            );
+          }
 
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Error loading course"),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Go Back"),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final course = snapshot.data!;
-
-        return Scaffold(
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeInOut,
-                color: SLCColors.getCourseColor(course.color),
-                height:
-                    MediaQuery.of(context).orientation == Orientation.portrait
-                        ? MediaQuery.of(context).size.height * 0.35
-                        : MediaQuery.of(context).size.height * 0.55,
-                width: double.infinity,
-                child: Stack(
+          if (snapshot.hasError || !snapshot.hasData) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Positioned(
-                      right: -150,
-                      top: -150,
-                      child: Container(
-                        width: 350,
-                        height: 350,
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(65, 227, 227, 227),
-                          shape: BoxShape.circle,
+                    const Text("Error loading course"),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Go Back"),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final course = snapshot.data!;
+
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  color: SLCColors.getCourseColor(course.color),
+                  height:
+                      MediaQuery.of(context).orientation == Orientation.portrait
+                          ? MediaQuery.of(context).size.height * 0.35
+                          : MediaQuery.of(context).size.height * 0.55,
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        right: -150,
+                        top: -150,
+                        child: Container(
+                          width: 350,
+                          height: 350,
+                          decoration: const BoxDecoration(
+                            color: Color.fromARGB(65, 227, 227, 227),
+                            shape: BoxShape.circle,
+                          ),
                         ),
                       ),
-                    ),
-                    SafeArea(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal:
-                              SpacingStyles(context).defaultPadding.right,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Navigation Row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  icon: const Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ),
-                                ),
-                                PullDownButton(
-                                  itemBuilder: (context) => [
-                                    PullDownMenuItem(
-                                      onTap: () =>
-                                          _handleMenuSelection('edit', course),
-                                      title: "Edit",
-                                      icon: Icons.edit,
-                                    ),
-                                    PullDownMenuItem(
-                                      onTap: () => _handleMenuSelection(
-                                          'delete', course),
-                                      title: "Delete",
-                                      isDestructive: true,
-                                      icon: Icons.delete,
-                                    ),
-                                  ],
-                                  buttonBuilder: (context, showMenu) =>
-                                      GestureDetector(
-                                    onTap: showMenu,
-                                    child: const Icon(
-                                      Icons.more_vert,
+                      SafeArea(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal:
+                                SpacingStyles(context).defaultPadding.right,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Navigation Row
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    icon: const Icon(
+                                      Icons.arrow_back,
                                       color: Colors.white,
                                       size: 30,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  course.code,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 35,
-                                    fontWeight: FontWeight.w800,
-                                    overflow: TextOverflow.ellipsis,
+                                  PullDownButton(
+                                    itemBuilder: (context) => [
+                                      PullDownMenuItem(
+                                        onTap: () => _handleMenuSelection(
+                                            'edit', course),
+                                        title: "Edit",
+                                        icon: Icons.edit,
+                                      ),
+                                      PullDownMenuItem(
+                                        onTap: () => _handleMenuSelection(
+                                            'delete', course),
+                                        title: "Delete",
+                                        isDestructive: true,
+                                        icon: Icons.delete,
+                                      ),
+                                    ],
+                                    buttonBuilder: (context, showMenu) =>
+                                        GestureDetector(
+                                      onTap: showMenu,
+                                      child: const Icon(
+                                        Icons.more_vert,
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  course.name,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w700,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SLCButton(
-                              onPressed: _startFocusSession,
-                              width: MediaQuery.of(context).size.width * 0.2,
-                              text: "Start Focus Session",
-                              backgroundColor: Colors.white,
-                              foregroundColor:
-                                  SLCColors.getCourseColor(course.color),
-                              icon: Icon(
-                                Icons.play_circle,
-                                color: SLCColors.getCourseColor(course.color),
-                                size: 28,
+                                ],
                               ),
+                              const SizedBox(height: 10),
+
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    course.code,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 35,
+                                      fontWeight: FontWeight.w800,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Text(
+                                    course.name,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SLCButton(
+                                onPressed: _startFocusSession,
+                                width: MediaQuery.of(context).size.width * 0.2,
+                                text: "Start Focus Session",
+                                backgroundColor: Colors.white,
+                                foregroundColor:
+                                    SLCColors.getCourseColor(course.color),
+                                icon: Icon(
+                                  Icons.play_circle,
+                                  color: SLCColors.getCourseColor(course.color),
+                                  size: 28,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+
+                // Progress indicator
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Progress: ${_calculateProgress(course)}%",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: SLCColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: _calculateProgress(course) / 100,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            SLCColors.getCourseColor(course.color)),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Tabs Section
+                Expanded(
+                  child: Column(
+                    children: [
+                      // TabBar
+                      TabBar(
+                        controller: _tabController,
+                        labelColor: SLCColors.primaryColor,
+                        indicatorColor: SLCColors.primaryColor,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        unselectedLabelColor: SLCColors.coolGray,
+                        dividerColor: const Color.fromARGB(147, 127, 127, 127),
+                        overlayColor:
+                            WidgetStateProperty.all(Colors.transparent),
+                        tabs: const [
+                          Tab(text: "Files"),
+                          Tab(text: "Notes"),
+                          Tab(text: "Events"),
+                        ],
+                      ),
+
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            FilesTab(
+                              course: course,
+                              enrollment: widget.enrollment,
+                            ),
+                            const Center(child: Text("Notes Content")),
+                            EventsTab(
+                              course: course,
+                              enrollment: widget.enrollment,
                             ),
                           ],
                         ),
                       ),
-                    )
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-
-              // Progress indicator
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Progress: ${_calculateProgress(course)}%",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: SLCColors.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: _calculateProgress(course) / 100,
-                      backgroundColor: Colors.grey[300],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                          SLCColors.getCourseColor(course.color)),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Tabs Section
-              Expanded(
-                child: Column(
-                  children: [
-                    // TabBar
-                    TabBar(
-                      controller: _tabController,
-                      labelColor: SLCColors.primaryColor,
-                      indicatorColor: SLCColors.primaryColor,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      unselectedLabelColor: SLCColors.coolGray,
-                      dividerColor: const Color.fromARGB(147, 127, 127, 127),
-                      overlayColor: WidgetStateProperty.all(Colors.transparent),
-                      tabs: const [
-                        Tab(text: "Files"),
-                        Tab(text: "Notes"),
-                        Tab(text: "Events"),
-                      ],
-                    ),
-
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          FilesTab(
-                            course: course,
-                            enrollment: widget.enrollment,
-                          ),
-                          const Center(child: Text("Notes Content")),
-                          EventsTab(
-                            course: course,
-                            enrollment: widget.enrollment,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
