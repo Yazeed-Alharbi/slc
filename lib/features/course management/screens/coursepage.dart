@@ -9,6 +9,7 @@ import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/features/course%20management/screens/eventstab.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
+import 'package:slc/features/course%20management/screens/notestab.dart';
 import 'package:slc/features/course%20management/widgets/courseform.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
@@ -274,7 +275,7 @@ class _CourseScreenState extends State<CourseScreen>
                               course: course,
                               enrollment: widget.enrollment,
                             ),
-                            const Center(child: Text("Notes Content")),
+                            NotesTab(),
                             EventsTab(
                               course: course,
                               enrollment: widget.enrollment,
