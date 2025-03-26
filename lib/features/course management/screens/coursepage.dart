@@ -10,6 +10,7 @@ import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/features/course%20management/screens/eventstab.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
 import 'package:slc/features/course%20management/widgets/courseform.dart';
+import 'package:slc/features/focus%20sessions/screens/focussession.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/repositories/course_repository.dart';
@@ -294,25 +295,26 @@ class _CourseScreenState extends State<CourseScreen>
   }
 
   void _startFocusSession() async {
-    // Create a new focus session and link it to this course enrollment
-    final focusSessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    // // Create a new focus session and link it to this course enrollment
+    // final focusSessionId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    try {
-      await _courseRepository.addFocusSession(
-        enrollmentId: widget.enrollment.id,
-        focusSessionId: focusSessionId,
-      );
+    // try {
+    //   await _courseRepository.addFocusSession(
+    //     enrollmentId: widget.enrollment.id,
+    //     focusSessionId: focusSessionId,
+    //   );
 
-      // Navigate to focus session screen or show timer
-      // ...
-    } catch (e) {
-      // Show error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to start focus session: $e")),
-        );
-      }
-    }
+    //   // Navigate to focus session screen or show timer
+    //   // ...
+    // } catch (e) {
+    //   // Show error
+    //   if (mounted) {
+    //     ScaffoldMessenger.of(context).showSnackBar(
+    //       SnackBar(content: Text("Failed to start focus session: $e")),
+    //     );
+    //   }
+    // }
+    Navigator.push(context, MaterialPageRoute(builder: (context) => FocusSessionScreen()));
   }
 
   void _handleMenuSelection(String value, Course course) {
