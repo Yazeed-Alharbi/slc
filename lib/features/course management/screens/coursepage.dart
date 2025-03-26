@@ -275,7 +275,9 @@ class _CourseScreenState extends State<CourseScreen>
                               course: course,
                               enrollment: widget.enrollment,
                             ),
-                            NotesTab(),
+                            NotesTab(
+                              courseId: course.id,
+                            ),
                             EventsTab(
                               course: course,
                               enrollment: widget.enrollment,
