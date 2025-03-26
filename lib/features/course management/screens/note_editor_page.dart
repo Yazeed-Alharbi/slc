@@ -5,6 +5,7 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:flutter/services.dart';
+import 'package:slc/features/course%20management/screens/note_service.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String noteId;
@@ -28,9 +29,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   int _currentPageIndex = 0;
   bool _isTypingMode = false;
   bool _showPageSelector = false;
+  bool _isLoading = true; // Add loading state
 
   late AnimationController _drawerAnimController;
   late Animation<double> _drawerAnimation;
+
+  final NoteService _noteService = NoteService(); // Add note service
 
   @override
   void initState() {
@@ -49,8 +53,41 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       curve: Curves.easeInOut,
     );
 
-    // Add first page
-    _addNewPage(initial: true);
+    // Load note data from Firestore instead of adding first page directly
+    _loadNoteData();
+  }
+
+  // New method to load note data from Firestore
+  Future<void> _loadNoteData() async {
+    try {
+      final note = await _noteService.getNote(widget.noteId);
+
+      if (note != null && note.pages.isNotEmpty) {
+        setState(() {
+          _pages.clear();
+          _textControllers.clear();
+
+          // Add all pages from Firestore
+          for (var page in note.pages) {
+            _pages.add(page);
+            _textControllers.add(TextEditingController(
+              text: page['text']?.toString() ?? '',
+            ));
+          }
+        });
+      } else {
+        // If the note doesn't exist or has no pages, add a default page
+        _addNewPage(initial: true);
+      }
+    } catch (e) {
+      print('Error loading note: $e');
+      // Add a default page in case of error
+      _addNewPage(initial: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -81,9 +118,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         _scribbleNotifier.clear();
       }
     });
+
+    // Save to Firestore if not initial load
+    if (!initial) {
+      _saveToFirestore();
+    }
   }
 
   Future<void> _saveCurrentPage() async {
+    if (_pages.isEmpty || _currentPageIndex >= _pages.length) {
+      return;
+    }
+
     if (!_isTypingMode) {
       // Save drawing
       final json = _scribbleNotifier.currentSketch.toJson();
@@ -95,8 +141,24 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     }
   }
 
+  Future<void> _saveToFirestore() async {
+    try {
+      if (_pages.isEmpty) {
+        // Don't save if there are no pages
+        return;
+      }
+
+      await _noteService.updateNotePages(widget.noteId, _pages);
+    } catch (e) {
+      print('Error saving to Firestore: $e');
+      // Don't show an error message here to avoid disrupting the user experience
+      // We'll just log it and continue
+    }
+  }
+
   Future<void> _loadPage(int index) async {
     await _saveCurrentPage();
+    await _saveToFirestore(); // Add Firestore save
 
     setState(() {
       _currentPageIndex = index;
@@ -123,6 +185,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   void _toggleInputMode() async {
     await _saveCurrentPage();
+    await _saveToFirestore(); // Add Firestore save
 
     setState(() {
       _isTypingMode = !_isTypingMode;
@@ -137,6 +200,18 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   @override
   Widget build(BuildContext context) {
+    // Add loading indicator
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.noteTitle),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return WillPopScope(
       onWillPop: () async {
         if (_showPageSelector) {
@@ -144,6 +219,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           return false;
         }
         await _saveCurrentPage();
+        await _saveToFirestore(); // Add Firestore save
         return true;
       },
       child: Scaffold(
@@ -152,13 +228,21 @@ class _NoteEditorPageState extends State<NoteEditorPage>
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
           // Back button in the standard leading position
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              await _saveCurrentPage();
-              Navigator.of(context).pop();
-            },
-          ),
+          // In the leading back button in build method:
+leading: IconButton(
+  icon: const Icon(Icons.arrow_back),
+  onPressed: () async {
+    await _saveCurrentPage();
+    try {
+      await _saveToFirestore();
+    } catch (e) {
+      print('Error saving before navigation: $e');
+    }
+    if (mounted) { // Add this check
+      Navigator.of(context).pop();
+    }
+  },
+),
           actions: [
             // Page indicator
             Center(
@@ -190,6 +274,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               icon: const Icon(Icons.save),
               onPressed: () async {
                 await _saveCurrentPage();
+                await _saveToFirestore(); // Add Firestore save
                 SLCFlushbar.show(
                   context: context,
                   message: "Note saved!",
@@ -308,7 +393,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               ],
             ),
 
-            // Page selector overlay - keep this as is
+            // Page selector overlay
             if (_showPageSelector)
               Positioned.fill(
                 child: Material(
@@ -348,23 +433,41 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                                   ),
                                 ],
                               ),
-                              // Keep your existing page selector UI...
                               child: SafeArea(
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    // Keep your existing header
-
-                                    // Keep your existing pages list
+                                    Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            'Pages',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Spacer(),
+                                          IconButton(
+                                            icon: Icon(Icons.add),
+                                            onPressed: () {
+                                              _togglePageMenu();
+                                              _addNewPage();
+                                            },
+                                            tooltip: 'Add new page',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Divider(),
                                     Expanded(
                                       child: ListView.builder(
-                                        // Keep your existing ListView code...
                                         padding: const EdgeInsets.only(
                                             top: 8, bottom: 8),
                                         itemCount: _pages.length,
                                         itemBuilder: (context, index) {
-                                          // Keep your existing page item UI...
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 4),
@@ -490,8 +593,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                                         },
                                       ),
                                     ),
-
-                                    // Keep your existing bottom button
                                   ],
                                 ),
                               ),
@@ -650,7 +751,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       confirmText: "Delete",
       confirmTextColor: Colors.red,
       cancelText: "Cancel",
-      onConfirm: () {
+      onConfirm: () async {
         setState(() {
           // Remove the page data
           _pages.removeAt(_currentPageIndex);
@@ -674,6 +775,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             }
           }
         });
+
+        // Save changes to Firestore
+        _saveToFirestore();
 
         SLCFlushbar.show(
           context: context,
