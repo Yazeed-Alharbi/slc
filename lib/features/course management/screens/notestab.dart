@@ -4,6 +4,11 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/course%20management/widgets/slcnotecard.dart';
 import 'package:slc/features/course%20management/screens/note_editor_page.dart';
+// Use import prefix for note_service.dart
+import 'package:slc/features/course%20management/screens/note_service.dart'
+    as service;
+// Import Note model separately
+import 'package:slc/models/note.dart';
 
 class NotesTab extends StatefulWidget {
   const NotesTab({
@@ -15,11 +20,11 @@ class NotesTab extends StatefulWidget {
 }
 
 class _NotesTabState extends State<NotesTab> {
+  // Use the prefix when creating an instance
+  final service.NoteService _noteService = service.NoteService();
+
   @override
   Widget build(BuildContext context) {
-    // For demo purposes - you'd typically use a state variable to track if notes exist
-    bool hasNotes = true; // Change this to false to show empty state
-
     return SingleChildScrollView(
       child: Padding(
         padding: SpacingStyles(context).defaultPadding,
@@ -48,67 +53,91 @@ class _NotesTabState extends State<NotesTab> {
             ),
             const SizedBox(height: 10),
 
-            // If we have notes, show them
-            if (hasNotes) ...[
-              SLCNoteCard(
-                title: "Course Introduction",
-                createdAt: DateTime.now(),
-                onPressed: () async {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NoteEditorPage(
-                        noteId: "note1", // In a real app, use actual note IDs
-                        noteTitle: "Course Introduction",
+            // StreamBuilder with proper error handling
+            StreamBuilder<List<Note>>(
+                stream: _noteService.getNotes(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                        child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ));
+                  }
+
+                  if (snapshot.hasError) {
+                    print('Error in StreamBuilder: ${snapshot.error}');
+                    return Center(
+                        child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text('Error loading notes: ${snapshot.error}'),
+                    ));
+                  }
+
+                  final notes = snapshot.data ?? [];
+                  print('Notes count in UI: ${notes.length}');
+
+                  if (notes.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.note_add_rounded,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              "No notes added yet",
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Create notes using the button above",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    );
+                  }
+
+                  return Column(
+                    children: notes.map((note) {
+                      return Column(
+                        children: [
+                          SLCNoteCard(
+                            title: note.title,
+                            createdAt: note.createdAt,
+                            onPressed: () async {
+                              print('Opening note: ${note.id}');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NoteEditorPage(
+                                    noteId: note.id,
+                                    noteTitle: note.title,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      );
+                    }).toList(),
                   );
-                },
-              ),
-              const SizedBox(height: 10),
-              SLCNoteCard(
-                title: "Week 1 Notes",
-                createdAt: DateTime.now().subtract(const Duration(days: 2)),
-                onPressed: () async {
-                  // Handle note tap
-                  print("Note tapped!");
-                },
-              ),
-            ]
-            // Otherwise show empty state
-            else
-              Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.note_add_rounded,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No notes added yet",
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Create notes using the button above",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                }),
           ],
         ),
       ),
@@ -136,18 +165,29 @@ class _NotesTabState extends State<NotesTab> {
             child: const Text("Cancel"),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               if (titleController.text.trim().isNotEmpty) {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NoteEditorPage(
-                      noteId: DateTime.now().millisecondsSinceEpoch.toString(),
-                      noteTitle: titleController.text.trim(),
+                try {
+                  final noteId = await _noteService.createNote(
+                    titleController.text.trim(),
+                  );
+                  print('Created note with ID: $noteId');
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NoteEditorPage(
+                        noteId: noteId,
+                        noteTitle: titleController.text.trim(),
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } catch (e) {
+                  print('Error creating note: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error creating note: $e')),
+                  );
+                }
               }
             },
             child: const Text("Create"),
