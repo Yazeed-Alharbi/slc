@@ -26,44 +26,146 @@ class FocusSessionScreen extends StatefulWidget {
 class _FocusSessionScreenState extends State<FocusSessionScreen>
     with TickerProviderStateMixin {
   late AnimationController _controller;
-  // Default focus session duration in seconds (25 minutes)
-  int _pomodoroMinutes = 25;
-  int _shortBreakMinutes = 5;
-  int _longBreakMinutes = 15;
-  int _longBreakInterval = 4;
-  int _duration = 25 * 60;
+  bool _controllerDisposed = false; // Track disposal
+
+  // For testing, define durations in seconds.
+  int _pomodoroFocusSeconds = 1;
+  int _shortBreakSeconds = 1;
+  int _longBreakSeconds = 1;
+  int _duration = 5;
   bool _isPlaying = false;
 
-  // Selected materials state
+  // Pomodoro cycle tracking
+  int _completedPomodoros = 0;
+  String _currentMode = "Focus Time";
+  bool _isBreakTime = false;
+  int _longBreakInterval = 4;
+
+  // Selected materials state...
   final List<CourseMaterial> _selectedMaterials = [];
   static const int _maxMaterials = 5;
 
   @override
   void initState() {
     super.initState();
+    _duration = _pomodoroFocusSeconds;
+    _currentMode = "Focus Time";
+    _setupController();
+  }
+
+  void _setupController() {
     _controller = AnimationController(
       vsync: this,
       duration: Duration(seconds: _duration),
     );
+    // Reset the flag when creating a new controller.
+    _controllerDisposed = false;
 
     _controller.addListener(() {
-      // Force UI to update by calling setState
-      setState(() {
-        // This empty setState is intentional - it forces a rebuild
-        // when the animation value changes
-      });
-
-      if (_controller.isCompleted) {
-        setState(() {
-          _isPlaying = false;
-        });
+      setState(() {});
+    });
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _handleTimerCompleted();
       }
     });
   }
 
+  // Helper method to dispose controller once.
+  void _disposeController() {
+    if (!_controllerDisposed) {
+      _controller.dispose();
+      _controllerDisposed = true;
+    }
+  }
+
+  void _handleTimerCompleted() {
+    setState(() {
+      _isPlaying = false;
+      if (!_isBreakTime) {
+        _completedPomodoros++;
+        if (_completedPomodoros == _longBreakInterval) {
+          _disposeController();
+          _showQuizModal();
+          return;
+        } else {
+          _isBreakTime = true;
+          _duration = _shortBreakSeconds;
+          _currentMode = "Short Break";
+        }
+      } else {
+        _isBreakTime = false;
+        _duration = _pomodoroFocusSeconds;
+        _currentMode = "Focus Time";
+      }
+      _disposeController();
+      _setupController();
+    });
+  }
+
+  void _showQuizModal() {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      builder: (BuildContext context) {
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "You've completed 4 pomodoros!",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "Would you like to take a quiz about the material?",
+                  style: TextStyle(fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 24),
+                Column(
+                  children: [
+                    SLCButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  Scaffold(body: Center(child: Text("Quiz")))),
+                        );
+                      },
+                      backgroundColor: SLCColors.primaryColor,
+                      foregroundColor: Colors.white,
+                      text: "Take the Quiz",
+                    ),
+                    SLCButton(
+                      onPressed: () {
+                        Navigator.pop(context); // close modal
+                        Navigator.pop(context); // close focus session screen
+                      },
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: SLCColors.primaryColor,
+                      text: "Skip",
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
-    _controller.dispose();
+    _disposeController();
     super.dispose();
   }
 
@@ -83,7 +185,6 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
       }
       _controller.forward();
     }
-
     setState(() {
       _isPlaying = !_isPlaying;
     });
@@ -97,39 +198,39 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   void _showSettingsDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return SettingsDialog(
-          pomodoroMinutes: _pomodoroMinutes,
-          shortBreakMinutes: _shortBreakMinutes,
-          longBreakMinutes: _longBreakMinutes,
-          longBreakInterval: _longBreakInterval,
-          onSave: (pomodoro, shortBreak, longBreak, interval) {
-            setState(() {
-              _pomodoroMinutes = pomodoro;
-              _shortBreakMinutes = shortBreak;
-              _longBreakMinutes = longBreak;
-              _longBreakInterval = interval;
+    // showModalBottomSheet(
+    //   context: context,
+    //   isScrollControlled: true,
+    //   shape: const RoundedRectangleBorder(
+    //     borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    //   ),
+    //   builder: (BuildContext context) {
+    //     return SettingsDialog(
+    //       pomodoroMinutes: _pomodoroMinutes,
+    //       shortBreakMinutes: _shortBreakMinutes,
+    //       longBreakMinutes: _longBreakMinutes,
+    //       longBreakInterval: _longBreakInterval,
+    //       onSave: (pomodoro, shortBreak, longBreak, interval) {
+    //         setState(() {
+    //           _pomodoroMinutes = pomodoro;
+    //           _shortBreakMinutes = shortBreak;
+    //           _longBreakMinutes = longBreak;
+    //           _longBreakInterval = interval;
 
-              // Update duration and reset the timer
-              _duration = _pomodoroMinutes * 60;
-              _controller.dispose();
-              _controller = AnimationController(
-                vsync: this,
-                duration: Duration(seconds: _duration),
-              );
+    //           // Update duration and reset the timer
+    //           _duration = _pomodoroMinutes * 60;
+    //           _controller.dispose();
+    //           _controller = AnimationController(
+    //             vsync: this,
+    //             duration: Duration(seconds: _duration),
+    //           );
 
-              _isPlaying = false;
-            });
-          },
-        );
-      },
-    );
+    //           _isPlaying = false;
+    //         });
+    //       },
+    //     );
+    //   },
+    // );
   }
 
   void _showMaterialSelectionDialog() {
@@ -210,18 +311,44 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         Column(
           children: [
             TimerDisplay(
+              key: ValueKey(
+                  _controller), // Adds a Key based on the current controller instance
               controller: _controller,
+              mode: _currentMode,
+              isBreak: _isBreakTime,
             ),
 
             SizedBox(height: screenHeight * 0.05),
 
             // Controls
-            SLCButton(
-              onPressed: _toggleTimer,
-              backgroundColor: SLCColors.primaryColor,
-              foregroundColor: Colors.white,
-              text: _isPlaying ? "Pause" : "Start",
-              width: 280,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Show session count
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Text(
+                    "Session: ${_completedPomodoros}",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+
+                // Main button
+                SizedBox(
+                  width: 220,
+                  child: SLCButton(
+                    onPressed: _toggleTimer,
+                    backgroundColor:
+                        _isBreakTime ? SLCColors.green : SLCColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    text: _isPlaying ? "Pause" : "Start",
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -236,6 +363,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         Expanded(
           child: TimerDisplay(
             controller: _controller,
+            mode: _currentMode,
+            isBreak: _isBreakTime,
           ),
         ),
 
@@ -263,7 +392,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               const SizedBox(height: 40),
               SLCButton(
                 onPressed: _toggleTimer,
-                backgroundColor: SLCColors.primaryColor,
+                backgroundColor:
+                    _isBreakTime ? SLCColors.green : SLCColors.primaryColor,
                 foregroundColor: Colors.white,
                 text: _isPlaying ? "Pause" : "Start",
                 width: 280,

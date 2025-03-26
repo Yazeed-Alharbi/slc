@@ -4,10 +4,14 @@ import 'package:slc/features/focus%20sessions/widgets/animated_timer.dart';
 
 class TimerDisplay extends StatefulWidget {
   final AnimationController controller;
+  final String mode;
+  final bool isBreak;
 
   const TimerDisplay({
     Key? key,
     required this.controller,
+    this.mode = "Focus Time",
+    this.isBreak = false,
   }) : super(key: key);
 
   @override
@@ -16,10 +20,25 @@ class TimerDisplay extends StatefulWidget {
 
 class _TimerDisplayState extends State<TimerDisplay> {
   String _timeRemaining = "00:00";
+  AnimationController? _previousController;
 
   @override
   void initState() {
     super.initState();
+    _setupControllerListener();
+  }
+
+  @override
+  void didUpdateWidget(TimerDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_updateTimeString);
+      _setupControllerListener();
+    }
+  }
+
+  void _setupControllerListener() {
     _updateTimeString();
     widget.controller.addListener(_updateTimeString);
   }
@@ -42,6 +61,10 @@ class _TimerDisplayState extends State<TimerDisplay> {
 
   @override
   Widget build(BuildContext context) {
+    // Get color based on mode
+    Color timerColor =
+        widget.isBreak ? SLCColors.green : SLCColors.primaryColor;
+
     return Center(
       child: AnimatedBuilder(
         animation: widget.controller,
@@ -68,7 +91,7 @@ class _TimerDisplayState extends State<TimerDisplay> {
                     value: 1.0 - widget.controller.value,
                     strokeWidth: 12,
                     backgroundColor: Colors.grey[300],
-                    color: SLCColors.primaryColor,
+                    color: timerColor,
                   ),
                 ),
                 // Time display
@@ -83,10 +106,11 @@ class _TimerDisplayState extends State<TimerDisplay> {
                       ),
                     ),
                     Text(
-                      "Focus Time",
+                      widget.mode,
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[600],
+                        color:
+                            widget.isBreak ? SLCColors.green : Colors.grey[600],
                       ),
                     ),
                   ],
