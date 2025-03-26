@@ -47,6 +47,12 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     );
 
     _controller.addListener(() {
+      // Force UI to update by calling setState
+      setState(() {
+        // This empty setState is intentional - it forces a rebuild
+        // when the animation value changes
+      });
+
       if (_controller.isCompleted) {
         setState(() {
           _isPlaying = false;
@@ -69,15 +75,16 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   void _toggleTimer() {
-    setState(() {
-      if (_isPlaying) {
-        _controller.stop();
-      } else {
-        if (_controller.value == 1.0) {
-          _controller.reset();
-        }
-        _controller.forward();
+    if (_isPlaying) {
+      _controller.stop();
+    } else {
+      if (_controller.value == 1.0) {
+        _controller.reset();
       }
+      _controller.forward();
+    }
+
+    setState(() {
       _isPlaying = !_isPlaying;
     });
   }
@@ -204,7 +211,6 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
           children: [
             TimerDisplay(
               controller: _controller,
-              timeRemaining: timeRemaining,
             ),
 
             SizedBox(height: screenHeight * 0.05),
@@ -230,7 +236,6 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         Expanded(
           child: TimerDisplay(
             controller: _controller,
-            timeRemaining: timeRemaining,
           ),
         ),
 
