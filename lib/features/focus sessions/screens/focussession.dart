@@ -3,13 +3,21 @@ import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
-import 'package:slc/common/widgets/slciconbutton.dart';
-import 'package:slc/features/focus%20sessions/widgets/animated_timer.dart';
-import 'package:slc/features/focus%20sessions/widgets/timer_display.dart';
+import 'package:slc/features/focus%20sessions/widgets/course_tag.dart';
+import 'package:slc/features/focus%20sessions/widgets/focus_menu_button.dart';
+import 'package:slc/features/focus%20sessions/widgets/material_selection_dialog.dart';
 import 'package:slc/features/focus%20sessions/widgets/settings_dialog.dart';
+import 'package:slc/features/focus%20sessions/widgets/timer_display.dart';
+import 'package:slc/models/Course.dart';
+import 'package:slc/models/Material.dart';
 
 class FocusSessionScreen extends StatefulWidget {
-  const FocusSessionScreen({super.key});
+  final Course course;
+
+  const FocusSessionScreen({
+    super.key,
+    required this.course,
+  });
 
   @override
   State<FocusSessionScreen> createState() => _FocusSessionScreenState();
@@ -25,6 +33,10 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   int _longBreakInterval = 4;
   int _duration = 25 * 60;
   bool _isPlaying = false;
+
+  // Selected materials state
+  final List<CourseMaterial> _selectedMaterials = [];
+  static const int _maxMaterials = 5;
 
   @override
   void initState() {
@@ -113,6 +125,37 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     );
   }
 
+  void _showMaterialSelectionDialog() {
+    if (widget.course.materials.isEmpty) {
+      // Show message if no materials are available
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No materials available for this course')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return MaterialSelectionDialog(
+          course: widget.course,
+          selectedMaterials: _selectedMaterials,
+          maxMaterials: _maxMaterials,
+          onMaterialsUpdated: (materials) {
+            setState(() {
+              _selectedMaterials.clear();
+              _selectedMaterials.addAll(materials);
+            });
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,25 +174,32 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   Widget _buildPortraitLayout(BuildContext context) {
-    double _screenHeight = MediaQuery.sizeOf(context).height;
+    double screenHeight = MediaQuery.sizeOf(context).height;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Top menu
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [_buildMenuButton()],
+          children: [
+            FocusMenuButton(
+              onSettingsTap: _showSettingsDialog,
+            ),
+          ],
         ),
 
-        SizedBox(height: _screenHeight * 0.05),
+        SizedBox(height: screenHeight * 0.05),
 
         // Course tag
-        _buildCourseTag(),
+        CourseTag(
+          course: widget.course,
+          selectedCount: _selectedMaterials.length,
+          onTap: _showMaterialSelectionDialog,
+        ),
 
-        SizedBox(height: _screenHeight * 0.05),
+        SizedBox(height: screenHeight * 0.05),
 
-        // Timer (expanded to take available space)
-
+        // Timer and controls
         Column(
           children: [
             TimerDisplay(
@@ -157,10 +207,16 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               timeRemaining: timeRemaining,
             ),
 
-            SizedBox(height: _screenHeight * 0.05),
+            SizedBox(height: screenHeight * 0.05),
 
             // Controls
-            _buildControlButton(),
+            SLCButton(
+              onPressed: _toggleTimer,
+              backgroundColor: SLCColors.primaryColor,
+              foregroundColor: Colors.white,
+              text: _isPlaying ? "Pause" : "Start",
+              width: 280,
+            ),
           ],
         ),
       ],
@@ -187,79 +243,30 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: [_buildMenuButton()],
+                children: [
+                  FocusMenuButton(
+                    onSettingsTap: _showSettingsDialog,
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
-              _buildCourseTag(),
+              CourseTag(
+                course: widget.course,
+                selectedCount: _selectedMaterials.length,
+                onTap: _showMaterialSelectionDialog,
+              ),
               const SizedBox(height: 40),
-              _buildControlButton(),
+              SLCButton(
+                onPressed: _toggleTimer,
+                backgroundColor: SLCColors.primaryColor,
+                foregroundColor: Colors.white,
+                text: _isPlaying ? "Pause" : "Start",
+                width: 280,
+              ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMenuButton() {
-    return PullDownButton(
-      itemBuilder: (context) => [
-        PullDownMenuItem(
-          onTap: () => () {},
-          title: "Notes",
-          icon: Icons.note_alt,
-        ),
-        PullDownMenuItem(
-          onTap: () => () {},
-          title: "AI Assistant",
-          icon: Icons.chat,
-        ),
-        PullDownMenuItem(
-          onTap: () => _showSettingsDialog(),
-          title: "Settings",
-          icon: Icons.settings,
-        ),
-      ],
-      buttonBuilder: (context, showMenu) => GestureDetector(
-        onTap: showMenu,
-        child: Icon(
-          Icons.more_vert,
-          color: Theme.of(context).brightness == Brightness.light
-              ? Colors.black
-              : Colors.white,
-          size: 30,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCourseTag() {
-    return Container(
-      padding: EdgeInsets.all(8),
-      width: 120,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.circle,
-            color: SLCColors.navyBlue,
-          ),
-          SizedBox(width: 8),
-          Text("SWE 387", style: Theme.of(context).textTheme.titleSmall),
-        ],
-      ),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(25)),
-          color: SLCColors.navyBlue.withValues(alpha: 0.3)),
-    );
-  }
-
-  Widget _buildControlButton() {
-    return SLCButton(
-      onPressed: _toggleTimer,
-      backgroundColor: SLCColors.primaryColor,
-      foregroundColor: Colors.white,
-      text: _isPlaying ? "Pause" : "Start",
-      width: 280,
     );
   }
 }

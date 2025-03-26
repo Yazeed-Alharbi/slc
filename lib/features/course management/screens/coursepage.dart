@@ -201,7 +201,7 @@ class _CourseScreenState extends State<CourseScreen>
                                 ],
                               ),
                               SLCButton(
-                                onPressed: _startFocusSession,
+                                onPressed: () => _startFocusSession(course),
                                 width: MediaQuery.of(context).size.width * 0.2,
                                 text: "Start Focus Session",
                                 backgroundColor: Colors.white,
@@ -294,27 +294,15 @@ class _CourseScreenState extends State<CourseScreen>
     );
   }
 
-  void _startFocusSession() async {
-    // // Create a new focus session and link it to this course enrollment
-    // final focusSessionId = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // try {
-    //   await _courseRepository.addFocusSession(
-    //     enrollmentId: widget.enrollment.id,
-    //     focusSessionId: focusSessionId,
-    //   );
-
-    //   // Navigate to focus session screen or show timer
-    //   // ...
-    // } catch (e) {
-    //   // Show error
-    //   if (mounted) {
-    //     ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text("Failed to start focus session: $e")),
-    //     );
-    //   }
-    // }
-    Navigator.push(context, MaterialPageRoute(builder: (context) => FocusSessionScreen()));
+  void _startFocusSession(Course course) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FocusSessionScreen(
+          course: course,
+        ),
+      ),
+    );
   }
 
   void _handleMenuSelection(String value, Course course) {
