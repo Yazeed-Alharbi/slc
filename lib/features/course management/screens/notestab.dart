@@ -4,15 +4,16 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/course%20management/widgets/slcnotecard.dart';
 import 'package:slc/features/course%20management/screens/note_editor_page.dart';
-// Use import prefix for note_service.dart
-import 'package:slc/features/course%20management/screens/note_service.dart'
-    as service;
-// Import Note model separately
+import 'package:slc/features/course%20management/screens/note_service.dart' as service;
 import 'package:slc/models/note.dart';
+ // Add or use your course provider
 
 class NotesTab extends StatefulWidget {
+  final String courseId;
+  
   const NotesTab({
     Key? key,
+    required this.courseId,
   }) : super(key: key);
 
   @override
@@ -20,8 +21,13 @@ class NotesTab extends StatefulWidget {
 }
 
 class _NotesTabState extends State<NotesTab> {
-  // Use the prefix when creating an instance
-  final service.NoteService _noteService = service.NoteService();
+  late service.NoteService _noteService;
+  
+  @override
+  void initState() {
+    super.initState();
+    _noteService = service.NoteService(courseId: widget.courseId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +133,7 @@ class _NotesTabState extends State<NotesTab> {
                                   builder: (context) => NoteEditorPage(
                                     noteId: note.id,
                                     noteTitle: note.title,
+                                    courseId: widget.courseId,  // Pass the courseId here
                                   ),
                                 ),
                               );
@@ -179,6 +186,7 @@ class _NotesTabState extends State<NotesTab> {
                       builder: (context) => NoteEditorPage(
                         noteId: noteId,
                         noteTitle: titleController.text.trim(),
+                        courseId: widget.courseId,  // Pass the courseId here
                       ),
                     ),
                   );
