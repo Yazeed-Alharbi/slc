@@ -6,21 +6,45 @@ class NoteService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Current course ID
+  String? _currentCourseId;
+
+  // Constructor that takes a courseId
+  NoteService({String? courseId}) {
+    _currentCourseId = courseId;
+  }
+
+  // Method to set current course ID
+  void setCourseId(String courseId) {
+    _currentCourseId = courseId;
+  }
+
   // Get the user ID
   String? _getUserId() {
     return _auth.currentUser?.uid;
   }
 
-  // Get reference to student's notes collection
+  // Get reference to student's notes collection for a specific course
   CollectionReference _getNotesCollection() {
     final userId = _getUserId();
     if (userId == null) {
       throw Exception('User not authenticated');
     }
-    return _firestore.collection('students').doc(userId).collection('notes');
+
+    if (_currentCourseId == null) {
+      throw Exception('Course ID not set');
+    }
+
+    // Path: students/{studentId}/courses/{courseId}/notes
+    return _firestore
+        .collection('students')
+        .doc(userId)
+        .collection('courses')
+        .doc(_currentCourseId)
+        .collection('notes');
   }
 
-  // Get all notes for current student
+  // Get all notes for current student and course
   Stream<List<Note>> getNotes() {
     try {
       final userId = _getUserId();
@@ -28,7 +52,13 @@ class NoteService {
         return Stream.value([]);
       }
 
-      print('Getting notes for student ID: $userId');
+      if (_currentCourseId == null) {
+        print('Warning: Course ID not set when getting notes');
+        return Stream.value([]);
+      }
+
+      print(
+          'Getting notes for student ID: $userId, course ID: $_currentCourseId');
 
       return _getNotesCollection()
           .orderBy('lastModified', descending: true)
@@ -66,7 +96,7 @@ class NoteService {
   // Get a specific note
   Future<Note?> getNote(String noteId) async {
     try {
-      print('Getting note with ID: $noteId');
+      print('Getting note with ID: $noteId for course: $_currentCourseId');
       final doc = await _getNotesCollection().doc(noteId).get();
 
       if (doc.exists) {
@@ -99,7 +129,7 @@ class NoteService {
     }
   }
 
-  // Create a new note
+  // Create a new note for the current course
   Future<String> createNote(String title) async {
     try {
       final userId = _getUserId();
@@ -107,26 +137,34 @@ class NoteService {
         throw Exception('User not authenticated');
       }
 
-      print('Creating note with title: $title for student: $userId');
-
-      // First check if the student document exists
-      final studentDocRef = _firestore.collection('students').doc(userId);
-      final studentDoc = await studentDocRef.get();
-
-      // If student document doesn't exist, create it
-      if (!studentDoc.exists) {
-        await studentDocRef.set({
-          'lastActive': Timestamp.now(),
-        });
-        print('Created new student document');
+      if (_currentCourseId == null) {
+        throw Exception('Course ID not set');
       }
 
-      // Now create the note in the student's notes subcollection
+      print(
+          'Creating note with title: $title for student: $userId, course: $_currentCourseId');
+
+      // Make sure parent documents exist
+      final studentRef = _firestore.collection('students').doc(userId);
+      final courseRef = studentRef.collection('courses').doc(_currentCourseId);
+
+      // Check if the course document exists
+      final courseDoc = await courseRef.get();
+      if (!courseDoc.exists) {
+        // Create course document if it doesn't exist
+        await courseRef.set({
+          'lastActive': Timestamp.now(),
+        });
+        print('Created course document for course ID: $_currentCourseId');
+      }
+
+      // Now create the note in the course's notes subcollection
       final docRef = _getNotesCollection().doc();
 
       // Set the data
       await docRef.set({
         'title': title,
+        'courseId': _currentCourseId,
         'createdAt': Timestamp.now(),
         'lastModified': Timestamp.now(),
         'pages': [
@@ -149,7 +187,11 @@ class NoteService {
   Future<void> updateNotePages(
       String noteId, List<Map<String, dynamic>> pages) async {
     try {
-      print('Updating note pages for ID: $noteId');
+      if (_currentCourseId == null) {
+        throw Exception('Course ID not set');
+      }
+
+      print('Updating note pages for ID: $noteId in course: $_currentCourseId');
       print('Number of pages: ${pages.length}');
 
       final docRef = _getNotesCollection().doc(noteId);
@@ -168,6 +210,7 @@ class NoteService {
         // Create new document if it doesn't exist
         await docRef.set({
           'title': 'Untitled', // Default title
+          'courseId': _currentCourseId,
           'createdAt': Timestamp.now(),
           'lastModified': Timestamp.now(),
           'pages': pages,
