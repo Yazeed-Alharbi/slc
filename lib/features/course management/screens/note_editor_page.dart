@@ -10,11 +10,13 @@ import 'package:slc/features/course%20management/screens/note_service.dart';
 class NoteEditorPage extends StatefulWidget {
   final String noteId;
   final String noteTitle;
+  final String courseId; // Add courseId parameter
 
   const NoteEditorPage({
     Key? key,
     required this.noteId,
     required this.noteTitle,
+    required this.courseId, // Add this parameter
   }) : super(key: key);
 
   @override
@@ -34,7 +36,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   late AnimationController _drawerAnimController;
   late Animation<double> _drawerAnimation;
 
-  final NoteService _noteService = NoteService(); // Add note service
+  late NoteService _noteService; // Update initialization of NoteService
 
   @override
   void initState() {
@@ -52,6 +54,9 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       parent: _drawerAnimController,
       curve: Curves.easeInOut,
     );
+
+    _noteService = NoteService(
+        courseId: widget.courseId); // Initialize NoteService with courseId
 
     // Load note data from Firestore instead of adding first page directly
     _loadNoteData();
@@ -229,20 +234,21 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
           // Back button in the standard leading position
           // In the leading back button in build method:
-leading: IconButton(
-  icon: const Icon(Icons.arrow_back),
-  onPressed: () async {
-    await _saveCurrentPage();
-    try {
-      await _saveToFirestore();
-    } catch (e) {
-      print('Error saving before navigation: $e');
-    }
-    if (mounted) { // Add this check
-      Navigator.of(context).pop();
-    }
-  },
-),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              await _saveCurrentPage();
+              try {
+                await _saveToFirestore();
+              } catch (e) {
+                print('Error saving before navigation: $e');
+              }
+              if (mounted) {
+                // Add this check
+                Navigator.of(context).pop();
+              }
+            },
+          ),
           actions: [
             // Page indicator
             Center(
