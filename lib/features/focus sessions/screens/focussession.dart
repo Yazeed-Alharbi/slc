@@ -3,6 +3,9 @@ import 'package:pull_down_button/pull_down_button.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
+import 'package:slc/common/widgets/slcflushbar.dart';
+import 'package:slc/features/course%20management/screens/coursepage.dart';
+import 'package:slc/features/focus%20sessions/screens/quiz.dart';
 import 'package:slc/features/focus%20sessions/widgets/course_tag.dart';
 import 'package:slc/features/focus%20sessions/widgets/focus_menu_button.dart';
 import 'package:slc/features/focus%20sessions/widgets/material_selection_dialog.dart';
@@ -10,14 +13,14 @@ import 'package:slc/features/focus%20sessions/widgets/settings_dialog.dart';
 import 'package:slc/features/focus%20sessions/widgets/timer_display.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/Material.dart';
+import 'package:slc/models/course_enrollment.dart';
 
 class FocusSessionScreen extends StatefulWidget {
   final Course course;
+  final CourseEnrollment enrollment;
 
-  const FocusSessionScreen({
-    super.key,
-    required this.course,
-  });
+  const FocusSessionScreen(
+      {super.key, required this.course, required this.enrollment});
 
   @override
   State<FocusSessionScreen> createState() => _FocusSessionScreenState();
@@ -28,10 +31,13 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   late AnimationController _controller;
   bool _controllerDisposed = false; // Track disposal
 
-  // For testing, define durations in seconds.
-  int _pomodoroFocusSeconds = 1;
-  int _shortBreakSeconds = 1;
-  int _longBreakSeconds = 1;
+  // Replace testing values with defaults.
+  int _pomodoroFocusSeconds = 25 * 60; // 25 minutes of focus
+  int _shortBreakSeconds = 5 * 60; // 5 minutes short break
+  int _longBreakSeconds = 15 * 60; // 15 minutes long break
+  // _longBreakInterval can remain at 4 (or your preferred value)
+  int _totalPomodoros = 4;
+
   int _duration = 5;
   bool _isPlaying = false;
 
@@ -39,11 +45,13 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   int _completedPomodoros = 0;
   String _currentMode = "Focus Time";
   bool _isBreakTime = false;
-  int _longBreakInterval = 4;
 
   // Selected materials state...
   final List<CourseMaterial> _selectedMaterials = [];
   static const int _maxMaterials = 5;
+
+  // First, add a boolean to track if the session is completed
+  bool _sessionCompleted = false;
 
   @override
   void initState() {
@@ -79,12 +87,14 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     }
   }
 
+  // Update the _handleTimerCompleted method to mark the session as completed
   void _handleTimerCompleted() {
     setState(() {
       _isPlaying = false;
       if (!_isBreakTime) {
         _completedPomodoros++;
-        if (_completedPomodoros == _longBreakInterval) {
+        if (_completedPomodoros == _totalPomodoros) {
+          _sessionCompleted = true; // Mark session as completed
           _disposeController();
           _showQuizModal();
           return;
@@ -117,7 +127,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "You've completed 4 pomodoros!",
+                  "You've completed $_totalPomodoros pomodoros!",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
@@ -132,12 +142,40 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                   children: [
                     SLCButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  Scaffold(body: Center(child: Text("Quiz")))),
-                        );
+                        if (_sessionCompleted) {
+                          if (_selectedMaterials.isEmpty) {
+                            // No materials have been selected: prompt selection with callback.
+
+                            _showMaterialSelectionDialog(
+                              onSelectionComplete: () {
+                                // Once valid materials are selected, auto-navigate to quiz:
+                                Navigator.pop(
+                                    context); // Close the current quiz modal.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => QuizScreen(
+                                      course: widget.course,
+                                      selectedMaterials: _selectedMaterials,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          } else {
+                            // Materials already selected: navigate directly.
+                            Navigator.pop(context); // Close quiz modal.
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => QuizScreen(
+                                  course: widget.course,
+                                  selectedMaterials: _selectedMaterials,
+                                ),
+                              ),
+                            );
+                          }
+                        }
                       },
                       backgroundColor: SLCColors.primaryColor,
                       foregroundColor: Colors.white,
@@ -145,8 +183,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                     ),
                     SLCButton(
                       onPressed: () {
-                        Navigator.pop(context); // close modal
-                        Navigator.pop(context); // close focus session screen
+                        Navigator.pop(context);
+                        Navigator.pop(context);
                       },
                       backgroundColor: Colors.transparent,
                       foregroundColor: SLCColors.primaryColor,
@@ -198,47 +236,53 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   void _showSettingsDialog() {
-    // showModalBottomSheet(
-    //   context: context,
-    //   isScrollControlled: true,
-    //   shape: const RoundedRectangleBorder(
-    //     borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    //   ),
-    //   builder: (BuildContext context) {
-    //     return SettingsDialog(
-    //       pomodoroMinutes: _pomodoroMinutes,
-    //       shortBreakMinutes: _shortBreakMinutes,
-    //       longBreakMinutes: _longBreakMinutes,
-    //       longBreakInterval: _longBreakInterval,
-    //       onSave: (pomodoro, shortBreak, longBreak, interval) {
-    //         setState(() {
-    //           _pomodoroMinutes = pomodoro;
-    //           _shortBreakMinutes = shortBreak;
-    //           _longBreakMinutes = longBreak;
-    //           _longBreakInterval = interval;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SettingsDialog(
+          pomodoroMinutes: (_pomodoroFocusSeconds / 60).round(),
+          shortBreakMinutes: (_shortBreakSeconds / 60).round(),
+          longBreakMinutes: (_longBreakSeconds / 60).round(),
+          longBreakInterval: _totalPomodoros,
+          onSave: (pomodoro, shortBreak, longBreak, interval) {
+            setState(() {
+              // Convert minutes to seconds.
+              _pomodoroFocusSeconds = pomodoro * 60;
+              _shortBreakSeconds = shortBreak * 60;
+              _longBreakSeconds = longBreak * 60;
+              _totalPomodoros = interval;
 
-    //           // Update duration and reset the timer
-    //           _duration = _pomodoroMinutes * 60;
-    //           _controller.dispose();
-    //           _controller = AnimationController(
-    //             vsync: this,
-    //             duration: Duration(seconds: _duration),
-    //           );
-
-    //           _isPlaying = false;
-    //         });
-    //       },
-    //     );
-    //   },
-    // );
+              // Update duration based on current mode.
+              if (_currentMode == "Focus Time") {
+                _duration = _pomodoroFocusSeconds;
+              } else if (_currentMode == "Short Break") {
+                _duration = _shortBreakSeconds;
+              } else if (_currentMode == "Long Break") {
+                _duration = _longBreakSeconds;
+              }
+              _disposeController();
+              _setupController();
+              _isPlaying = false;
+            });
+            Navigator.pop(context);
+          },
+        );
+      },
+    );
   }
 
-  void _showMaterialSelectionDialog() {
+  // Fix the _showMaterialSelectionDialog method
+  void _showMaterialSelectionDialog({Function()? onSelectionComplete}) {
     if (widget.course.materials.isEmpty) {
       // Show message if no materials are available
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No materials available for this course')),
-      );
+      SLCFlushbar.show(
+          context: context,
+          message: "No materials are available for this course.",
+          type: FlushbarType.error);
       return;
     }
 
@@ -258,6 +302,17 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               _selectedMaterials.clear();
               _selectedMaterials.addAll(materials);
             });
+
+            // This block is only executed when the dialog was launched from the quiz flow.
+            if (onSelectionComplete != null) {
+              if (materials.isNotEmpty) {
+                // Materials were selected: auto-close the dialog and trigger callback.
+                Navigator.of(context).pop();
+                // Use a microtask so that the pop is fully processed before navigating.
+                Future.microtask(() => onSelectionComplete());
+              }
+            }
+            // Otherwise (normal selection outside quiz flow) simply update _selectedMaterials without auto-closing.
           },
         );
       },
@@ -341,11 +396,15 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 SizedBox(
                   width: 220,
                   child: SLCButton(
-                    onPressed: _toggleTimer,
+                    onPressed: _sessionCompleted
+                        ? null
+                        : _toggleTimer, // Disable if completed
                     backgroundColor:
                         _isBreakTime ? SLCColors.green : SLCColors.primaryColor,
                     foregroundColor: Colors.white,
-                    text: _isPlaying ? "Pause" : "Start",
+                    text: _isPlaying
+                        ? "Pause"
+                        : (_sessionCompleted ? "Completed" : "Start"),
                   ),
                 ),
               ],
@@ -391,11 +450,15 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               ),
               const SizedBox(height: 40),
               SLCButton(
-                onPressed: _toggleTimer,
+                onPressed: _sessionCompleted
+                    ? null
+                    : _toggleTimer, // Disable if completed
                 backgroundColor:
                     _isBreakTime ? SLCColors.green : SLCColors.primaryColor,
                 foregroundColor: Colors.white,
-                text: _isPlaying ? "Pause" : "Start",
+                text: _isPlaying
+                    ? "Pause"
+                    : (_sessionCompleted ? "Completed" : "Start"),
                 width: 280,
               ),
             ],

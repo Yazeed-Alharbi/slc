@@ -201,7 +201,7 @@ class _CourseScreenState extends State<CourseScreen>
                                 ],
                               ),
                               SLCButton(
-                                onPressed: () => _startFocusSession(course),
+                                onPressed: () => _startFocusSession(course, widget.enrollment),
                                 width: MediaQuery.of(context).size.width * 0.2,
                                 text: "Start Focus Session",
                                 backgroundColor: Colors.white,
@@ -294,12 +294,13 @@ class _CourseScreenState extends State<CourseScreen>
     );
   }
 
-  void _startFocusSession(Course course) {
+  void _startFocusSession(Course course, CourseEnrollment enrollment) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => FocusSessionScreen(
           course: course,
+          enrollment: enrollment,
         ),
       ),
     );

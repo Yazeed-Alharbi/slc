@@ -3,7 +3,7 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 
-class SettingsDialog extends StatelessWidget {
+class SettingsDialog extends StatefulWidget {
   final int pomodoroMinutes;
   final int shortBreakMinutes;
   final int longBreakMinutes;
@@ -20,17 +20,39 @@ class SettingsDialog extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    // Create TextEditingControllers with initial values
-    final pomodoroController =
-        TextEditingController(text: pomodoroMinutes.toString());
-    final shortBreakController =
-        TextEditingController(text: shortBreakMinutes.toString());
-    final longBreakController =
-        TextEditingController(text: longBreakMinutes.toString());
-    final longBreakIntervalController =
-        TextEditingController(text: longBreakInterval.toString());
+  _SettingsDialogState createState() => _SettingsDialogState();
+}
 
+class _SettingsDialogState extends State<SettingsDialog> {
+  late TextEditingController _pomodoroController;
+  late TextEditingController _shortBreakController;
+  late TextEditingController _longBreakController;
+  late TextEditingController _intervalController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pomodoroController =
+        TextEditingController(text: widget.pomodoroMinutes.toString());
+    _shortBreakController =
+        TextEditingController(text: widget.shortBreakMinutes.toString());
+    _longBreakController =
+        TextEditingController(text: widget.longBreakMinutes.toString());
+    _intervalController =
+        TextEditingController(text: widget.longBreakInterval.toString());
+  }
+
+  @override
+  void dispose() {
+    _pomodoroController.dispose();
+    _shortBreakController.dispose();
+    _longBreakController.dispose();
+    _intervalController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 30,
@@ -65,7 +87,7 @@ class SettingsDialog extends StatelessWidget {
 
             // Pomodoro Duration
             SLCTextField(
-              controller: pomodoroController,
+              controller: _pomodoroController,
               labelText: 'Pomodoro (minutes)',
               keyboardType: TextInputType.number,
             ),
@@ -73,7 +95,7 @@ class SettingsDialog extends StatelessWidget {
 
             // Short Break Duration
             SLCTextField(
-              controller: shortBreakController,
+              controller: _shortBreakController,
               labelText: 'Short Break (minutes)',
               keyboardType: TextInputType.number,
             ),
@@ -81,7 +103,7 @@ class SettingsDialog extends StatelessWidget {
 
             // Long Break Duration
             SLCTextField(
-              controller: longBreakController,
+              controller: _longBreakController,
               labelText: 'Long Break (minutes)',
               keyboardType: TextInputType.number,
             ),
@@ -89,8 +111,8 @@ class SettingsDialog extends StatelessWidget {
 
             // Long Break Interval
             SLCTextField(
-              controller: longBreakIntervalController,
-              labelText: 'Long Break Interval (pomodoros)',
+              controller: _intervalController,
+              labelText: 'Number of pomodoros',
               keyboardType: TextInputType.number,
             ),
 
@@ -115,21 +137,18 @@ class SettingsDialog extends StatelessWidget {
                   backgroundColor: SLCColors.primaryColor,
                   onPressed: () {
                     // Parse values
-                    final pomodoro = int.tryParse(pomodoroController.text) ??
-                        pomodoroMinutes;
+                    final pomodoro = int.tryParse(_pomodoroController.text) ??
+                        widget.pomodoroMinutes;
                     final shortBreak =
-                        int.tryParse(shortBreakController.text) ??
-                            shortBreakMinutes;
-                    final longBreak = int.tryParse(longBreakController.text) ??
-                        longBreakMinutes;
-                    final interval =
-                        int.tryParse(longBreakIntervalController.text) ??
-                            longBreakInterval;
+                        int.tryParse(_shortBreakController.text) ??
+                            widget.shortBreakMinutes;
+                    final longBreak = int.tryParse(_longBreakController.text) ??
+                        widget.longBreakMinutes;
+                    final interval = int.tryParse(_intervalController.text) ??
+                        widget.longBreakInterval;
 
                     // Call callback with new values
-                    onSave(pomodoro, shortBreak, longBreak, interval);
-
-                    Navigator.of(context).pop();
+                    widget.onSave(pomodoro, shortBreak, longBreak, interval);
                   },
                 ),
               ],
