@@ -15,6 +15,7 @@ import 'package:slc/repositories/event_repository.dart'; // Add this import
 import 'package:intl/intl.dart';
 import 'package:slc/features/course%20management/screens/courses.dart';
 import 'package:slc/features/course%20management/screens/coursepage.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import at the top
 
 class HomeScreen extends StatefulWidget {
   final Student student;
@@ -408,7 +409,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _logoutUser() {
+  void _logoutUser() async {
+    // Actually sign out from Firebase
+    await FirebaseAuth.instance.signOut();
+
+    // Then navigate to login screen
     Navigator.pushReplacementNamed(context, '/loginscreen');
   }
 

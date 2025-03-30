@@ -11,6 +11,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:slc/features/course%20management/screens/addcourse.dart';
 import 'package:slc/models/Student.dart';
 import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:slc/features/authentication/screens/auth_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +42,7 @@ class MyApp extends StatelessWidget {
             title: 'Flutter Demo',
             theme: lightMode,
             darkTheme: darkMode,
-            home: Onborading(),
+            home: AuthWrapper(),
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),

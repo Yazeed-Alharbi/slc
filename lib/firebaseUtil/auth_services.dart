@@ -123,6 +123,11 @@ class AuthenticationService {
     }
   }
 
+  // Get the current user (or null if not authenticated)
+  User? getCurrentUser() {
+    return FirebaseAuth.instance.currentUser;
+  }
+
   void _showAuthError(BuildContext context, String errorCode) {
     String message = "An unexpected authentication error occurred.";
     switch (errorCode) {
@@ -147,10 +152,16 @@ class AuthenticationService {
         break;
     }
 
+
     SLCFlushbar.show(
       context: context,
       message: message,
       type: FlushbarType.error,
     );
+  }
+
+  void _logoutUser(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacementNamed(context, '/loginscreen');
   }
 }
