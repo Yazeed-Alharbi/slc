@@ -4,13 +4,13 @@ import 'package:pull_down_button/pull_down_button.dart';
 class FocusMenuButton extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback? onNotesTap;
-  final VoidCallback? onAIAssistantTap;
+  final VoidCallback onAIAssistantTap;
 
   const FocusMenuButton({
     Key? key,
     required this.onSettingsTap,
     this.onNotesTap,
-    this.onAIAssistantTap,
+    required this.onAIAssistantTap,
   }) : super(key: key);
 
   @override
@@ -23,7 +23,7 @@ class FocusMenuButton extends StatelessWidget {
           icon: Icons.note_alt,
         ),
         PullDownMenuItem(
-          onTap: () => onAIAssistantTap?.call(),
+          onTap: () => onAIAssistantTap(),
           title: "AI Assistant",
           icon: Icons.chat,
         ),

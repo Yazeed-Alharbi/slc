@@ -5,6 +5,7 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/features/course%20management/screens/coursepage.dart';
+import 'package:slc/features/focus%20sessions/screens/aichat.dart';
 import 'package:slc/features/focus%20sessions/screens/quiz.dart';
 import 'package:slc/features/focus%20sessions/widgets/course_tag.dart';
 import 'package:slc/features/focus%20sessions/widgets/focus_menu_button.dart';
@@ -87,30 +88,73 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     }
   }
 
-  // Update the _handleTimerCompleted method to mark the session as completed
-  void _handleTimerCompleted() {
+  void _transitionToNextPhase({bool resetToFocus = false}) {
     setState(() {
-      _isPlaying = false;
-      if (!_isBreakTime) {
+      if (resetToFocus) {
+        _isBreakTime = false;
+        _currentMode = "Focus Time";
+        _duration = _pomodoroFocusSeconds;
+      } else if (!_isBreakTime) {
+        // Transitioning from focus to break
         _completedPomodoros++;
+
         if (_completedPomodoros == _totalPomodoros) {
-          _sessionCompleted = true; // Mark session as completed
+          _sessionCompleted = true;
           _disposeController();
           _showQuizModal();
           return;
         } else {
           _isBreakTime = true;
-          _duration = _shortBreakSeconds;
           _currentMode = "Short Break";
+          _duration = _shortBreakSeconds;
         }
       } else {
+        // Transitioning from break to focus
         _isBreakTime = false;
-        _duration = _pomodoroFocusSeconds;
         _currentMode = "Focus Time";
+        _duration = _pomodoroFocusSeconds;
       }
+
       _disposeController();
       _setupController();
+      _isPlaying = false;
     });
+  }
+
+  void _handleTimerCompleted() {
+    _transitionToNextPhase();
+  }
+
+  void _navigateToQuiz() {
+    if (_selectedMaterials.isEmpty) {
+      // No materials selected: prompt selection with callback
+      _showMaterialSelectionDialog(
+        onSelectionComplete: () {
+          Navigator.pop(context); // Close the quiz modal
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuizScreen(
+                course: widget.course,
+                selectedMaterials: _selectedMaterials,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Materials already selected: navigate directly
+      Navigator.pop(context); // Close quiz modal
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => QuizScreen(
+            course: widget.course,
+            selectedMaterials: _selectedMaterials,
+          ),
+        ),
+      );
+    }
   }
 
   void _showQuizModal() {
@@ -141,42 +185,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 Column(
                   children: [
                     SLCButton(
-                      onPressed: () {
-                        if (_sessionCompleted) {
-                          if (_selectedMaterials.isEmpty) {
-                            // No materials have been selected: prompt selection with callback.
-
-                            _showMaterialSelectionDialog(
-                              onSelectionComplete: () {
-                                // Once valid materials are selected, auto-navigate to quiz:
-                                Navigator.pop(
-                                    context); // Close the current quiz modal.
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => QuizScreen(
-                                      course: widget.course,
-                                      selectedMaterials: _selectedMaterials,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          } else {
-                            // Materials already selected: navigate directly.
-                            Navigator.pop(context); // Close quiz modal.
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => QuizScreen(
-                                  course: widget.course,
-                                  selectedMaterials: _selectedMaterials,
-                                ),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                      onPressed: _sessionCompleted ? _navigateToQuiz : null,
                       backgroundColor: SLCColors.primaryColor,
                       foregroundColor: Colors.white,
                       text: "Take the Quiz",
@@ -255,19 +264,11 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               _shortBreakSeconds = shortBreak * 60;
               _longBreakSeconds = longBreak * 60;
               _totalPomodoros = interval;
-
-              // Update duration based on current mode.
-              if (_currentMode == "Focus Time") {
-                _duration = _pomodoroFocusSeconds;
-              } else if (_currentMode == "Short Break") {
-                _duration = _shortBreakSeconds;
-              } else if (_currentMode == "Long Break") {
-                _duration = _longBreakSeconds;
-              }
-              _disposeController();
-              _setupController();
-              _isPlaying = false;
             });
+
+            // Use the transition helper with resetToFocus=true to properly
+            // reset the timer with the new settings
+            _transitionToNextPhase(resetToFocus: true);
             Navigator.pop(context);
           },
         );
@@ -319,6 +320,13 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     );
   }
 
+  void _navigateToAiChat() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AiChatScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -347,6 +355,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
           children: [
             FocusMenuButton(
               onSettingsTap: _showSettingsDialog,
+              onAIAssistantTap: _navigateToAiChat,
             ),
           ],
         ),
@@ -438,8 +447,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   FocusMenuButton(
-                    onSettingsTap: _showSettingsDialog,
-                  ),
+                      onSettingsTap: _showSettingsDialog,
+                      onAIAssistantTap: _navigateToAiChat),
                 ],
               ),
               const SizedBox(height: 24),
