@@ -11,6 +11,7 @@ import 'package:slc/features/course%20management/screens/eventstab.dart';
 import 'package:slc/features/course%20management/screens/filestab.dart';
 import 'package:slc/features/course%20management/widgets/courseform.dart';
 import 'package:slc/features/focus%20sessions/screens/focussession.dart';
+import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/repositories/course_repository.dart';
@@ -201,14 +202,15 @@ class _CourseScreenState extends State<CourseScreen>
                                 ],
                               ),
                               SLCButton(
-                                onPressed: () => _startFocusSession(course, widget.enrollment),
+                                onPressed: () => _startFocusSession(
+                                    course, widget.enrollment),
                                 width: MediaQuery.of(context).size.width * 0.2,
-                                text: "Start Focus Session",
+                                text: _getSessionButtonText(course.id),
                                 backgroundColor: Colors.white,
                                 foregroundColor:
                                     SLCColors.getCourseColor(course.color),
                                 icon: Icon(
-                                  Icons.play_circle,
+                                  _getFocusSessionIcon(course.id),
                                   color: SLCColors.getCourseColor(course.color),
                                   size: 28,
                                 ),
@@ -295,15 +297,60 @@ class _CourseScreenState extends State<CourseScreen>
   }
 
   void _startFocusSession(Course course, CourseEnrollment enrollment) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FocusSessionScreen(
-          course: course,
-          enrollment: enrollment,
+    // Use a post-frame callback to ensure this happens AFTER the current build
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final FocusSessionManager sessionManager = FocusSessionManager();
+
+      // Check if there's already an active session for this course
+      if (sessionManager.isSessionActive &&
+          sessionManager.course.id == course.id) {
+        // Same course session exists, just navigate to it
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FocusSessionScreen(
+              course: course,
+              enrollment: enrollment,
+            ),
+          ),
+        );
+        return;
+      }
+
+      // If there's an active session for a different course, show confirmation
+      if (sessionManager.isSessionActive) {
+        // Ask for confirmation before ending the active session
+        final bool shouldEndSession = await NativeAlertDialog.show(
+          context: context,
+          title: "End Active Session?",
+          content:
+              "You have an active focus session for ${sessionManager.course.code}. " +
+                  "Starting a new session will end the current one. Continue?",
+          confirmText: "End & Start New",
+          cancelText: "Cancel",
+          confirmTextColor: Colors.red,
+        );
+
+        if (!shouldEndSession) {
+          // User canceled, don't proceed
+          return;
+        }
+      }
+
+      // End any existing session
+      sessionManager.endSession();
+
+      // Now navigate to the focus session screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FocusSessionScreen(
+            course: course,
+            enrollment: enrollment,
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   void _handleMenuSelection(String value, Course course) {
@@ -398,5 +445,23 @@ class _CourseScreenState extends State<CourseScreen>
     int totalCount = course.materials.length;
 
     return (completedCount / totalCount * 100).clamp(0, 100);
+  }
+
+  String _getSessionButtonText(String courseId) {
+    final sessionManager = FocusSessionManager();
+    if (sessionManager.isSessionActive &&
+        sessionManager.course.id == courseId) {
+      return "Go to Focus Session";
+    }
+    return "Start Focus Session";
+  }
+
+  IconData _getFocusSessionIcon(String courseId) {
+    final sessionManager = FocusSessionManager();
+    if (sessionManager.isSessionActive &&
+        sessionManager.course.id == courseId) {
+      return Icons.arrow_forward;
+    }
+    return Icons.play_circle;
   }
 }

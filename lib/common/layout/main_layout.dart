@@ -4,6 +4,7 @@ import 'package:slc/features/calendar/screens/calendar.dart';
 import 'package:slc/features/course%20management/screens/courses.dart';
 import 'package:slc/features/home/screens/home.dart';
 import 'package:slc/models/Student.dart';
+import 'package:slc/main.dart'; // Import to access the global homeScreenKey
 
 class MainLayout extends StatefulWidget {
   final Student student;
@@ -23,12 +24,14 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> widgetOptions = <Widget>[
-      HomeScreen(student: widget.student),
+    // Simple list without conditional logic
+    final List<Widget> widgetOptions = [
+      HomeScreen(key: homeScreenKey, student: widget.student),
       CoursesScreen(student: widget.student),
       Center(child: Text('Page 3')),
       CalendarScreen(),
     ];
+
     return Scaffold(
       body: widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: SLCBottomNavBar(

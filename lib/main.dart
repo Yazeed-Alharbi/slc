@@ -14,12 +14,48 @@ import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:slc/features/authentication/screens/auth_wrapper.dart';
 
+// Create a session manager class to handle session checks
+class SessionManager {
+  static void checkForActiveSession() {
+    // Implement session checking logic here
+    final currentUser = FirebaseAuth.instance.currentUser;
+    // Add your session validation logic here
+  }
+}
+
+// Define a global key to access the home screen state
+final GlobalKey<State> homeScreenKey = GlobalKey<State>();
+
+// Navigation observer to detect screen changes - fix the implementation
+class AppNavigationObserver extends NavigatorObserver {
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    super.didPop(route, previousRoute);
+
+    // When returning to any screen, check if the HomeScreen is visible
+    // Use a microtask to ensure it runs AFTER the current build phase completes
+    Future.microtask(() {
+      if (homeScreenKey.currentState != null) {
+        // Use a try-catch to prevent errors
+        try {
+          final state = homeScreenKey.currentState as dynamic;
+          if (state.checkForActiveSession != null) {
+            state.checkForActiveSession();
+          }
+        } catch (e) {
+          print('Error checking active session: $e');
+        }
+      }
+    });
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await dotenv.load(fileName: ".env");
+
   runApp(const MyApp());
 }
 
@@ -43,6 +79,7 @@ class MyApp extends StatelessWidget {
             theme: lightMode,
             darkTheme: darkMode,
             home: AuthWrapper(),
+            navigatorObservers: [AppNavigationObserver()],
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),
