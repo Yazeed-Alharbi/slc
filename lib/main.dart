@@ -52,6 +52,10 @@ class AppNavigationObserver extends NavigatorObserver {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize dotenv BEFORE any code that uses it
+  await dotenv.load(fileName: ".env");
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
