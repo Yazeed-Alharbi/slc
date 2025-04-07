@@ -222,13 +222,20 @@ class QuizResultsScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Bottom action buttons
+              // Replace the SLCButton onPressed section with this:
+
+// Bottom action buttons
               SizedBox(
                 width: double.infinity,
                 child: SLCButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    // This will navigate back to the home screen, regardless of how user arrived
+                    Navigator.of(context).popUntil((route) {
+                      // Either pop until we reach the home route or until we reach the root
+                      return route.isFirst;
+                    });
                   },
-                  text: "Return to Course",
+                  text: "Done",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,
                 ),

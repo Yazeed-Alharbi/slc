@@ -13,6 +13,7 @@ import 'package:slc/models/Student.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:slc/features/authentication/screens/auth_wrapper.dart';
+import 'package:slc/services/notifications_service.dart';
 
 // Create a session manager class to handle session checks
 class SessionManager {
@@ -59,6 +60,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize notifications
+  await NotificationsService().initialize();
 
   runApp(const MyApp());
 }

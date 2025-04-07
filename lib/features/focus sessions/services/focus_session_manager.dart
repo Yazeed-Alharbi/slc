@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/Material.dart';
+import 'package:slc/services/notifications_service.dart';
 
 class FocusSessionManager with ChangeNotifier {
   // Singleton instance
@@ -50,8 +51,7 @@ class FocusSessionManager with ChangeNotifier {
 
   // Getters
   bool get isSessionCreated => _isSessionCreated;
-  bool get isSessionActive =>
-      _isSessionActive && _isPlaying; // Only consider active if playing
+  bool get isSessionActive => _isSessionActive; // Remove _isPlaying condition
   Course get course => _course!;
   CourseEnrollment get enrollment => _enrollment!;
   List<CourseMaterial> get selectedMaterials => _selectedMaterials;
@@ -199,14 +199,18 @@ class FocusSessionManager with ChangeNotifier {
     notifyListeners();
   }
 
-  // Pause timer
+  // Restore the improved pause logic with proper order
   void pauseTimer() {
-    if (!_isPlaying || !_isSessionActive) return;
+    if (!_isPlaying) return;
 
-    _isPlaying = false;
-    _lastPauseTime = DateTime.now();
+    // Cancel timer BEFORE changing state flags
     _timer?.cancel();
     _timer = null;
+
+    // Then update state flags
+    _isPlaying = false;
+    // Important: Don't set _isSessionActive to false here
+    _lastPauseTime = DateTime.now();
 
     _saveSessionState();
     notifyListeners();
@@ -236,13 +240,29 @@ class FocusSessionManager with ChangeNotifier {
       _completedPomodoros++;
 
       if (_completedPomodoros >= _totalPomodoros) {
+        // Last pomodoro completed: mark session as completed and send quiz notification
         _sessionCompleted = true;
-        endSession();
+
+        if (_course != null) {
+          NotificationsService().showPomodoroCompletedNotification(
+            courseName: _course!.code,
+            totalPomodoros: _totalPomodoros,
+          );
+        }
+
+        _saveSessionState();
+        notifyListeners();
         return;
       } else {
+        // Not the last pomodoro—switch to break mode and send break notification
         _isBreakTime = true;
         _currentMode = "Short Break";
         _currentDuration = _shortBreakSeconds;
+
+        NotificationsService().showBreakNotification(
+          breakType: "Short Break",
+          breakDuration: _shortBreakSeconds,
+        );
       }
     } else {
       // Transitioning from break to focus

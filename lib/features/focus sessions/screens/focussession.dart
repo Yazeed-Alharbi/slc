@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pull_down_button/pull_down_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
+import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/features/course%20management/screens/coursepage.dart';
@@ -16,6 +18,7 @@ import 'package:slc/features/focus%20sessions/widgets/timer_display.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/Material.dart';
 import 'package:slc/models/course_enrollment.dart';
+import 'package:slc/services/notifications_service.dart';
 
 class FocusSessionScreen extends StatefulWidget {
   final Course course;
@@ -33,6 +36,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   late AnimationController _controller;
   final FocusSessionManager _sessionManager = FocusSessionManager();
   bool _initializedFromManager = false;
+  bool _quizModalShown = false;
 
   // Keep list of selected materials in local state for UI
   List<CourseMaterial> _selectedMaterials = [];
@@ -41,16 +45,31 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   void initState() {
     super.initState();
 
-    // Setup the animation controller for visual effects only
+    // Request notification permissions
+    _requestNotificationPermissions();
+
+    // Initialize animation controller
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: _sessionManager.pomodoroFocusSeconds),
+      duration: Duration(seconds: _sessionManager.currentDuration),
     );
 
-    _initializeSession();
-
-    // Listen to manager changes to update UI
+    // Subscribe to session manager updates
     _sessionManager.addListener(_updateFromManager);
+
+    // Call this method to initialize the session
+    _initializeSession();
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    // Store a flag to only show this once
+    final prefs = await SharedPreferences.getInstance();
+    bool hasRequestedPermissions = prefs.getBool('notification_permissions_requested') ?? false;
+    
+    if (!hasRequestedPermissions) {
+      await NotificationsService().requestNotificationPermissions();
+      await prefs.setBool('notification_permissions_requested', true);
+    }
   }
 
   void _initializeSession() {
@@ -61,6 +80,19 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
       _initializedFromManager = true;
       _selectedMaterials = _sessionManager.selectedMaterials;
       _updateControllerFromManager();
+
+      // Check if session is already completed and show quiz modal if needed
+      if (_sessionManager.sessionCompleted && !_quizModalShown) {
+        // Set flag to prevent duplicate modals
+        _quizModalShown = true;
+
+        // Delay showing the modal until after the build is complete
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showQuizModal();
+          }
+        });
+      }
     } else {
       // Start new session
       _sessionManager.startSession(
@@ -79,15 +111,21 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     }
 
     setState(() {
+      // Update state variables from manager
       _selectedMaterials = _sessionManager.selectedMaterials;
-      _updateControllerFromManager();
-
-      // Timer display updates via the controller
     });
 
-    // Handle session completion
-    if (_sessionManager.sessionCompleted) {
-      _showQuizModal();
+    // Handle session completion - show quiz modal when session is marked as completed
+    if (_sessionManager.sessionCompleted && !_quizModalShown) {
+      // Set flag to prevent duplicate modals
+      _quizModalShown = true;
+
+      // Use a post-frame callback to avoid showing during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _showQuizModal();
+        }
+      });
     }
   }
 
@@ -267,15 +305,23 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 Column(
                   children: [
                     SLCButton(
-                      onPressed: _navigateToQuiz,
+                      onPressed: () {
+                        // End session before navigating to quiz
+                        _sessionManager.endSession();
+                        _navigateToQuiz();
+                      },
                       backgroundColor: SLCColors.primaryColor,
                       foregroundColor: Colors.white,
                       text: "Take the Quiz",
                     ),
                     SLCButton(
                       onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.pop(context);
+                        // End session when skipping quiz
+                        _sessionManager.endSession();
+                        Navigator.of(context).popUntil((route) {
+                          // Either pop until we reach the home route or until we reach the root
+                          return route.isFirst;
+                        });
                       },
                       backgroundColor: Colors.transparent,
                       foregroundColor: SLCColors.primaryColor,
@@ -288,6 +334,30 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
             ),
           ),
         );
+      },
+    );
+  }
+
+  // Handle back button press
+  void _handleBackButtonPress() {
+    // If session is active, show confirmation dialog
+
+    // Just go back if session is paused - it will still be shown in home
+    Navigator.pop(context);
+  }
+
+  // Show confirmation dialog for ending session
+  void _showEndSessionConfirmation() {
+    NativeAlertDialog.show(
+      context: context,
+      title: "End Session",
+      content: "Are you sure you want to end this session?",
+      confirmText: "End Session",
+      confirmTextColor: Colors.red,
+      cancelText: "Cancel",
+      onConfirm: () {
+        _sessionManager.endSession();
+        Navigator.pop(context);
       },
     );
   }
@@ -314,10 +384,16 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Top menu
+        // Top menu with back button
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // Back button
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => _handleBackButtonPress(),
+            ),
+
             FocusMenuButton(
               onSettingsTap: _showSettingsDialog,
               onAIAssistantTap: _navigateToAiChat,
@@ -340,8 +416,6 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         Column(
           children: [
             TimerDisplay(
-              key: ValueKey(_controller),
-              controller: _controller,
               mode: _sessionManager.currentMode,
               isBreak: _sessionManager.isBreakTime,
             ),
@@ -356,7 +430,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: Text(
-                    "Session: ${_sessionManager.completedPomodoros}",
+                    "Session: ${_sessionManager.completedPomodoros}/${_sessionManager.totalPomodoros}",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -384,10 +458,22 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 ),
               ],
             ),
+
+            // End Session button - only visible when session is active
+            if (_sessionManager.isSessionActive) ...[
+              SizedBox(height: 16),
+              SizedBox(
+                width: 220,
+                child: SLCButton(
+                  onPressed: _showEndSessionConfirmation,
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.red,
+                  text: "End Session",
+                ),
+              ),
+            ],
           ],
         ),
-
-        // Session status indicator
       ],
     );
   }
@@ -398,7 +484,6 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         // Timer on left side (taking half the width)
         Expanded(
           child: TimerDisplay(
-            controller: _controller,
             mode: _sessionManager.currentMode,
             isBreak: _sessionManager.isBreakTime,
           ),
@@ -412,11 +497,18 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Back button
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => _handleBackButtonPress(),
+                  ),
+
                   FocusMenuButton(
-                      onSettingsTap: _showSettingsDialog,
-                      onAIAssistantTap: _navigateToAiChat),
+                    onSettingsTap: _showSettingsDialog,
+                    onAIAssistantTap: _navigateToAiChat,
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -440,6 +532,18 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                         : "Start"),
                 width: 280,
               ),
+
+              // End Session button - visible only when active
+              if (_sessionManager.isSessionActive) ...[
+                const SizedBox(height: 16),
+                SLCButton(
+                  onPressed: _showEndSessionConfirmation,
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.red,
+                  text: "End Session",
+                  width: 280,
+                ),
+              ],
             ],
           ),
         ),

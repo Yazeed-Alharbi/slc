@@ -95,12 +95,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  // Replace the _onSessionChanged method
   void _onSessionChanged() {
     if (!mounted) return;
 
-    // Only show card if timer is running (session is active)
-    final isActiveNow = _sessionManager
-        .isSessionActive; // The fixed getter only returns true if timer is running
+    // Consider sessions active whether playing or paused
+    final isActiveNow = _sessionManager.isSessionActive;
     if (isActiveNow != _hasActiveSession) {
       setState(() {
         _hasActiveSession = isActiveNow;
@@ -115,15 +115,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // Public method that can be safely called from anywhere
+  // Replace the checkForActiveSession method
   void checkForActiveSession() async {
     // Make sure we're mounted before continuing
     if (!mounted) return;
 
     try {
-      // Only consider active if timer is running
+      // Check if there's an active session (playing OR paused)
       if (_sessionManager.isSessionActive) {
-        // Using the fixed getter
         setState(() {
           _hasActiveSession = true;
           _activeSessionCourse = _sessionManager.course;
@@ -132,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         return;
       }
 
-      // Try to restore session - only if timer was running when app closed
+      // Try to restore session
       final hasActiveSession = await _sessionManager.restoreSessionIfActive();
 
       if (mounted) {
