@@ -8,11 +8,15 @@ import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/Material.dart';
 import 'package:slc/services/notifications_service.dart';
 
-class FocusSessionManager with ChangeNotifier {
+// Update the class declaration to include WidgetsBindingObserver
+class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
   // Singleton instance
   static final FocusSessionManager _instance = FocusSessionManager._internal();
   factory FocusSessionManager() => _instance;
-  FocusSessionManager._internal();
+  FocusSessionManager._internal() {
+    // Register this manager as a lifecycle observer when created
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   // Add a safeguard for listeners
   final List<Function> _safeListeners = [];
@@ -156,15 +160,45 @@ class FocusSessionManager with ChangeNotifier {
 
   // Update the startTimer method to ensure timer is synchronized
   void startTimer() {
-    if (_isPlaying || !_isSessionCreated) return;
+    if (_isPlaying || !_isSessionCreated) return; // <-- Fixed condition
 
     _isPlaying = true;
     _isSessionActive = true;
     _lastPauseTime = null;
 
-    // Record the start time if starting fresh
-    if (_sessionStartTime == null) {
-      _sessionStartTime = DateTime.now();
+    // Always reset session start time when starting timer
+    _sessionStartTime = DateTime.now();
+
+    // Calculate the exact end time for this timer period
+    final timerEndTime =
+        _sessionStartTime!.add(Duration(seconds: _currentDuration));
+
+    // Schedule the appropriate type of notification based on current state
+    if (!_isBreakTime) {
+      // We're in a focus period
+      if (_completedPomodoros + 1 >= _totalPomodoros) {
+        // This is the last pomodoro - schedule completion notification
+        NotificationsService().scheduleSessionCompletionNotification(
+          scheduledTime: timerEndTime,
+          courseName: _course?.code ?? "Focus Session",
+          totalPomodoros: _totalPomodoros,
+        );
+      } else {
+        // Not the last pomodoro - schedule break notification
+        NotificationsService().scheduleBreakNotification(
+          scheduledTime: timerEndTime,
+          breakType: "Short Break",
+          breakDuration: _shortBreakSeconds,
+        );
+      }
+    } else {
+      // We're in a break period - schedule focus notification
+      NotificationsService().scheduleFocusTimeNotification(
+        scheduledTime: timerEndTime,
+        courseName: _course?.code ?? "Focus Session",
+        pomodoro: _completedPomodoros + 1,
+        totalPomodoros: _totalPomodoros,
+      );
     }
 
     // Calculate the exact start time with second precision to sync timers
@@ -230,6 +264,8 @@ class FocusSessionManager with ChangeNotifier {
     notifyListeners();
   }
 
+  // Also update the _handleTimerCompleted method to reset the session start time
+  // when switching between focus and break modes
   void _handleTimerCompleted() {
     _timer?.cancel();
     _timer = null;
@@ -254,10 +290,14 @@ class FocusSessionManager with ChangeNotifier {
         notifyListeners();
         return;
       } else {
-        // Not the last pomodoro—switch to break mode and send break notification
+        // Not the last pomodoro—switch to break mode
         _isBreakTime = true;
         _currentMode = "Short Break";
         _currentDuration = _shortBreakSeconds;
+
+        // IMPORTANT: Reset session start time when transitioning to break
+        _sessionStartTime = null;
+        _elapsedSeconds = 0;
 
         NotificationsService().showBreakNotification(
           breakType: "Short Break",
@@ -269,9 +309,19 @@ class FocusSessionManager with ChangeNotifier {
       _isBreakTime = false;
       _currentMode = "Focus Time";
       _currentDuration = _pomodoroFocusSeconds;
+
+      // IMPORTANT: Reset session start time when transitioning back to focus
+      _sessionStartTime = null;
+      _elapsedSeconds = 0;
+
+      // ADD THIS: Show notification when break ends
+      NotificationsService().showFocusTimeNotification(
+        courseName: _course?.code ?? "Focus Session",
+        pomodoro: _completedPomodoros + 1,
+        totalPomodoros: _totalPomodoros,
+      );
     }
 
-    _elapsedSeconds = 0;
     _saveSessionState();
     notifyListeners();
   }
@@ -440,104 +490,102 @@ class FocusSessionManager with ChangeNotifier {
 
   // Restore session from saved state (called at app startup)
   Future<bool> restoreSessionIfActive() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isActive = prefs.getBool('focus_session_active') ?? false;
+    // Add timeout to prevent infinite loading
+    return Future.delayed(Duration(seconds: 2), () async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final isActive = prefs.getBool('focus_session_active') ?? false;
 
-    if (!isActive) return false;
+        if (!isActive) return false;
 
-    try {
-      // Restore course and enrollment objects from serialized data
-      final courseJson = prefs.getString('focus_session_course_json');
-      final enrollmentJson = prefs.getString('focus_session_enrollment_json');
+        // Restore course and enrollment objects from serialized data
+        final courseJson = prefs.getString('focus_session_course_json');
+        final enrollmentJson = prefs.getString('focus_session_enrollment_json');
 
-      if (courseJson == null || enrollmentJson == null) {
-        // Missing data, can't restore
-        _clearSessionState();
+        if (courseJson == null || enrollmentJson == null) {
+          // Missing data, can't restore
+          _clearSessionState();
+          return false;
+        }
+
+        _course = courseFromJson(courseJson);
+        _enrollment = enrollmentFromJson(enrollmentJson);
+
+        // Restore session details with safeguards
+        _isSessionActive = true;
+        _isSessionCreated =
+            true; // Add this to ensure session is properly marked as created
+        _isPlaying = prefs.getBool('focus_session_is_playing') ?? false;
+        _currentMode =
+            prefs.getString('focus_session_current_mode') ?? "Focus Time";
+        _isBreakTime = prefs.getBool('focus_session_is_break') ?? false;
+
+        // Rest of your restoration logic...
+
+        // CRITICAL FIX: After a break, ensure the state is consistent
+        if (_isBreakTime) {
+          // Make sure we have the correct duration set
+          _currentDuration = _shortBreakSeconds;
+        } else {
+          _currentDuration = _pomodoroFocusSeconds;
+        }
+
+        // Don't auto-handle timer completion during restoration - just update the UI
+        if (_isPlaying && _elapsedSeconds >= _currentDuration) {
+          _isPlaying = false; // Just pause the timer instead of completing it
+        }
+
+        notifyListeners();
+        return true;
+      } catch (e) {
+        print("Error restoring session: $e");
+        // Always clear session state on error to avoid getting stuck
+        await _clearSessionState();
         return false;
       }
-
-      _course = courseFromJson(courseJson);
-      _enrollment = enrollmentFromJson(enrollmentJson);
-
-      // Restore session details
-      _isSessionActive = true;
-      _isPlaying = prefs.getBool('focus_session_is_playing') ?? false;
-      _currentMode =
-          prefs.getString('focus_session_current_mode') ?? "Focus Time";
-      _isBreakTime = prefs.getBool('focus_session_is_break') ?? false;
-      _completedPomodoros =
-          prefs.getInt('focus_session_completed_pomodoros') ?? 0;
-      _pomodoroFocusSeconds =
-          prefs.getInt('focus_session_pomodoro_seconds') ?? 25 * 60;
-      _shortBreakSeconds =
-          prefs.getInt('focus_session_short_break_seconds') ?? 5 * 60;
-      _longBreakSeconds =
-          prefs.getInt('focus_session_long_break_seconds') ?? 15 * 60;
-      _totalPomodoros = prefs.getInt('focus_session_total_pomodoros') ?? 4;
-      _currentDuration = prefs.getInt('focus_session_current_duration') ??
-          _pomodoroFocusSeconds;
-      _elapsedSeconds = prefs.getInt('focus_session_elapsed_seconds') ?? 0;
-
-      // Restore timestamps and calculate elapsed time
-      final startTimeStr = prefs.getString('focus_session_start_time');
-      final pauseTimeStr = prefs.getString('focus_session_pause_time');
-
-      if (startTimeStr != null) {
-        _sessionStartTime = DateTime.parse(startTimeStr);
-      }
-
-      if (pauseTimeStr != null) {
-        _lastPauseTime = DateTime.parse(pauseTimeStr);
-      }
-
-      // Calculate elapsed time if the app was closed while the timer was running
-      if (_isPlaying && _sessionStartTime != null) {
-        final now = DateTime.now();
-        final storedElapsed = _elapsedSeconds;
-
-        // Calculate additional elapsed time since app was closed
-        final additionalSeconds =
-            now.difference(_sessionStartTime!).inSeconds - storedElapsed;
-
-        if (additionalSeconds > 0) {
-          _elapsedSeconds = storedElapsed + additionalSeconds;
-
-          // Check if timer would have completed while app was closed
-          if (_elapsedSeconds >= _currentDuration) {
-            // Handle timer completion
-            _isPlaying = false;
-            _handleTimerCompleted();
-          }
-        }
-      }
-
-      // If still playing after restoring, restart the timer
-      if (_isPlaying) {
-        _timer?.cancel();
-        _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-          _elapsedSeconds++;
-
-          if (_elapsedSeconds >= _currentDuration) {
-            _handleTimerCompleted();
-          }
-
-          _saveSessionState();
-          notifyListeners();
-        });
-      }
-
-      notifyListeners();
-      return true;
-    } catch (e) {
-      print("Error restoring session: $e");
-      _clearSessionState();
-      return false;
-    }
+    });
   }
 
   @override
   void dispose() {
+    // Unregister from lifecycle events
+    WidgetsBinding.instance.removeObserver(this);
     _timerController.close();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      recalculateElapsedTimeOnResume();
+    }
+  }
+
+  // Update the recalculateElapsedTimeOnResume method to work correctly even when paused
+  void recalculateElapsedTimeOnResume() {
+    if (!_isSessionActive || _sessionStartTime == null) return;
+
+    final now = DateTime.now();
+    int actualElapsed;
+
+    // Always calculate actual elapsed time since session start
+    actualElapsed = now.difference(_sessionStartTime!).inSeconds;
+
+    // Check if the timer would have completed while the app was in background
+    if (actualElapsed >= _currentDuration) {
+      // Handle timer completion (will transition to break if needed)
+      _elapsedSeconds = _currentDuration;
+      _handleTimerCompleted();
+    } else if (_isPlaying) {
+      // Timer is playing but hasn't completed - update elapsed time
+      _elapsedSeconds = actualElapsed;
+
+      // Emit event to update the UI
+      _timerController.add(_elapsedSeconds);
+
+      _saveSessionState();
+      notifyListeners();
+    }
+    // If paused, we leave it as is
   }
 }

@@ -22,7 +22,7 @@ class ActiveSessionCard extends StatefulWidget {
   State<ActiveSessionCard> createState() => _ActiveSessionCardState();
 }
 
-class _ActiveSessionCardState extends State<ActiveSessionCard> {
+class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindingObserver {
   final FocusSessionManager _sessionManager = FocusSessionManager();
 
   // For efficient UI updates
@@ -34,6 +34,9 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
   @override
   void initState() {
     super.initState();
+    
+    // Register as lifecycle observer to detect app resuming
+    WidgetsBinding.instance.addObserver(this);
 
     // Initial values
     _currentMode = _sessionManager.currentMode;
@@ -55,9 +58,29 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
 
   @override
   void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(this);
     _timerSubscription?.cancel();
     _sessionManager.removeListener(_updateSessionState);
     super.dispose();
+  }
+  
+  // Add this method to handle app lifecycle changes
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // App has come back to foreground - recalculate elapsed time
+      if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
+        _sessionManager.recalculateElapsedTimeOnResume();
+        
+        // Update UI immediately
+        if (mounted) {
+          setState(() {
+            _timeRemaining = _sessionManager.timeRemainingFormatted;
+          });
+        }
+      }
+    }
   }
 
   void _updateSessionState() {

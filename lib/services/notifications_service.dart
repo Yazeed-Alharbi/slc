@@ -99,7 +99,8 @@ class NotificationsService {
   }) async {
     await initialize();
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
       'break_channel',
       'Break Notifications',
       channelDescription: 'Notifies when it is time for a break',
@@ -119,6 +120,170 @@ class NotificationsService {
       1, // Use a unique ID for break notifications
       '$breakType Time!',
       'Take a break for ${breakDuration ~/ 60} minutes.',
+      details,
+    );
+  }
+
+  Future<void> scheduleSessionCompletionNotification({
+    required DateTime scheduledTime,
+    required String courseName,
+    required int totalPomodoros,
+  }) async {
+    await initialize();
+
+    // Use exactScheduleMode to ensure precise timing, even when app is backgrounded
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'session_completion_channel',
+      'Session Completion Notifications',
+      channelDescription: 'Notifies when a focus session is complete',
+      importance: Importance.high,
+      priority: Priority.high,
+      fullScreenIntent: true, // Will pop up even if device is locked
+      category: AndroidNotificationCategory
+          .alarm, // Uses the alarm category for higher priority
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: true,
+      interruptionLevel:
+          InterruptionLevel.timeSensitive, // Higher priority on iOS
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // Schedule for exact time, allowing it to wake device if needed
+    await _notificationsPlugin.zonedSchedule(
+      0,
+      'Focus Session Completed',
+      'You\'ve completed $totalPomodoros pomodoros for $courseName. Time for a quiz!',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  // Add this method for break notifications
+  Future<void> scheduleBreakNotification({
+    required DateTime scheduledTime,
+    required String breakType,
+    required int breakDuration,
+  }) async {
+    await initialize();
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'break_channel',
+      'Break Notifications',
+      channelDescription: 'Notifies when it is time for a break',
+      importance: Importance.high,
+      priority: Priority.high,
+      fullScreenIntent: true,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      1, // Use a different ID for break notifications
+      'Time for a $breakType!',
+      'Take a break for ${breakDuration ~/ 60} minutes.',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  // Add this method for resume focus notifications
+  Future<void> scheduleFocusTimeNotification({
+    required DateTime scheduledTime,
+    required String courseName,
+    required int pomodoro,
+    required int totalPomodoros,
+  }) async {
+    await initialize();
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'focus_channel',
+      'Focus Time Notifications',
+      channelDescription: 'Notifies when it is time to focus again',
+      importance: Importance.high,
+      priority: Priority.high,
+      fullScreenIntent: true,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      2, // Use a different ID for focus notifications
+      'Break time over!',
+      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  // Add this method to NotificationsService class
+  Future<void> showFocusTimeNotification({
+    required String courseName,
+    required int pomodoro,
+    required int totalPomodoros,
+  }) async {
+    await initialize();
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'focus_channel',
+      'Focus Time Notifications',
+      channelDescription: 'Notifies when it is time to focus again',
+      importance: Importance.high,
+      priority: Priority.high,
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentSound: true,
+      presentBadge: true,
+      interruptionLevel: InterruptionLevel.timeSensitive,
+    );
+
+    const NotificationDetails details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _notificationsPlugin.show(
+      2, // Use a different ID for focus notifications
+      'Break Time Over!',
+      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
       details,
     );
   }

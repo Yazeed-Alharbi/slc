@@ -32,18 +32,27 @@ class FocusSessionScreen extends StatefulWidget {
 }
 
 class _FocusSessionScreenState extends State<FocusSessionScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _controller;
   final FocusSessionManager _sessionManager = FocusSessionManager();
   bool _initializedFromManager = false;
   bool _quizModalShown = false;
+  bool _initialLoad = true;
 
   // Keep list of selected materials in local state for UI
   List<CourseMaterial> _selectedMaterials = [];
 
+  // Add this field to track break state changes
+  bool _previousBreakTimeState = false;
+  // Add a key for the timer widget (non-final so it can be reassigned)
+  Key _timerKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
+
+    // Register for app lifecycle events
+    WidgetsBinding.instance.addObserver(this);
 
     // Request notification permissions
     _requestNotificationPermissions();
@@ -61,11 +70,50 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     _initializeSession();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // If we're returning to this screen (not initial load)
+    if (!_initialLoad) {
+      // Force a complete resync with SessionManager instead of just recalculating elapsed time
+      _forceFullResync();
+    }
+    _initialLoad = false;
+  }
+
+  // Add this new method to completely resync the UI with session state
+  void _forceFullResync() {
+    if (mounted) {
+      // Recalculate elapsed time
+      _sessionManager.recalculateElapsedTimeOnResume();
+      
+      // Force UI mode to match session manager mode
+      setState(() {
+        // This will force the TimerDisplay widget to rebuild with correct break/focus mode
+      });
+      
+      // Reset animation controller with current session values
+      _updateControllerFromManager();
+      
+      // For extreme cases, force recreation of the Timer widget
+      if (_sessionManager.isBreakTime != _previousBreakTimeState) {
+        _previousBreakTimeState = _sessionManager.isBreakTime;
+        
+        // Force timer display to rebuild completely
+        setState(() {
+          _timerKey = UniqueKey();
+        });
+      }
+    }
+  }
+
   Future<void> _requestNotificationPermissions() async {
     // Store a flag to only show this once
     final prefs = await SharedPreferences.getInstance();
-    bool hasRequestedPermissions = prefs.getBool('notification_permissions_requested') ?? false;
-    
+    bool hasRequestedPermissions =
+        prefs.getBool('notification_permissions_requested') ?? false;
+
     if (!hasRequestedPermissions) {
       await NotificationsService().requestNotificationPermissions();
       await prefs.setBool('notification_permissions_requested', true);
@@ -156,9 +204,22 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
 
   @override
   void dispose() {
+    // Unregister when screen is disposed
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _sessionManager.removeListener(_updateFromManager);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Immediately recalculate elapsed time when the app resumes
+      if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
+        _sessionManager
+            .recalculateElapsedTimeOnResume(); // Change to use the public method
+      }
+    }
   }
 
   void _toggleTimer() {
@@ -416,6 +477,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         Column(
           children: [
             TimerDisplay(
+              key: _timerKey,
               mode: _sessionManager.currentMode,
               isBreak: _sessionManager.isBreakTime,
             ),
@@ -484,6 +546,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
         // Timer on left side (taking half the width)
         Expanded(
           child: TimerDisplay(
+            key: _timerKey,
             mode: _sessionManager.currentMode,
             isBreak: _sessionManager.isBreakTime,
           ),

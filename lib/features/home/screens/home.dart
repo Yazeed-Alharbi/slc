@@ -91,6 +91,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // First recalculate the elapsed time to ensure timer accuracy
+      if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
+        _sessionManager.recalculateElapsedTimeOnResume();
+      }
+      
+      // Then check for and restore any active session
       if (mounted) _checkForActiveSession();
     }
   }

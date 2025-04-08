@@ -76,13 +76,25 @@ class _TimerDisplayState extends State<TimerDisplay>
   // New method that handles all session manager changes
   void _handleSessionManagerChanges() {
     if (!mounted) return;
-
+    
+    // Check if mode has changed (focus→break or break→focus)
+    bool modeChanged = (_sessionManager.isBreakTime != widget.isBreak);
+    
     // If session isn't active yet, update the initial time display
-    // This ensures settings changes are reflected immediately
     if (!_sessionManager.isSessionActive) {
       _updateInitialTime();
     }
-
+    
+    // IMPORTANT: When switching between focus and break, reset progress circle to full
+    if (modeChanged) {
+      _currentProgress = 1.0;
+      _progressAnimation = null;
+      _progressAnimationController.value = 0;
+      
+      // Force an immediate update of the progress circle
+      _updateProgress(animate: false);
+    }
+    
     // Always update the time string (which handles active sessions)
     _updateTimeString();
   }
@@ -146,6 +158,23 @@ class _TimerDisplayState extends State<TimerDisplay>
           _timeRemaining = _sessionManager.timeRemainingFormatted;
         }
       });
+    }
+  }
+
+  @override
+  void didUpdateWidget(TimerDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Detect and handle mode changes (focus<->break) when widget rebuilds
+    if (oldWidget.isBreak != widget.isBreak) {
+      // Force reset progress circle and time display
+      _currentProgress = 1.0;
+      _updateInitialTime();
+      
+      // Force rebuild of the circle
+      _progressAnimation = null;
+      _progressAnimationController.value = 0;
+      _updateProgress(animate: false);
     }
   }
 
