@@ -4,13 +4,14 @@ import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/course%20management/widgets/slcnotecard.dart';
 import 'package:slc/features/course%20management/screens/note_editor_page.dart';
-import 'package:slc/features/course%20management/screens/note_service.dart' as service;
+import 'package:slc/features/course%20management/screens/note_service.dart'
+    as service;
 import 'package:slc/models/note.dart';
- // Add or use your course provider
+// Add or use your course provider
 
 class NotesTab extends StatefulWidget {
   final String courseId;
-  
+
   const NotesTab({
     Key? key,
     required this.courseId,
@@ -22,7 +23,7 @@ class NotesTab extends StatefulWidget {
 
 class _NotesTabState extends State<NotesTab> {
   late service.NoteService _noteService;
-  
+
   @override
   void initState() {
     super.initState();
@@ -58,8 +59,6 @@ class _NotesTabState extends State<NotesTab> {
               ],
             ),
             const SizedBox(height: 10),
-
-            // StreamBuilder with proper error handling
             StreamBuilder<List<Note>>(
                 stream: _noteService.getNotes(),
                 builder: (context, snapshot) {
@@ -72,7 +71,6 @@ class _NotesTabState extends State<NotesTab> {
                   }
 
                   if (snapshot.hasError) {
-                    print('Error in StreamBuilder: ${snapshot.error}');
                     return Center(
                         child: Padding(
                       padding: const EdgeInsets.all(20.0),
@@ -81,7 +79,6 @@ class _NotesTabState extends State<NotesTab> {
                   }
 
                   final notes = snapshot.data ?? [];
-                  print('Notes count in UI: ${notes.length}');
 
                   if (notes.isEmpty) {
                     return Padding(
@@ -126,14 +123,13 @@ class _NotesTabState extends State<NotesTab> {
                             title: note.title,
                             createdAt: note.createdAt,
                             onPressed: () async {
-                              print('Opening note: ${note.id}');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => NoteEditorPage(
                                     noteId: note.id,
                                     noteTitle: note.title,
-                                    courseId: widget.courseId,  // Pass the courseId here
+                                    courseId: widget.courseId,
                                   ),
                                 ),
                               );
@@ -178,7 +174,6 @@ class _NotesTabState extends State<NotesTab> {
                   final noteId = await _noteService.createNote(
                     titleController.text.trim(),
                   );
-                  print('Created note with ID: $noteId');
                   Navigator.pop(context);
                   Navigator.push(
                     context,
@@ -186,12 +181,11 @@ class _NotesTabState extends State<NotesTab> {
                       builder: (context) => NoteEditorPage(
                         noteId: noteId,
                         noteTitle: titleController.text.trim(),
-                        courseId: widget.courseId,  // Pass the courseId here
+                        courseId: widget.courseId,
                       ),
                     ),
                   );
                 } catch (e) {
-                  print('Error creating note: $e');
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error creating note: $e')),
                   );
