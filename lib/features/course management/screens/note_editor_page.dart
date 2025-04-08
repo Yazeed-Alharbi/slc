@@ -79,14 +79,25 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               text: page['text']?.toString() ?? '',
             ));
           }
+
+          // Load the initial sketch if we're in drawing mode
+          if (!_isTypingMode && _pages[_currentPageIndex]['sketch'] != null) {
+            try {
+              final sketchJson = _pages[_currentPageIndex]['sketch'];
+              if (sketchJson != null) {
+                _scribbleNotifier.setSketch(
+                    sketch:
+                        Sketch.fromJson(Map<String, dynamic>.from(sketchJson)));
+              }
+            } catch (e) {
+              // Error restoring initial sketch
+            }
+          }
         });
       } else {
-        // If the note doesn't exist or has no pages, add a default page
         _addNewPage(initial: true);
       }
     } catch (e) {
-      print('Error loading note: $e');
-      // Add a default page in case of error
       _addNewPage(initial: true);
     } finally {
       setState(() {
@@ -149,29 +160,25 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   Future<void> _saveToFirestore() async {
     try {
       if (_pages.isEmpty) {
-        // Don't save if there are no pages
         return;
       }
 
       await _noteService.updateNotePages(widget.noteId, _pages);
     } catch (e) {
-      print('Error saving to Firestore: $e');
-      // Don't show an error message here to avoid disrupting the user experience
-      // We'll just log it and continue
+      // Error saving to Firestore
     }
   }
 
   Future<void> _loadPage(int index) async {
     await _saveCurrentPage();
-    await _saveToFirestore(); // Add Firestore save
+    await _saveToFirestore();
 
     setState(() {
       _currentPageIndex = index;
       _showPageSelector = false;
 
       if (_isTypingMode) {
-        // No need to do anything special for text mode
-        // Make sure text controller has the right value
+        // Handle text mode
         if (_pages[index]['text'] != null) {
           _textControllers[index].text = _pages[index]['text'].toString();
         }
@@ -181,8 +188,17 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
         // Load the saved drawing if it exists
         if (_pages[index]['sketch'] != null) {
-          // We'd restore the sketch here from json
-          // Not directly supported by the library but could be implemented
+          try {
+            // Convert the stored JSON back to a sketch
+            final sketchJson = _pages[index]['sketch'];
+            if (sketchJson != null) {
+              _scribbleNotifier.setSketch(
+                  sketch:
+                      Sketch.fromJson(Map<String, dynamic>.from(sketchJson)));
+            }
+          } catch (e) {
+            // Error restoring sketch
+          }
         }
       }
     });
