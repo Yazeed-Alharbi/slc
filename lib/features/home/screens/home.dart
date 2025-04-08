@@ -8,6 +8,7 @@ import 'package:slc/common/widgets/slcquickactioncard.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/models/Student.dart';
 import 'package:slc/models/Course.dart';
+import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/event.dart'; // Add this import
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/repositories/course_repository.dart';
@@ -15,6 +16,9 @@ import 'package:slc/repositories/event_repository.dart'; // Add this import
 import 'package:intl/intl.dart';
 import 'package:slc/features/course%20management/screens/courses.dart';
 import 'package:slc/features/course%20management/screens/coursepage.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Add this import at the top
+import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
+import 'package:slc/features/focus%20sessions/widgets/active_session_card.dart';
 
 class HomeScreen extends StatefulWidget {
   final Student student;
@@ -23,20 +27,139 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String greeting = "";
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
-  // Add event repository
   final EventRepository _eventRepository = EventRepository(
     firestoreUtils: FirestoreUtils(),
   );
+  final FocusSessionManager _sessionManager = FocusSessionManager();
+
+  // Add focus node to detect when screen is active
+  final FocusNode _focusNode = FocusNode();
+
+  // Add these variables
+  bool _hasActiveSession = false;
+  Course? _activeSessionCourse;
+  CourseEnrollment? _activeSessionEnrollment;
+
+  // Add a flag to track if we've checked for sessions after navigation
+  bool _checkedActiveSessionAfterNavigation = false;
 
   @override
   void initState() {
     super.initState();
     _updateGreeting();
+
+    // Add app lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
+    // Listen for session changes
+    _sessionManager.addListener(_onSessionChanged);
+
+    // Schedule a check AFTER the first build completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _checkForActiveSession();
+    });
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      _checkForActiveSession();
+    }
+  }
+
+  @override
+  void dispose() {
+    _sessionManager.removeListener(_onSessionChanged);
+    WidgetsBinding.instance.removeObserver(this);
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset flag when widget updates (like hot reload)
+    _checkedActiveSessionAfterNavigation = false;
+  }
+
+  // Add this method to handle app lifecycle changes (app resuming from background)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // First recalculate the elapsed time to ensure timer accuracy
+      if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
+        _sessionManager.recalculateElapsedTimeOnResume();
+      }
+      
+      // Then check for and restore any active session
+      if (mounted) _checkForActiveSession();
+    }
+  }
+
+  // Replace the _onSessionChanged method
+  void _onSessionChanged() {
+    if (!mounted) return;
+
+    // Consider sessions active whether playing or paused
+    final isActiveNow = _sessionManager.isSessionActive;
+    if (isActiveNow != _hasActiveSession) {
+      setState(() {
+        _hasActiveSession = isActiveNow;
+        if (_hasActiveSession) {
+          _activeSessionCourse = _sessionManager.course;
+          _activeSessionEnrollment = _sessionManager.enrollment;
+        } else {
+          _activeSessionCourse = null;
+          _activeSessionEnrollment = null;
+        }
+      });
+    }
+  }
+
+  // Replace the checkForActiveSession method
+  void checkForActiveSession() async {
+    // Make sure we're mounted before continuing
+    if (!mounted) return;
+
+    try {
+      // Check if there's an active session (playing OR paused)
+      if (_sessionManager.isSessionActive) {
+        setState(() {
+          _hasActiveSession = true;
+          _activeSessionCourse = _sessionManager.course;
+          _activeSessionEnrollment = _sessionManager.enrollment;
+        });
+        return;
+      }
+
+      // Try to restore session
+      final hasActiveSession = await _sessionManager.restoreSessionIfActive();
+
+      if (mounted) {
+        setState(() {
+          _hasActiveSession = hasActiveSession;
+          if (_hasActiveSession) {
+            _activeSessionCourse = _sessionManager.course;
+            _activeSessionEnrollment = _sessionManager.enrollment;
+          } else {
+            _activeSessionCourse = null;
+            _activeSessionEnrollment = null;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error checking for active session: $e');
+    }
+  }
+
+  // Update your existing _checkForActiveSession to use the public method
+  Future<void> _checkForActiveSession() async {
+    checkForActiveSession();
   }
 
   void _updateGreeting() {
@@ -63,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      // Rest of your build method remains the same
       child: Container(
         padding: SpacingStyles(context).defaultPadding,
         child: Column(
@@ -174,6 +298,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // *** ADD ACTIVE SESSION CARD HERE ***
+                            if (_hasActiveSession &&
+                                _activeSessionCourse != null &&
+                                _activeSessionEnrollment != null)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                      height:
+                                          MediaQuery.sizeOf(context).height *
+                                              0.025),
+                                  Text(
+                                    "Ongoing Session",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall,
+                                  ),
+                                  SizedBox(height: 16),
+                                  ActiveSessionCard(
+                                    course: _activeSessionCourse!,
+                                    enrollment: _activeSessionEnrollment!,
+                                  ),
+                                ],
+                              ),
+
+                            // Events section - keep existing
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -408,7 +558,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _logoutUser() {
+  void _logoutUser() async {
+    // Actually sign out from Firebase
+    await FirebaseAuth.instance.signOut();
+
+    // Then navigate to login screen
     Navigator.pushReplacementNamed(context, '/loginscreen');
   }
 
