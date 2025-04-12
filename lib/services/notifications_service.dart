@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:flutter/material.dart';
 
 class NotificationsService {
   static final NotificationsService _instance =
@@ -11,6 +12,58 @@ class NotificationsService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   bool _initialized = false;
+
+  // Translations map
+  final Map<String, Map<String, String>> _translations = {
+    'en': {
+      'focusSessionCompleted': 'Focus Session Completed!',
+      'pomodoroCompleted':
+          'You\'ve completed {count} pomodoros for {course}. Time for a quiz!',
+      'breakTime': '{type} Time!',
+      'breakDuration': 'Take a break for {minutes} minutes.',
+      'breakTimeOver': 'Break Time Over!',
+      'focusTimeMessage':
+          'Time to focus on {course} (Pomodoro {current} of {total})'
+    },
+    'ar': {
+      'focusSessionCompleted': 'اكتملت جلسة التركيز!',
+      'pomodoroCompleted':
+          'لقد أكملت {count} من جلسات بومودورو لمقرر {course}. حان وقت الاختبار!',
+      'breakTime': 'وقت {type}!',
+      'breakDuration': 'خذ استراحة لمدة {minutes} دقائق.',
+      'breakTimeOver': 'انتهت وقت الاستراحة!',
+      'focusTimeMessage':
+          'حان وقت التركيز على {course} (جلسة {current} من {total})'
+    }
+  };
+
+  // Get translated string based on locale
+  String _getTranslation(String key, String locale,
+      [Map<String, String>? replacements]) {
+    // Debug log to check the selected locale
+    print("Getting translation for key: $key, locale: $locale");
+    
+    // Make sure we use 'ar' or 'en' only
+    final validLocale = (locale == 'ar') ? 'ar' : 'en';
+    
+    // First try to get the translation in the requested locale
+    String? text = _translations[validLocale]?[key];
+    
+    // If not found, fall back to English
+    if (text == null) {
+      print("Translation not found for $key in $locale, falling back to English");
+      text = _translations['en']![key]!;
+    }
+    
+    // Replace placeholders if provided
+    if (replacements != null) {
+      replacements.forEach((key, value) {
+        text = text!.replaceAll('{$key}', value);
+      });
+    }
+    
+    return text!;
+  }
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -43,7 +96,6 @@ class NotificationsService {
   }
 
   Future<bool> requestNotificationPermissions() async {
-    // Request iOS permissions
     final ios = await _notificationsPlugin
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>()
@@ -53,18 +105,14 @@ class NotificationsService {
           sound: true,
         );
 
-    // For Android, permissions are managed differently.
-    // Since the method requestPermission() is not available,
-    // you may simply assume permissions are granted for older versions.
-    // Alternatively, use a package like permission_handler for Android 13+.
     bool android = true;
-
     return ios ?? android;
   }
 
   Future<void> showPomodoroCompletedNotification({
     required String courseName,
     required int totalPomodoros,
+    String locale = 'en',
   }) async {
     await initialize();
 
@@ -79,23 +127,27 @@ class NotificationsService {
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
+    final title = _getTranslation('focusSessionCompleted', locale);
+    final message = _getTranslation('pomodoroCompleted', locale,
+        {'count': totalPomodoros.toString(), 'course': courseName});
+
     await _notificationsPlugin.show(
       0,
-      'Focus Session Completed!',
-      'You\'ve completed $totalPomodoros pomodoros for $courseName. Time for a quiz!',
+      title,
+      message,
       details,
     );
   }
 
   Future<void> showBreakNotification({
-    required String breakType, // e.g., "Short Break" or "Long Break"
-    required int breakDuration, // in seconds
+    required String breakType,
+    required int breakDuration,
+    String locale = 'en',
   }) async {
     await initialize();
 
@@ -110,16 +162,19 @@ class NotificationsService {
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
+    final title = _getTranslation('breakTime', locale, {'type': breakType});
+    final message = _getTranslation(
+        'breakDuration', locale, {'minutes': (breakDuration ~/ 60).toString()});
+
     await _notificationsPlugin.show(
-      1, // Use a unique ID for break notifications
-      '$breakType Time!',
-      'Take a break for ${breakDuration ~/ 60} minutes.',
+      1,
+      title,
+      message,
       details,
     );
   }
@@ -128,10 +183,10 @@ class NotificationsService {
     required DateTime scheduledTime,
     required String courseName,
     required int totalPomodoros,
+    String locale = 'en',
   }) async {
     await initialize();
 
-    // Use exactScheduleMode to ensure precise timing, even when app is backgrounded
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       'session_completion_channel',
@@ -139,17 +194,15 @@ class NotificationsService {
       channelDescription: 'Notifies when a focus session is complete',
       importance: Importance.high,
       priority: Priority.high,
-      fullScreenIntent: true, // Will pop up even if device is locked
-      category: AndroidNotificationCategory
-          .alarm, // Uses the alarm category for higher priority
+      fullScreenIntent: true,
+      category: AndroidNotificationCategory.alarm,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentSound: true,
       presentBadge: true,
-      interruptionLevel:
-          InterruptionLevel.timeSensitive, // Higher priority on iOS
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     const NotificationDetails details = NotificationDetails(
@@ -157,22 +210,25 @@ class NotificationsService {
       iOS: iosDetails,
     );
 
-    // Schedule for exact time, allowing it to wake device if needed
+    final title = _getTranslation('focusSessionCompleted', locale);
+    final message = _getTranslation('pomodoroCompleted', locale,
+        {'count': totalPomodoros.toString(), 'course': courseName});
+
     await _notificationsPlugin.zonedSchedule(
       0,
-      'Focus Session Completed',
-      'You\'ve completed $totalPomodoros pomodoros for $courseName. Time for a quiz!',
+      title,
+      message,
       tz.TZDateTime.from(scheduledTime, tz.local),
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method for break notifications
   Future<void> scheduleBreakNotification({
     required DateTime scheduledTime,
     required String breakType,
     required int breakDuration,
+    String locale = 'en',
   }) async {
     await initialize();
 
@@ -198,22 +254,26 @@ class NotificationsService {
       iOS: iosDetails,
     );
 
+    final title = _getTranslation('breakTime', locale, {'type': breakType});
+    final message = _getTranslation(
+        'breakDuration', locale, {'minutes': (breakDuration ~/ 60).toString()});
+
     await _notificationsPlugin.zonedSchedule(
-      1, // Use a different ID for break notifications
-      'Time for a $breakType!',
-      'Take a break for ${breakDuration ~/ 60} minutes.',
+      1,
+      title,
+      message,
       tz.TZDateTime.from(scheduledTime, tz.local),
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method for resume focus notifications
   Future<void> scheduleFocusTimeNotification({
     required DateTime scheduledTime,
     required String courseName,
     required int pomodoro,
     required int totalPomodoros,
+    String locale = 'en',
   }) async {
     await initialize();
 
@@ -239,21 +299,28 @@ class NotificationsService {
       iOS: iosDetails,
     );
 
+    final title = _getTranslation('breakTimeOver', locale);
+    final message = _getTranslation('focusTimeMessage', locale, {
+      'course': courseName,
+      'current': pomodoro.toString(),
+      'total': totalPomodoros.toString()
+    });
+
     await _notificationsPlugin.zonedSchedule(
-      2, // Use a different ID for focus notifications
-      'Break time over!',
-      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
+      2,
+      title,
+      message,
       tz.TZDateTime.from(scheduledTime, tz.local),
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method to NotificationsService class
   Future<void> showFocusTimeNotification({
     required String courseName,
     required int pomodoro,
     required int totalPomodoros,
+    String locale = 'en',
   }) async {
     await initialize();
 
@@ -280,10 +347,17 @@ class NotificationsService {
       iOS: iosDetails,
     );
 
+    final title = _getTranslation('breakTimeOver', locale);
+    final message = _getTranslation('focusTimeMessage', locale, {
+      'course': courseName,
+      'current': pomodoro.toString(),
+      'total': totalPomodoros.toString()
+    });
+
     await _notificationsPlugin.show(
-      2, // Use a different ID for focus notifications
-      'Break Time Over!',
-      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
+      2,
+      title,
+      message,
       details,
     );
   }

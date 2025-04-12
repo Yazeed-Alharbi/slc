@@ -52,6 +52,14 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   void initState() {
     super.initState();
 
+    // Get current app locale and set it in session manager
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final locale = Localizations.localeOf(context).languageCode;
+      print("Setting locale in FocusSessionScreen: $locale"); // Add this debug line
+      _sessionManager.setLocale(locale);
+      _sessionManager.updateLocalizations(context);
+    });
+
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);
 
@@ -74,7 +82,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
+
     // If we're returning to this screen (not initial load)
     if (!_initialLoad) {
       // Force a complete resync with SessionManager instead of just recalculating elapsed time
@@ -88,19 +96,19 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     if (mounted) {
       // Recalculate elapsed time
       _sessionManager.recalculateElapsedTimeOnResume();
-      
+
       // Force UI mode to match session manager mode
       setState(() {
         // This will force the TimerDisplay widget to rebuild with correct break/focus mode
       });
-      
+
       // Reset animation controller with current session values
       _updateControllerFromManager();
-      
+
       // For extreme cases, force recreation of the Timer widget
       if (_sessionManager.isBreakTime != _previousBreakTimeState) {
         _previousBreakTimeState = _sessionManager.isBreakTime;
-        
+
         // Force timer display to rebuild completely
         setState(() {
           _timerKey = UniqueKey();
@@ -268,7 +276,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
       final l10n = AppLocalizations.of(context);
       SLCFlushbar.show(
           context: context,
-          message: l10n?.noMaterialsAvailable ?? "No materials are available for this course.",
+          message: l10n?.noMaterialsAvailable ??
+              "No materials are available for this course.",
           type: FlushbarType.error);
       return;
     }
@@ -355,13 +364,15 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  l10n?.pomodorosCompleted(_sessionManager.totalPomodoros) ?? "You've completed ${_sessionManager.totalPomodoros} pomodoros!",
+                  l10n?.pomodorosCompleted(_sessionManager.totalPomodoros) ??
+                      "You've completed ${_sessionManager.totalPomodoros} pomodoros!",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 16),
                 Text(
-                  l10n?.takeQuizQuestion ?? "Would you like to take a quiz about the material?",
+                  l10n?.takeQuizQuestion ??
+                      "Would you like to take a quiz about the material?",
                   style: TextStyle(fontSize: 18),
                   textAlign: TextAlign.center,
                 ),
@@ -416,7 +427,8 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
     NativeAlertDialog.show(
       context: context,
       title: l10n?.endSession ?? "End Session",
-      content: l10n?.endSessionConfirmation ?? "Are you sure you want to end this session?",
+      content: l10n?.endSessionConfirmation ??
+          "Are you sure you want to end this session?",
       confirmText: l10n?.endSession ?? "End Session",
       confirmTextColor: Colors.red,
       cancelText: l10n?.cancel ?? "Cancel",
@@ -498,8 +510,9 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: Text(
-                    l10n?.session(_sessionManager.completedPomodoros, _sessionManager.totalPomodoros) ?? 
-                    "Session: ${_sessionManager.completedPomodoros}/${_sessionManager.totalPomodoros}",
+                    l10n?.session(_sessionManager.completedPomodoros,
+                            _sessionManager.totalPomodoros) ??
+                        "Session: ${_sessionManager.completedPomodoros}/${_sessionManager.totalPomodoros}",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -518,10 +531,10 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                         ? SLCColors.green
                         : SLCColors.primaryColor,
                     foregroundColor: Colors.white,
-                    text: _sessionManager.isPlaying 
-                        ? (l10n?.pause ?? "Pause") 
-                        : (_sessionManager.sessionCompleted 
-                            ? (l10n?.completed ?? "Completed") 
+                    text: _sessionManager.isPlaying
+                        ? (l10n?.pause ?? "Pause")
+                        : (_sessionManager.sessionCompleted
+                            ? (l10n?.completed ?? "Completed")
                             : (l10n?.start ?? "Start")),
                   ),
                 ),

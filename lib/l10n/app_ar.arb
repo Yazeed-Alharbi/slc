@@ -287,5 +287,11 @@
   "selectMaterials": "اختر المواد ({current}/{max})",
   "maxMaterialsLimit": "يمكنك اختيار حتى {max} مواد",
   "notes": "الملاحظات",
-  "settings": "الإعدادات"
+  "settings": "الإعدادات",
+  "focusSessionCompleted": "اكتملت جلسة التركيز!",
+  "pomodoroCompletedMessage": "لقد أكملت {count} من جلسات بومودورو لمقرر {course}. حان وقت الاختبار!",
+  "breakTimeTitle": "وقت {type}!",
+  "breakTimeMessage": "خذ استراحة لمدة {minutes} دقائق.",
+  "breakTimeOver": "انتهت الاستراحة!",
+  "focusTimeMessage": "حان وقت التركيز على {course} (جلسة {current} من {total})"
 }

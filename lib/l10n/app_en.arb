@@ -283,5 +283,11 @@
   "settings": "Settings",
   "activeFocusSession": "Active Focus Session",
   "focusSessionReady": "Focus Session Ready",
-  "tapToStartSession": "Tap to start session"
+  "tapToStartSession": "Tap to start session",
+  "focusSessionCompleted": "Focus Session Completed!",
+  "pomodoroCompletedMessage": "You've completed {count} pomodoros for {course}. Time for a quiz!",
+  "breakTimeTitle": "{type} Time!",
+  "breakTimeMessage": "Take a break for {minutes} minutes.",
+  "breakTimeOver": "Break Time Over!",
+  "focusTimeMessage": "Time to focus on {course} (Pomodoro {current} of {total})"
 }
