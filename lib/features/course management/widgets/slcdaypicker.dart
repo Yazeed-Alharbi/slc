@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'slcdaypickeritem.dart';
 
 class SLCDayPicker extends StatefulWidget {
-  final List<String> days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   final Function(List<String>) onSelectionChanged;
-  final List<String> initialSelection; // Add this parameter
+  final List<String> initialSelection;
 
   SLCDayPicker({
     Key? key,
     required this.onSelectionChanged,
-    this.initialSelection = const [], // Default to empty list
+    this.initialSelection = const [],
   }) : super(key: key);
 
   @override
@@ -22,10 +22,8 @@ class _SLCDayPickerState extends State<SLCDayPicker> {
   @override
   void initState() {
     super.initState();
-    // Initialize with the provided selection
     selectedDays = List<String>.from(widget.initialSelection);
-    
-    // Notify parent about the initial selection
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onSelectionChanged(selectedDays);
     });
@@ -34,29 +32,54 @@ class _SLCDayPickerState extends State<SLCDayPicker> {
   void toggleSelection(String day) {
     setState(() {
       if (selectedDays.contains(day)) {
-        selectedDays.remove(day); // Unselect
+        selectedDays.remove(day);
       } else {
-        selectedDays.add(day); // Select
+        selectedDays.add(day);
       }
-      widget.onSelectionChanged(selectedDays); // Notify parent
+      widget.onSelectionChanged(selectedDays);
     });
+  }
+
+  // Get localized day names based on current locale
+  List<String> getDayLabels(BuildContext context) {
+    // Check if we're in Arabic locale
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    if (isArabic) {
+      // Full Arabic day names
+      return ["أحد", "اثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
+    } else {
+      // English abbreviated day names
+      return ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+    }
+  }
+
+  // Get standardized day codes regardless of display language
+  List<String> getDayCodes() {
+    return ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   }
 
   @override
   Widget build(BuildContext context) {
+    final dayLabels = getDayLabels(context);
+    final dayCodes = getDayCodes();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
       child: Wrap(
         alignment: WrapAlignment.center,
         spacing: 10,
         runSpacing: 10,
-        children: widget.days.map((day) {
+        children: List.generate(7, (index) {
+          final dayCode = dayCodes[index];
+          final dayLabel = dayLabels[index];
+
           return SLCDayPickerItem(
-            dayLabel: day,
-            isSelected: selectedDays.contains(day),
-            onTap: () => toggleSelection(day),
+            dayLabel: dayLabel,
+            isSelected: selectedDays.contains(dayCode),
+            onTap: () => toggleSelection(dayCode),
           );
-        }).toList(),
+        }),
       ),
     );
   }

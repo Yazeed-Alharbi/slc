@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/models/Student.dart';
@@ -20,6 +21,8 @@ class AuthenticationService {
             StudentRepository(
               firestoreUtils: FirestoreUtils(),
             );
+
+  // Update the signup method - remove the signOut call
   Future<bool> signup({
     required BuildContext context,
     required String email,
@@ -40,6 +43,9 @@ class AuthenticationService {
         name: fullName,
       );
 
+      // Send verification email
+      await userCredential.user?.sendEmailVerification();
+
       return true;
     } on FirebaseAuthException catch (e) {
       _showAuthError(context, e.code);
@@ -47,14 +53,14 @@ class AuthenticationService {
     }
   }
 
-// Add this method to check verification status
+  // Add this method to check verification status
   Future<bool> isEmailVerified() async {
     User? user = _auth.currentUser;
     await user?.reload();
     return user?.emailVerified ?? false;
   }
 
-// Add this method to resend verification email
+  // Add this method to resend verification email
   Future<void> resendVerificationEmail(BuildContext context) async {
     try {
       User? user = _auth.currentUser;
@@ -113,9 +119,16 @@ class AuthenticationService {
   }) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
+
+      // Get localized message
+      final l10n = AppLocalizations.of(context);
+      final message = l10n != null
+          ? l10n.passwordResetSent(email)
+          : "Password reset instructions have been sent to $email.";
+
       SLCFlushbar.show(
         context: context,
-        message: "Password reset instructions have been sent to $email.",
+        message: message,
         type: FlushbarType.success,
       );
     } on FirebaseAuthException catch (e) {
@@ -129,29 +142,37 @@ class AuthenticationService {
   }
 
   void _showAuthError(BuildContext context, String errorCode) {
-    String message = "An unexpected authentication error occurred.";
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
+    // Default message with fallback
+    String message = l10n?.unexpectedAuthError ??
+        "An unexpected authentication error occurred.";
+
     switch (errorCode) {
       case 'invalid-email':
-        message = 'Invalid email format.';
+        message = l10n?.invalidEmailFormat ?? 'Invalid email format.';
         break;
       case 'email-already-in-use':
-        message = 'An account with this email already exists.';
+        message = l10n?.emailAlreadyInUse ??
+            'An account with this email already exists.';
         break;
       case 'weak-password':
-        message = 'The password is too weak.';
+        message = l10n?.weakPassword ?? 'The password is too weak.';
         break;
       case 'user-not-found':
       case 'wrong-password':
-        message = 'Invalid credentials. Please try again.';
+        message = l10n?.invalidCredentials ??
+            'Invalid credentials. Please try again.';
         break;
       case 'too-many-requests':
-        message = 'Too many attempts. Try again later.';
+        message =
+            l10n?.tooManyAttempts ?? 'Too many attempts. Try again later.';
         break;
       case 'network-request-failed':
-        message = 'Network error. Check your connection.';
+        message = l10n?.networkError ?? 'Network error. Check your connection.';
         break;
     }
-
 
     SLCFlushbar.show(
       context: context,
@@ -163,5 +184,32 @@ class AuthenticationService {
   void _logoutUser(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacementNamed(context, '/loginscreen');
+  }
+
+  Future<void> signOut(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (e) {
+      // Get localized strings
+      final l10n = AppLocalizations.of(context);
+      final errorMessage = l10n?.unexpectedAuthError ??
+          "An unexpected authentication error occurred.";
+
+      SLCFlushbar.show(
+        context: context,
+        message: errorMessage,
+        type: FlushbarType.error,
+      );
+    }
+  }
+
+  // Add this method to force a reload of the current user
+  Future<void> reloadCurrentUser() async {
+    try {
+      User? user = _auth.currentUser;
+      await user?.reload();
+    } catch (e) {
+      // Handle error silently - just checking status
+    }
   }
 }

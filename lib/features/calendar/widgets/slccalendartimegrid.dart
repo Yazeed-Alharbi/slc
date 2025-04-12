@@ -4,6 +4,7 @@ import 'package:slc/features/calendar/models/slccalendarentry.dart';
 import 'package:slc/features/calendar/widgets/slccalendarentryprocessor.dart';
 import 'package:slc/features/calendar/widgets/slccalendartimeslots.dart';
 import 'package:slc/features/calendar/widgets/slccalendarentrywidget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SLCCalendarTimeGrid extends StatelessWidget {
   final List<SLCCalendarEntry> entries;
@@ -17,6 +18,12 @@ class SLCCalendarTimeGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+    
+    // Time column width constant - IMPORTANT
+    const double timeColumnWidth = 85.0;
+    
     // Show loading state that completely replaces the calendar
     if (isLoading) {
       return Container(
@@ -33,7 +40,9 @@ class SLCCalendarTimeGrid extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: SLCLoadingIndicator(),
+          child: SLCLoadingIndicator(
+            text: l10n?.loadingCalendar ?? "Loading...",
+          ),
         ),
       );
     }
@@ -64,8 +73,8 @@ class SLCCalendarTimeGrid extends StatelessWidget {
           ...List.generate(24, (index) {
             return Positioned(
               top: (index * 100) + 50, // Position at half-hour marks
-              left: 85,
-              right: 16,
+              left: isRTL ? 0 : timeColumnWidth,
+              right: isRTL ? timeColumnWidth : 0,
               child: Container(
                 height: 1,
                 color: Colors.grey.withOpacity(0.1),
@@ -75,7 +84,11 @@ class SLCCalendarTimeGrid extends StatelessWidget {
 
           // Calendar entries positioned based on their times
           ...processedEntries.map((groupedEntries) =>
-              SLCCalendarEntryWidget(entries: groupedEntries)),
+              SLCCalendarEntryWidget(
+                entries: groupedEntries,
+                timeColumnWidth: timeColumnWidth,
+                isRTL: isRTL,
+              )),
         ],
       ),
     );

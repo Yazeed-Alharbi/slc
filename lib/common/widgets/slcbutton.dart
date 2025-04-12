@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:slc/common/styles/locale_theme_helper.dart';
 
 class SLCButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -27,6 +28,26 @@ class SLCButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the current locale
+    final locale = Localizations.localeOf(context).languageCode;
+
+    // Create a basic text style with properties from this widget
+    final baseTextStyle = TextStyle(
+      fontWeight: fontWeight ?? FontWeight.bold,
+      fontSize: fontSize ?? 16,
+    );
+
+    // Get the appropriate font based on locale
+    final textStyle = locale == 'ar'
+        ? GoogleFonts.rubik(
+            fontWeight: fontWeight ?? FontWeight.bold,
+            fontSize: fontSize ?? 16,
+          )
+        : GoogleFonts.poppins(
+            fontWeight: fontWeight ?? FontWeight.bold,
+            fontSize: fontSize ?? 16,
+          );
+
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -50,10 +71,7 @@ class SLCButton extends StatelessWidget {
           ],
           Text(
             text,
-            style: GoogleFonts.poppins(
-              fontWeight: fontWeight ?? FontWeight.bold,
-              fontSize: fontSize ?? 16,
-            ),
+            style: textStyle, // Use the locale-aware text style
           ),
         ],
       ),

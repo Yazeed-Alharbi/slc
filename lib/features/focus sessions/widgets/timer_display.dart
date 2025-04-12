@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/features/focus%20sessions/widgets/animated_timer.dart';
 import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TimerDisplay extends StatefulWidget {
   final String mode;
@@ -76,25 +77,25 @@ class _TimerDisplayState extends State<TimerDisplay>
   // New method that handles all session manager changes
   void _handleSessionManagerChanges() {
     if (!mounted) return;
-    
+
     // Check if mode has changed (focus→break or break→focus)
     bool modeChanged = (_sessionManager.isBreakTime != widget.isBreak);
-    
+
     // If session isn't active yet, update the initial time display
     if (!_sessionManager.isSessionActive) {
       _updateInitialTime();
     }
-    
+
     // IMPORTANT: When switching between focus and break, reset progress circle to full
     if (modeChanged) {
       _currentProgress = 1.0;
       _progressAnimation = null;
       _progressAnimationController.value = 0;
-      
+
       // Force an immediate update of the progress circle
       _updateProgress(animate: false);
     }
-    
+
     // Always update the time string (which handles active sessions)
     _updateTimeString();
   }
@@ -164,13 +165,13 @@ class _TimerDisplayState extends State<TimerDisplay>
   @override
   void didUpdateWidget(TimerDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Detect and handle mode changes (focus<->break) when widget rebuilds
     if (oldWidget.isBreak != widget.isBreak) {
       // Force reset progress circle and time display
       _currentProgress = 1.0;
       _updateInitialTime();
-      
+
       // Force rebuild of the circle
       _progressAnimation = null;
       _progressAnimationController.value = 0;
@@ -222,19 +223,28 @@ class _TimerDisplayState extends State<TimerDisplay>
               },
             ),
 
-            // Time display
+            // Time display - use Directionality to force LTR for timer
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedTimeDisplay(
-                  timeString: displayTime,
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+                // Force the timer to always display in LTR format with consistent digits
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: AnimatedTimeDisplay(
+                    timeString: displayTime,
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      // Use a font that ensures consistent digit display
+                      fontFamily:
+                          'Roboto', // Using Roboto for consistent digit display
+                    ),
                   ),
                 ),
+                // Mode can be translated
                 Text(
-                  _sessionManager.currentMode,
+                  _getLocalizedMode(
+                      context), // Replace _sessionManager.currentMode
                   style: TextStyle(
                     fontSize: 16,
                     color: widget.isBreak ? SLCColors.green : Colors.grey[600],
@@ -246,5 +256,16 @@ class _TimerDisplayState extends State<TimerDisplay>
         ),
       ),
     );
+  }
+
+  // Add this method to translate the mode but keep timer consistent
+  String _getLocalizedMode(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    if (widget.isBreak) {
+      return l10n?.breakTime ?? "Break Time";
+    } else {
+      return l10n?.focusTime ?? "Focus Time";
+    }
   }
 }

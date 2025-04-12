@@ -12,11 +12,11 @@ import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/Material.dart';
 import 'package:slc/repositories/course_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart' as picker;
 import 'package:path/path.dart' as path;
 import 'dart:math';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -40,7 +40,7 @@ class _FilesTabState extends State<FilesTab> {
   );
 
   bool _isLoading = false;
-  bool _isOpeningFile = false; // New separate state for file opening
+  bool _isOpeningFile = false;
   String _currentFileName = "";
   double _uploadProgress = 0.0;
 
@@ -80,10 +80,10 @@ class _FilesTabState extends State<FilesTab> {
   }
 
   Future<void> _openFile(CourseMaterial material, String fileName) async {
+    final l10n = AppLocalizations.of(context);
     try {
-      print("Starting to open file: $fileName");
       setState(() {
-        _isOpeningFile = true; // Use this instead of _isLoading
+        _isOpeningFile = true;
         _currentFileName = fileName;
       });
 
@@ -92,17 +92,11 @@ class _FilesTabState extends State<FilesTab> {
       final filePath = '${tempDir.path}/$fileName';
       final file = File(filePath);
 
-      print("File path: $filePath");
-
       // Check if file exists already
       if (!await file.exists()) {
-        print("File doesn't exist, downloading from: ${material.downloadUrl}");
         // Download file from URL
         final response = await http.get(Uri.parse(material.downloadUrl));
         await file.writeAsBytes(response.bodyBytes);
-        print("File downloaded, size: ${response.bodyBytes.length} bytes");
-      } else {
-        print("File already exists, size: ${await file.length()} bytes");
       }
 
       // Verify file exists and has content
@@ -110,39 +104,36 @@ class _FilesTabState extends State<FilesTab> {
         throw Exception("File download failed or file is empty");
       }
 
-      print("Opening file with MIME type: ${_getMimeType(material.type)}");
-
       // Open file with device's default app
       final result = await OpenFile.open(
         filePath,
         type: _getMimeType(material.type),
       );
 
-      print("OpenFile result: ${result.type} - ${result.message}");
-
       if (result.type != ResultType.done) {
         // Handle error
         SLCFlushbar.show(
           context: context,
-          message: "Could not open file: ${result.message}",
+          message: l10n?.couldNotOpenFile(result.message) ??
+              "Could not open file: ${result.message}",
           type: FlushbarType.error,
         );
       }
     } catch (e) {
-      print("Error opening file: $e");
       SLCFlushbar.show(
         context: context,
-        message: "Error opening file: $e",
+        message:
+            l10n?.errorOpeningFile(e.toString()) ?? "Error opening file: $e",
         type: FlushbarType.error,
       );
     } finally {
       if (mounted) {
-        setState(() => _isOpeningFile = false); // Reset opening state
+        setState(() => _isOpeningFile = false);
       }
     }
   }
 
-// Helper to get MIME type for different file extensions
+  // Helper to get MIME type for different file extensions
   String _getMimeType(String extension) {
     extension = extension.toLowerCase();
 
@@ -167,6 +158,7 @@ class _FilesTabState extends State<FilesTab> {
   }
 
   Future<void> _uploadFile() async {
+    final l10n = AppLocalizations.of(context);
     try {
       // Pick multiple files
       picker.FilePickerResult? result =
@@ -232,7 +224,7 @@ class _FilesTabState extends State<FilesTab> {
       // Success message
       SLCFlushbar.show(
         context: context,
-        message: "Files uploaded successfully",
+        message: l10n?.filesUploadedSuccess ?? "Files uploaded successfully",
         type: FlushbarType.success,
       );
 
@@ -242,7 +234,8 @@ class _FilesTabState extends State<FilesTab> {
       // Handle errors
       SLCFlushbar.show(
         context: context,
-        message: "Error uploading file: $e",
+        message: l10n?.errorUploadingFile(e.toString()) ??
+            "Error uploading file: $e",
         type: FlushbarType.error,
       );
     } finally {
@@ -257,6 +250,7 @@ class _FilesTabState extends State<FilesTab> {
   }
 
   Future<void> _deleteFile(int index) async {
+    final l10n = AppLocalizations.of(context);
     Map<String, dynamic> fileData = _materialsAsFiles[index];
     CourseMaterial material = fileData["material"];
 
@@ -268,7 +262,8 @@ class _FilesTabState extends State<FilesTab> {
 
       SLCFlushbar.show(
         context: context,
-        message: "${fileData["fileName"]} deleted successfully",
+        message: l10n?.fileDeletedSuccess(fileData["fileName"]) ??
+            "${fileData["fileName"]} deleted successfully",
         type: FlushbarType.success,
       );
 
@@ -277,13 +272,15 @@ class _FilesTabState extends State<FilesTab> {
     } catch (e) {
       SLCFlushbar.show(
         context: context,
-        message: "Error deleting file: $e",
+        message:
+            l10n?.errorDeletingFile(e.toString()) ?? "Error deleting file: $e",
         type: FlushbarType.error,
       );
     }
   }
 
   Future<void> _markMaterialAsCompleted(CourseMaterial material) async {
+    final l10n = AppLocalizations.of(context);
     try {
       await _courseRepository.markMaterialAsCompleted(
         enrollmentId: widget.enrollment.id,
@@ -292,7 +289,8 @@ class _FilesTabState extends State<FilesTab> {
 
       SLCFlushbar.show(
         context: context,
-        message: "Material marked as completed",
+        message:
+            l10n?.materialMarkedCompleted ?? "Material marked as completed",
         type: FlushbarType.success,
       );
 
@@ -301,7 +299,8 @@ class _FilesTabState extends State<FilesTab> {
     } catch (e) {
       SLCFlushbar.show(
         context: context,
-        message: "Error marking as completed: $e",
+        message: l10n?.errorMarkingCompleted(e.toString()) ??
+            "Error marking as completed: $e",
         type: FlushbarType.error,
       );
     }
@@ -317,13 +316,16 @@ class _FilesTabState extends State<FilesTab> {
   @override
   Widget build(BuildContext context) {
     final files = _materialsAsFiles;
+    final l10n = AppLocalizations.of(context);
 
     if (_isLoading) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SLCLoadingIndicator(text: "Uploading $_currentFileName"),
+            SLCLoadingIndicator(
+                text: l10n?.uploadingFile(_currentFileName) ??
+                    "Uploading $_currentFileName"),
             const SizedBox(height: 16),
             Text(
               "${(_uploadProgress * 100).toStringAsFixed(1)}%",
@@ -352,7 +354,9 @@ class _FilesTabState extends State<FilesTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SLCLoadingIndicator(text: "Opening $_currentFileName"),
+            SLCLoadingIndicator(
+                text: l10n?.openingFile(_currentFileName) ??
+                    "Opening $_currentFileName"),
             const SizedBox(height: 16),
           ],
         ),
@@ -373,7 +377,7 @@ class _FilesTabState extends State<FilesTab> {
                       Icons.add,
                       color: Colors.white,
                     ),
-                    text: "Upload File",
+                    text: l10n?.uploadFile ?? "Upload File",
                     backgroundColor: SLCColors.primaryColor,
                     foregroundColor: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -399,7 +403,7 @@ class _FilesTabState extends State<FilesTab> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          "No files uploaded yet",
+                          l10n?.noFilesUploaded ?? "No files uploaded yet",
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 16,
@@ -407,7 +411,8 @@ class _FilesTabState extends State<FilesTab> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Upload course materials using the button above",
+                          l10n?.uploadMaterialsHint ??
+                              "Upload course materials using the button above",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey[400],
@@ -434,12 +439,12 @@ class _FilesTabState extends State<FilesTab> {
                       confirmDismiss: (direction) async {
                         bool confirm = await NativeAlertDialog.show(
                           context: context,
-                          title: "Delete File",
-                          content:
+                          title: l10n?.deleteFile ?? "Delete File",
+                          content: l10n?.confirmDeleteFile(file["fileName"]) ??
                               "Are you sure you want to delete '${file["fileName"]}'?",
-                          confirmText: "Delete",
+                          confirmText: l10n?.delete ?? "Delete",
                           confirmTextColor: Colors.red,
-                          cancelText: "Cancel",
+                          cancelText: l10n?.cancel ?? "Cancel",
                         );
                         if (confirm) {
                           await _deleteFile(index);
@@ -472,12 +477,7 @@ class _FilesTabState extends State<FilesTab> {
                           fileSize: file["fileSize"],
                           isCompleted: isCompleted,
                           onPressed: () async {
-                            // Get material details
-                            CourseMaterial material = file["material"];
-                            String fileName = file["fileName"];
-
-                            // Open file
-                            await _openFile(material, fileName);
+                            await _openFile(material, file["fileName"]);
                           },
                         ),
                       ),

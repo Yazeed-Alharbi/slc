@@ -14,6 +14,8 @@ import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:slc/features/authentication/screens/auth_wrapper.dart';
 import 'package:slc/services/notifications_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:slc/common/styles/locale_theme_helper.dart';
 
 // Create a session manager class to handle session checks
 class SessionManager {
@@ -88,6 +90,26 @@ class MyApp extends StatelessWidget {
             darkTheme: darkMode,
             home: AuthWrapper(),
             navigatorObservers: [AppNavigationObserver()],
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('ar'), // Force Arabic locale for testing
+            builder: (context, child) {
+              // Get the current locale
+              final isArabic =
+                  Localizations.localeOf(context).languageCode == 'ar';
+
+              // Get the appropriate theme based on the current brightness and locale
+              final isDarkMode =
+                  Theme.of(context).brightness == Brightness.dark;
+              final themeData = isDarkMode
+                  ? getThemeForLocale(darkMode, isArabic)
+                  : getThemeForLocale(lightMode, isArabic);
+
+              return Theme(
+                data: themeData,
+                child: child ?? const SizedBox(),
+              );
+            },
             routes: {
               '/onboardingscreen': (context) => const Onborading(),
               '/loginscreen': (context) => LoginScreen(),

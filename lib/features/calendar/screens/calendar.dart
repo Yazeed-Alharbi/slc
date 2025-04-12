@@ -12,6 +12,7 @@ import 'package:slc/repositories/course_repository.dart';
 import 'package:slc/repositories/event_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
@@ -29,7 +30,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<SLCCalendarEntry> _calendarEntries = [];
   bool _isLoading = true;
 
-  // Direct repository instantiation like in HomeScreen
   final CourseRepository _courseRepository = CourseRepository(
     firestoreUtils: FirestoreUtils(),
   );
@@ -58,7 +58,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  // Load calendar data from repositories
   Future<void> _loadCalendarData() async {
     setState(() => _isLoading = true);
 
@@ -188,6 +187,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return SafeArea(
       child: SingleChildScrollView(
         child: Container(
@@ -197,7 +198,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             children: [
               SizedBox(height: 7),
               Text(
-                "Calendar",
+                l10n?.calendar ?? "Calendar",
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall

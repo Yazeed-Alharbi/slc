@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/features/focus%20sessions/models/quizmodels.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class QuizResultsScreen extends StatelessWidget {
   final Quiz quiz;
@@ -28,6 +29,7 @@ class QuizResultsScreen extends StatelessWidget {
     final score = _calculateScore();
     final percentage = (score / quiz.questions.length) * 100;
     final isGoodScore = percentage >= 70;
+    final l10n = AppLocalizations.of(context);
 
     // Determine emoji based on score
     String emoji;
@@ -66,7 +68,7 @@ class QuizResultsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Quiz Completed!",
+                      l10n?.quizCompleted ?? "Quiz Completed!",
                       style: Theme.of(context).textTheme.headlineMedium,
                       textAlign: TextAlign.center,
                     ),
@@ -111,8 +113,8 @@ class QuizResultsScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       isGoodScore
-                          ? "Great job! You've mastered this material."
-                          : "You need to review this material again.",
+                          ? l10n?.greatJob ?? "Great job! You've mastered this material."
+                          : l10n?.needToReview ?? "You need to review this material again.",
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
@@ -194,7 +196,7 @@ class QuizResultsScreen extends StatelessWidget {
                             if (userAnswerIndex != null)
                               _buildAnswerTile(
                                 context: context,
-                                label: "Your Answer:",
+                                label: l10n?.yourAnswer ?? 'Your Answer:',
                                 text: question.options[userAnswerIndex].text,
                                 isCorrect: isCorrect,
                               ),
@@ -205,7 +207,7 @@ class QuizResultsScreen extends StatelessWidget {
                             if (!isCorrect && userAnswerIndex != null)
                               _buildAnswerTile(
                                 context: context,
-                                label: "Correct Answer:",
+                                label: l10n?.correctAnswer ?? 'Correct Answer:',
                                 text: question
                                     .options[question.correctOptionIndex].text,
                                 isCorrect: true,
@@ -235,7 +237,7 @@ class QuizResultsScreen extends StatelessWidget {
                       return route.isFirst;
                     });
                   },
-                  text: "Done",
+                  text: l10n?.done ?? "Done",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
@@ -15,6 +16,9 @@ class SLCBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       decoration: BoxDecoration(
         border: const Border(
