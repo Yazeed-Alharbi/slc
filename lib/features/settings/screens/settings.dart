@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:slc/common/providers/theme_provider.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcavatar.dart';
@@ -8,6 +10,7 @@ import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/services/notifications_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -19,7 +22,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   // Setting values
   bool _notificationsEnabled = false;
-  bool _darkMode = false;
+  // No longer need _darkMode as a local variable
 
   @override
   void initState() {
@@ -32,24 +35,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() {
       _notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
-      _darkMode = prefs.getBool('dark_mode') ?? false;
+      // No need to load dark mode here
     });
   }
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final l10n = AppLocalizations.of(context);
 
     await prefs.setBool('notifications_enabled', _notificationsEnabled);
-    await prefs.setBool('dark_mode', _darkMode);
+    // No need to save dark mode here
 
     SLCFlushbar.show(
       context: context,
-      message: "Settings saved successfully",
+      message: l10n?.settingsSaved ?? "Settings saved successfully",
       type: FlushbarType.success,
     );
   }
 
   Future<void> _handleNotificationToggle(bool value) async {
+    final l10n = AppLocalizations.of(context);
+
     if (value) {
       final permissionGranted =
           await NotificationsService().requestNotificationPermissions();
@@ -57,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (mounted) {
           SLCFlushbar.show(
             context: context,
-            message:
+            message: l10n?.notificationPermissionsRequired ??
                 "Notification permissions required to enable notifications",
             type: FlushbarType.warning,
           );
@@ -73,12 +79,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _logoutUser() async {
+    final l10n = AppLocalizations.of(context);
+
     final shouldLogout = await NativeAlertDialog.show(
       context: context,
-      title: "Log Out",
-      content: "Are you sure you want to log out?",
-      confirmText: "Log Out",
-      cancelText: "Cancel",
+      title: l10n?.logOut ?? "Log Out",
+      content: l10n?.logOutConfirmation ?? "Are you sure you want to log out?",
+      confirmText: l10n?.logOut ?? "Log Out",
+      cancelText: l10n?.cancel ?? "Cancel",
       confirmTextColor: Colors.red,
     );
 
@@ -90,8 +98,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final user = FirebaseAuth.instance.currentUser;
     final padding = SpacingStyles(context).defaultPadding;
+
+    // Access the theme provider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return SafeArea(
       child: Scaffold(
@@ -103,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Header with back button and title
               SizedBox(height: 7),
               Text(
-                "Settings",
+                l10n?.settings ?? "Settings",
                 style: Theme.of(context)
                     .textTheme
                     .headlineSmall
@@ -142,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user.displayName ?? "User",
+                              user.displayName ?? (l10n?.user ?? "User"),
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             SizedBox(height: 4),
@@ -169,14 +181,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // App Settings
               Text(
-                "App Settings",
+                l10n?.appSettings ?? "App Settings",
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 16),
               _buildSettingTile(
                 icon: Icons.notifications_outlined,
-                title: "Notifications",
-                subtitle: "Receive push notifications",
+                title: l10n?.notifications ?? "Notifications",
+                subtitle:
+                    l10n?.receiveNotifications ?? "Receive push notifications",
                 trailing: Switch(
                   value: _notificationsEnabled,
                   onChanged: _handleNotificationToggle,
@@ -190,15 +203,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SizedBox(height: 8),
               _buildSettingTile(
                 icon: Icons.dark_mode_outlined,
-                title: "Dark Mode",
-                subtitle: "Use dark theme",
+                title: l10n?.darkMode ?? "Dark Mode",
+                subtitle: l10n?.useDarkTheme ?? "Use dark theme",
                 trailing: Switch(
-                  value: _darkMode,
+                  value: themeProvider.isDarkMode,
                   onChanged: (value) {
-                    setState(() {
-                      _darkMode = value;
-                    });
-                    _saveSettings();
+                    // Use the provider to change theme
+                    themeProvider.toggleTheme(value);
+                    // No need for setState as the provider notifies listeners
                   },
                   activeColor: SLCColors.primaryColor,
                   inactiveThumbColor: Colors.white,
@@ -212,13 +224,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // About section
               Text(
-                "About",
+                l10n?.about ?? "About",
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SizedBox(height: 16),
               _buildSettingTile(
                 icon: Icons.help_outline,
-                title: "Help & Support",
+                title: l10n?.helpAndSupport ?? "Help & Support",
                 onTap: () {
                   // Navigate to help screen
                 },
@@ -226,8 +238,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SizedBox(height: 8),
               _buildSettingTile(
                 icon: Icons.info_outline,
-                title: "About SLC",
-                subtitle: "Version 1.0.0",
+                title: l10n?.aboutSLC ?? "About SLC",
+                subtitle: l10n?.version ?? "Version 1.0.0",
                 onTap: () {
                   // Navigate to about screen
                 },
@@ -242,7 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.logout,
                     color: Colors.white,
                   ),
-                  text: "Log Out",
+                  text: l10n?.logOut ?? "Log Out",
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white),
 

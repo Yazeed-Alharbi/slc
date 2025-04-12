@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                       PullDownMenuItem(
                         onTap: () => _handleMenuSelection('logout'),
-                        title: l10n?.logout ?? "Logout",
+                        title: l10n?.logOut ?? "Logout",
                         isDestructive: true,
                         icon: Icons.logout,
                       ),

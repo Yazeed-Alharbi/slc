@@ -16,6 +16,8 @@ import 'package:slc/features/authentication/screens/auth_wrapper.dart';
 import 'package:slc/services/notifications_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:slc/common/styles/locale_theme_helper.dart';
+import 'package:provider/provider.dart';
+import 'package:slc/common/providers/theme_provider.dart';
 
 // Create a session manager class to handle session checks
 class SessionManager {
@@ -66,7 +68,15 @@ Future<void> main() async {
   // Initialize notifications
   await NotificationsService().initialize();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        // any other providers you have
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -81,6 +91,9 @@ class MyApp extends StatelessWidget {
         final scale = mediaQueryData.textScaler
             .clamp(maxScaleFactor: 1.5, minScaleFactor: 1.0);
 
+        // Get theme provider to access current theme mode
+        final themeProvider = Provider.of<ThemeProvider>(context);
+
         return MediaQuery(
           data: mediaQueryData.copyWith(textScaler: scale),
           child: MaterialApp(
@@ -88,6 +101,7 @@ class MyApp extends StatelessWidget {
             title: 'Flutter Demo',
             theme: lightMode,
             darkTheme: darkMode,
+            themeMode: themeProvider.themeMode, // Use provider's theme mode
             home: AuthWrapper(),
             navigatorObservers: [AppNavigationObserver()],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -98,9 +112,10 @@ class MyApp extends StatelessWidget {
               final isArabic =
                   Localizations.localeOf(context).languageCode == 'ar';
 
-              // Get the appropriate theme based on the current brightness and locale
-              final isDarkMode =
-                  Theme.of(context).brightness == Brightness.dark;
+              // Use the theme provider's dark mode state
+              final isDarkMode = themeProvider.isDarkMode;
+
+              // Get the appropriate theme based on provider's state and locale
               final themeData = isDarkMode
                   ? getThemeForLocale(darkMode, isArabic)
                   : getThemeForLocale(lightMode, isArabic);

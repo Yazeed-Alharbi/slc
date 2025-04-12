@@ -84,9 +84,9 @@ class SLCCalendarHeader extends StatelessWidget {
       ),
       onPressed: onPrevious,
       backgroundColor:
-          MediaQuery.of(context).platformBrightness == Brightness.light
+          Theme.of(context).brightness == Brightness.light
               ? Colors.white
-              : Colors.black,
+              : Colors.black,  // Changed from MediaQuery to Theme
       iconColor: SLCColors.coolGray,
       size: 25,
       icon: Directionality.of(context) == ui.TextDirection.rtl
@@ -103,9 +103,9 @@ class SLCCalendarHeader extends StatelessWidget {
       ),
       onPressed: onNext,
       backgroundColor:
-          MediaQuery.of(context).platformBrightness == Brightness.light
+          Theme.of(context).brightness == Brightness.light
               ? Colors.white
-              : Colors.black,
+              : Colors.black,  // Changed from MediaQuery to Theme
       iconColor: SLCColors.coolGray,
       size: 25,
       icon: Directionality.of(context) == ui.TextDirection.rtl

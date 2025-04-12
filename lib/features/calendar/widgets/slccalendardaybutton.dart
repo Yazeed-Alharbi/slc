@@ -29,7 +29,7 @@ class SLCCalendarDayButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -38,7 +38,7 @@ class SLCCalendarDayButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? SLCColors.primaryColor
-              : MediaQuery.of(context).platformBrightness == Brightness.light
+              : Theme.of(context).brightness == Brightness.light
                   ? Colors.white
                   : Colors.black,
           borderRadius: BorderRadius.circular(15),
