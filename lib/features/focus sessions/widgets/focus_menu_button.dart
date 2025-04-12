@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pull_down_button/pull_down_button.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FocusMenuButton extends StatelessWidget {
   final VoidCallback onSettingsTap;
@@ -15,21 +16,23 @@ class FocusMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return PullDownButton(
       itemBuilder: (context) => [
         PullDownMenuItem(
           onTap: () => onNotesTap?.call(),
-          title: "Notes",
+          title: l10n?.notes ?? "Notes",
           icon: Icons.note_alt,
         ),
         PullDownMenuItem(
           onTap: () => onAIAssistantTap(),
-          title: "AI Assistant",
+          title: l10n?.aiAssistant ?? "AI Assistant",
           icon: Icons.chat,
         ),
         PullDownMenuItem(
           onTap: () => onSettingsTap(),
-          title: "Settings",
+          title: l10n?.settings ?? "Settings",
           icon: Icons.settings,
         ),
       ],

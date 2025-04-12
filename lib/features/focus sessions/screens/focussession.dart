@@ -19,6 +19,7 @@ import 'package:slc/models/Course.dart';
 import 'package:slc/models/Material.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/services/notifications_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FocusSessionScreen extends StatefulWidget {
   final Course course;
@@ -264,9 +265,10 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
 
   void _showMaterialSelectionDialog({Function()? onSelectionComplete}) {
     if (widget.course.materials.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       SLCFlushbar.show(
           context: context,
-          message: "No materials are available for this course.",
+          message: l10n?.noMaterialsAvailable ?? "No materials are available for this course.",
           type: FlushbarType.error);
       return;
     }
@@ -339,6 +341,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   void _showQuizModal() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -352,13 +355,13 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "You've completed ${_sessionManager.totalPomodoros} pomodoros!",
+                  l10n?.pomodorosCompleted(_sessionManager.totalPomodoros) ?? "You've completed ${_sessionManager.totalPomodoros} pomodoros!",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 SizedBox(height: 16),
                 Text(
-                  "Would you like to take a quiz about the material?",
+                  l10n?.takeQuizQuestion ?? "Would you like to take a quiz about the material?",
                   style: TextStyle(fontSize: 18),
                   textAlign: TextAlign.center,
                 ),
@@ -373,7 +376,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                       },
                       backgroundColor: SLCColors.primaryColor,
                       foregroundColor: Colors.white,
-                      text: "Take the Quiz",
+                      text: l10n?.takeQuiz ?? "Take the Quiz",
                     ),
                     SLCButton(
                       onPressed: () {
@@ -386,7 +389,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                       },
                       backgroundColor: Colors.transparent,
                       foregroundColor: SLCColors.primaryColor,
-                      text: "Skip",
+                      text: l10n?.skip ?? "Skip",
                     ),
                   ],
                 ),
@@ -409,13 +412,14 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
 
   // Show confirmation dialog for ending session
   void _showEndSessionConfirmation() {
+    final l10n = AppLocalizations.of(context);
     NativeAlertDialog.show(
       context: context,
-      title: "End Session",
-      content: "Are you sure you want to end this session?",
-      confirmText: "End Session",
+      title: l10n?.endSession ?? "End Session",
+      content: l10n?.endSessionConfirmation ?? "Are you sure you want to end this session?",
+      confirmText: l10n?.endSession ?? "End Session",
       confirmTextColor: Colors.red,
-      cancelText: "Cancel",
+      cancelText: l10n?.cancel ?? "Cancel",
       onConfirm: () {
         _sessionManager.endSession();
         Navigator.pop(context);
@@ -425,6 +429,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: OrientationBuilder(
@@ -442,6 +447,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
 
   Widget _buildPortraitLayout(BuildContext context) {
     double screenHeight = MediaQuery.sizeOf(context).height;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -492,6 +498,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                 Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: Text(
+                    l10n?.session(_sessionManager.completedPomodoros, _sessionManager.totalPomodoros) ?? 
                     "Session: ${_sessionManager.completedPomodoros}/${_sessionManager.totalPomodoros}",
                     style: TextStyle(
                       fontSize: 16,
@@ -511,11 +518,11 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                         ? SLCColors.green
                         : SLCColors.primaryColor,
                     foregroundColor: Colors.white,
-                    text: _sessionManager.isPlaying
-                        ? "Pause"
-                        : (_sessionManager.sessionCompleted
-                            ? "Completed"
-                            : "Start"),
+                    text: _sessionManager.isPlaying 
+                        ? (l10n?.pause ?? "Pause") 
+                        : (_sessionManager.sessionCompleted 
+                            ? (l10n?.completed ?? "Completed") 
+                            : (l10n?.start ?? "Start")),
                   ),
                 ),
               ],
@@ -530,7 +537,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                   onPressed: _showEndSessionConfirmation,
                   backgroundColor: Colors.transparent,
                   foregroundColor: Colors.red,
-                  text: "End Session",
+                  text: l10n?.endSession ?? "End Session",
                 ),
               ),
             ],
@@ -541,6 +548,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
   }
 
   Widget _buildLandscapeLayout(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         // Timer on left side (taking half the width)
@@ -589,10 +597,10 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                     : SLCColors.primaryColor,
                 foregroundColor: Colors.white,
                 text: _sessionManager.isPlaying
-                    ? "Pause"
+                    ? (l10n?.pause ?? "Pause")
                     : (_sessionManager.sessionCompleted
-                        ? "Completed"
-                        : "Start"),
+                        ? (l10n?.completed ?? "Completed")
+                        : (l10n?.start ?? "Start")),
                 width: 280,
               ),
 
@@ -603,7 +611,7 @@ class _FocusSessionScreenState extends State<FocusSessionScreen>
                   onPressed: _showEndSessionConfirmation,
                   backgroundColor: Colors.transparent,
                   foregroundColor: Colors.red,
-                  text: "End Session",
+                  text: l10n?.endSession ?? "End Session",
                   width: 280,
                 ),
               ],

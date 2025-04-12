@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsDialog extends StatefulWidget {
   final int pomodoroMinutes;
@@ -53,6 +54,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 30,
@@ -70,7 +73,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Timer Settings',
+                  l10n?.timerSettings ?? 'Timer Settings',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -88,7 +91,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             // Pomodoro Duration
             SLCTextField(
               controller: _pomodoroController,
-              labelText: 'Pomodoro (minutes)',
+              labelText: l10n?.pomodoroMinutes ?? 'Pomodoro (minutes)',
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
@@ -96,7 +99,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             // Short Break Duration
             SLCTextField(
               controller: _shortBreakController,
-              labelText: 'Short Break (minutes)',
+              labelText: l10n?.shortBreakMinutes ?? 'Short Break (minutes)',
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
@@ -104,7 +107,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             // Long Break Duration
             SLCTextField(
               controller: _longBreakController,
-              labelText: 'Long Break (minutes)',
+              labelText: l10n?.longBreakMinutes ?? 'Long Break (minutes)',
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
@@ -112,7 +115,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             // Long Break Interval
             SLCTextField(
               controller: _intervalController,
-              labelText: 'Number of pomodoros',
+              labelText: l10n?.numberOfPomodoros ?? 'Number of pomodoros',
               keyboardType: TextInputType.number,
             ),
 
@@ -127,12 +130,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   backgroundColor: Colors.transparent,
                   foregroundColor: SLCColors.primaryColor,
                   onPressed: () => Navigator.of(context).pop(),
-                  text: "CANCEL",
+                  text: l10n?.cancel ?? "Cancel",
                 ),
                 const SizedBox(width: 16),
                 SLCButton(
                   width: 60,
-                  text: "SAVE",
+                  text: l10n?.save ?? "Save",
                   foregroundColor: Colors.white,
                   backgroundColor: SLCColors.primaryColor,
                   onPressed: () {

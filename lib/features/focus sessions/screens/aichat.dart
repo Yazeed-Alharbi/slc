@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 // A simple chat message model.
 class ChatMessage {
   final String content;
@@ -189,6 +189,7 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildInputArea({bool isLandscape = false}) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 15,
@@ -216,7 +217,7 @@ class _AiChatScreenState extends State<AiChatScreen>
               child: TextField(
                 controller: _textController,
                 decoration: InputDecoration(
-                  hintText: 'Message SLC AI...',
+                  hintText: l10n?.messageAI ?? 'Message SLC AI...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
@@ -394,12 +395,13 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Use OrientationBuilder to handle different layouts
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
         title: Text(
-          "AI Assistant",
+          l10n?.aiAssistant ?? "AI Assistant",
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 18,
@@ -416,11 +418,11 @@ class _AiChatScreenState extends State<AiChatScreen>
             onPressed: () {
               NativeAlertDialog.show(
                   context: context,
-                  title: "New Chat",
-                  content:
+                  title: l10n?.newChat ?? "New Chat",
+                  content: l10n?.newChatConfirmation ??
                       "Are you sure you want to start a new chat? This will clear the current conversation",
-                  confirmText: "New Chat",
-                  cancelText: "Cancel",
+                  confirmText: l10n?.newChat ?? "New Chat",
+                  cancelText: l10n?.cancel ?? "Cancel",
                   onConfirm: () {
                     setState(() {
                       _messages.clear();
@@ -476,6 +478,7 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildWelcomeScreen() {
+    final l10n = AppLocalizations.of(context);
     final orientation = MediaQuery.of(context).orientation;
     final isLandscape = orientation == Orientation.landscape;
 
@@ -499,7 +502,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "SLC AI Assistant",
+                            l10n?.aiAssistantTitle ?? "SLC AI Assistant",
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -507,7 +510,8 @@ class _AiChatScreenState extends State<AiChatScreen>
                           ),
                           SizedBox(height: 8),
                           Text(
-                            "Ask me anything about your courses, study techniques, or learning strategies.",
+                            l10n?.askAnything ??
+                                "Ask me anything about your courses, study techniques, or learning strategies.",
                             textAlign: TextAlign.start,
                             style: TextStyle(fontSize: 14),
                           ),
@@ -515,11 +519,12 @@ class _AiChatScreenState extends State<AiChatScreen>
                           OutlinedButton.icon(
                             onPressed: () {
                               _sendMessage(
-                                  text:
+                                  text: l10n?.helloAI ??
                                       "Hello! How can you help with my studies?");
                             },
                             icon: Icon(Icons.chat_outlined),
-                            label: Text("Start a conversation"),
+                            label: Text(l10n?.startConversation ??
+                                "Start a conversation"),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: _primaryColor,
                               padding: EdgeInsets.symmetric(
@@ -545,7 +550,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                     ),
                     SizedBox(height: 24),
                     Text(
-                      "SLC AI Assistant",
+                      l10n?.aiAssistantTitle ?? "SLC AI Assistant",
                       style: Theme.of(context)
                           .textTheme
                           .headlineLarge
@@ -553,7 +558,8 @@ class _AiChatScreenState extends State<AiChatScreen>
                     ),
                     SizedBox(height: 16),
                     Text(
-                        "Ask me anything about your courses, study techniques, or learning strategies.",
+                        l10n?.askAnything ??
+                            "Ask me anything about your courses, study techniques, or learning strategies.",
                         textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
@@ -563,10 +569,12 @@ class _AiChatScreenState extends State<AiChatScreen>
                     OutlinedButton.icon(
                       onPressed: () {
                         _sendMessage(
-                            text: "Hello! How can you help with my studies?");
+                            text: l10n?.helloAI ??
+                                "Hello! How can you help with my studies?");
                       },
                       icon: Icon(Icons.chat_outlined),
-                      label: Text("Start a conversation"),
+                      label: Text(l10n?.startConversation ??
+                          "Start a conversation"),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _primaryColor,
                         padding:
