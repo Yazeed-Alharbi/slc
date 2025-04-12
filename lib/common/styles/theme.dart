@@ -74,3 +74,16 @@ ThemeData darkMode = ThemeData(
     ),
   ),
 );
+
+ThemeData getThemeForLocale(ThemeData baseTheme, bool isArabic) {
+  // If Arabic, apply Cairo font to the text theme
+  if (isArabic) {
+    return baseTheme.copyWith(
+      textTheme: GoogleFonts.cairoTextTheme(baseTheme.textTheme),
+      primaryTextTheme: GoogleFonts.cairoTextTheme(baseTheme.primaryTextTheme),
+    );
+  }
+  
+  // For English, keep the existing fonts (Poppins from your setup)
+  return baseTheme;
+}

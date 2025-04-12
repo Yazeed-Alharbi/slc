@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -48,13 +49,20 @@ class _LoginScreenState extends State<LoginScreen> {
   void _validateForm() {
     setState(() {
       _isFormValid = Validators.validateEmail(emailController.text) == null &&
-          Validators.validatePassword(passwordController.text) == null;
+          Validators.validatePasswordSimple(passwordController.text) == null;
     });
   }
 
   void _login() async {
+    // Get localized strings for errors
+    final l10n = AppLocalizations.of(context);
+    final pleaseFixErrors =
+        l10n?.pleaseFixErrors ?? "Please fix the errors in red.";
+    final failedToLoadUserData =
+        l10n?.failedToLoadUserData ?? "Failed to load user data";
+
     if (!_isFormValid) {
-      _showFlushbar("Please fix the errors in red.", FlushbarType.error);
+      _showFlushbar(pleaseFixErrors, FlushbarType.error);
       return;
     }
     _setLoading(true);
@@ -77,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
             arguments: student,
           );
         } else {
-          _showFlushbar("Failed to load user data", FlushbarType.error);
+          _showFlushbar(failedToLoadUserData, FlushbarType.error);
         }
       } else {
         Navigator.pushNamed(
@@ -91,6 +99,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleGoogleSignInSuccess(Student? student) {
+    // Get localized string for error
+    final l10n = AppLocalizations.of(context);
+    final googleSignInFailed =
+        l10n?.googleSignInFailed ?? "Google sign-in failed.";
+
     if (student != null) {
       Navigator.pushReplacementNamed(
         context,
@@ -98,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
         arguments: student,
       );
     } else {
-      _showFlushbar("Google sign-in failed.", FlushbarType.error);
+      _showFlushbar(googleSignInFailed, FlushbarType.error);
     }
   }
 
@@ -111,12 +124,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+    final validators = Validators.of(context);
+
+    // Use localized strings with fallbacks
+    final loginTitle = l10n?.login ?? "Login";
+    final emailLabel = l10n?.email ?? "Email";
+    final passwordLabel = l10n?.password ?? "Password";
+    final forgotPassword = l10n?.forgotPassword ?? "Forgot Password?";
+    final signIn = l10n?.signIn ?? "Sign In";
+    final createNewAccount = l10n?.createNewAccount ?? "Create new account";
+    final signingIn = l10n?.signingIn ?? "Signing In...";
+
     return Scaffold(
       body: SafeArea(
           child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
-            ? const SLCLoadingIndicator(text: "Signing In...")
+            ? SLCLoadingIndicator(text: signingIn)
             : SingleChildScrollView(
                 reverse: true,
                 physics: const BouncingScrollPhysics(),
@@ -135,24 +161,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Login",
+                        loginTitle,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.05),
                       SLCTextField(
-                        labelText: "Email",
+                        labelText: emailLabel,
                         obscureText: false,
                         controller: emailController,
-                        validator: Validators.validateEmail,
+                        validator: validators.validateEmail,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
                       SLCTextField(
-                        labelText: "Password",
+                        labelText: passwordLabel,
                         obscureText: true,
                         controller: passwordController,
-                        validator: Validators.validatePassword,
+                        validator: validators
+                            .validatePasswordSimple, // Use the simple validator here
                         onChanged: (_) => _validateForm(),
                       ),
                       Row(
@@ -166,8 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               Navigator.pushNamed(
                                   context, "/forgotpassowrdscreen");
                             },
-                            child: const Text(
-                              "Forgot Password?",
+                            child: Text(
+                              forgotPassword,
                               style: TextStyle(
                                 color: SLCColors.primaryColor,
                                 fontWeight: FontWeight.w700,
@@ -179,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 30),
                       SLCButton(
                         onPressed: _isFormValid ? _login : null,
-                        text: "Sign In",
+                        text: signIn,
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       ),
@@ -197,8 +224,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.pushReplacementNamed(
                               context, "/registerscreen");
                         },
-                        child: const Text(
-                          "Create new account",
+                        child: Text(
+                          createNewAccount,
                           style: TextStyle(
                             color: SLCColors.primaryColor,
                             fontWeight: FontWeight.w700,

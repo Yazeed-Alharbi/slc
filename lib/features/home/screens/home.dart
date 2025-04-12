@@ -19,6 +19,7 @@ import 'package:slc/features/course%20management/screens/coursepage.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Add this import at the top
 import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
 import 'package:slc/features/focus%20sessions/widgets/active_session_card.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import for translations
 
 class HomeScreen extends StatefulWidget {
   final Student student;
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _updateGreeting();
+    // Remove _updateGreeting() from here
 
     // Add app lifecycle observer
     WidgetsBinding.instance.addObserver(this);
@@ -63,6 +64,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _checkForActiveSession();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateGreeting(); // Move the call here
   }
 
   void _onFocusChange() {
@@ -95,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
         _sessionManager.recalculateElapsedTimeOnResume();
       }
-      
+
       // Then check for and restore any active session
       if (mounted) _checkForActiveSession();
     }
@@ -163,15 +170,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _updateGreeting() {
+    final l10n = AppLocalizations.of(context);
     final int hour = DateTime.now().hour;
+
     if (hour >= 5 && hour < 12) {
-      greeting = "Good Morning";
+      greeting = l10n?.goodMorning ?? "Good Morning";
     } else if (hour >= 12 && hour < 17) {
-      greeting = "Good Afternoon";
+      greeting = l10n?.goodAfternoon ?? "Good Afternoon";
     } else if (hour >= 17 && hour < 21) {
-      greeting = "Good Evening";
+      greeting = l10n?.goodEvening ?? "Good Evening";
     } else {
-      greeting = "Hello";
+      greeting = l10n?.hello ?? "Hello";
     }
   }
 
@@ -185,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SafeArea(
       // Rest of your build method remains the same
       child: Container(
@@ -216,12 +226,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     itemBuilder: (context) => [
                       PullDownMenuItem(
                         onTap: () => {},
-                        title: "Settings",
+                        title: l10n?.settings ?? "Settings",
                         icon: Icons.settings,
                       ),
                       PullDownMenuItem(
                         onTap: () => _handleMenuSelection('logout'),
-                        title: "Logout",
+                        title: l10n?.logout ?? "Logout",
                         isDestructive: true,
                         icon: Icons.logout,
                       ),
@@ -245,10 +255,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     _courseRepository.streamStudentCourses(widget.student.uid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child:
-                          SLCLoadingIndicator(text: "Loading your schedule..."),
-                    );
+                    return SLCLoadingIndicator(
+                        text: l10n?.loadingData ?? "Loading your schedule...");
                   }
 
                   if (snapshot.hasError) {
@@ -256,14 +264,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "Failed to load your courses",
+                          Text(
+                            l10n?.failedToLoadCourses ??
+                                "Failed to load your courses",
                             style: TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 8),
                           TextButton(
                             onPressed: () => setState(() {}),
-                            child: const Text("Retry"),
+                            child: Text(l10n?.retry ?? "Retry"),
                           ),
                         ],
                       ),
@@ -283,9 +292,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       // Handle events loading state
                       if (eventsSnapshot.connectionState ==
                           ConnectionState.waiting) {
-                        return const Center(
-                          child: SLCLoadingIndicator(text: "Loading events..."),
-                        );
+                        return SLCLoadingIndicator(
+                            text: l10n?.loadingData ?? "Loading events...");
                       }
 
                       // Get today's events
@@ -310,7 +318,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           MediaQuery.sizeOf(context).height *
                                               0.025),
                                   Text(
-                                    "Ongoing Session",
+                                    l10n?.focusSession ?? "Ongoing Session",
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall,
@@ -335,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      "Events",
+                                      l10n?.events ?? "Events",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall,
@@ -351,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           ),
                                         );
                                       },
-                                      child: const Text("See All"),
+                                      child: Text(l10n?.seeAll ?? "See All"),
                                     ),
                                   ],
                                 ),
@@ -372,7 +380,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
-                                            "No events scheduled",
+                                            l10n?.noEventsToday ??
+                                                "No events scheduled",
                                             style: TextStyle(
                                                 color: Colors.grey[600]),
                                           ),
@@ -459,7 +468,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     height: MediaQuery.sizeOf(context).height *
                                         0.025),
                                 Text(
-                                  "Quick Actions",
+                                  l10n?.quickActions ?? "Quick Actions",
                                   style:
                                       Theme.of(context).textTheme.headlineSmall,
                                 ),
@@ -482,7 +491,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         const SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
-                                            "No quick actions available",
+                                            l10n?.noMaterialsAvailable ??
+                                                "No quick actions available",
                                             style: TextStyle(
                                                 color: Colors.grey[600]),
                                           ),

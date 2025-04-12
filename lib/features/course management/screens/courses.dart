@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcavatar.dart';
 import 'package:pull_down_button/pull_down_button.dart';
@@ -94,6 +95,7 @@ class _CoursesScreenState extends State<CoursesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     double _screenWidth = MediaQuery.sizeOf(context).width;
     return PopScope(
       onPopInvoked: (didPop) {
@@ -112,7 +114,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Courses",
+                    l10n?.courses ?? "Courses",
                     style: Theme.of(context)
                         .textTheme
                         .headlineSmall
