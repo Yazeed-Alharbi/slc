@@ -256,7 +256,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return SLCLoadingIndicator(
-                        text: l10n?.loadingData ?? "Loading your schedule...");
+                        text: l10n?.loadingYourData ??
+                            "Loading your schedule...");
                   }
 
                   if (snapshot.hasError) {
@@ -293,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       if (eventsSnapshot.connectionState ==
                           ConnectionState.waiting) {
                         return SLCLoadingIndicator(
-                            text: l10n?.loadingData ?? "Loading events...");
+                            text: l10n?.loadingYourData ?? "Loading events...");
                       }
 
                       // Get today's events

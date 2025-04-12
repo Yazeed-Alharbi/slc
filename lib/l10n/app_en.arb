@@ -121,7 +121,7 @@
   "verificationEmailResent": "Verification email has been resent.",
   
   "startingUp": "Starting up...",
-  "loadingData": "Loading your data...",
+  "loadingYourData": "Loading your data...",
   
   "googleSignInFailed": "Google sign-in failed.",
   "failedToLoadUserData": "Failed to load user data",
@@ -289,5 +289,9 @@
   "breakTimeTitle": "{type} Time!",
   "breakTimeMessage": "Take a break for {minutes} minutes.",
   "breakTimeOver": "Break Time Over!",
-  "focusTimeMessage": "Time to focus on {course} (Pomodoro {current} of {total})"
+  "focusTimeMessage": "Time to focus on {course} (Pomodoro {current} of {total})",
+  "loadingCourses": "Loading courses...",
+  "errorLoadingCourses": "Error loading courses",
+  "noCoursesEnrolled": "You haven't enrolled in any courses yet",
+  "courseAddedSuccess": "Course added successfully!"
 }

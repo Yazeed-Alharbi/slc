@@ -84,9 +84,10 @@ class _CoursesScreenState extends State<CoursesScreen>
     _needsRefresh = true;
     if (result == "success") {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         SLCFlushbar.show(
           context: context,
-          message: "Course added successfully!",
+          message: l10n?.courseAddedSuccess ?? "Course added successfully!",
           type: FlushbarType.success,
         );
       }
@@ -138,9 +139,10 @@ class _CoursesScreenState extends State<CoursesScreen>
                       .streamStudentCourses(widget.student.uid),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                          child:
-                              SLCLoadingIndicator(text: "Loading courses..."));
+                      return Center(
+                          child: SLCLoadingIndicator(
+                              text: l10n?.loadingCourses ??
+                                  "Loading courses..."));
                     }
 
                     if (snapshot.hasError) {
@@ -148,9 +150,10 @@ class _CoursesScreenState extends State<CoursesScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              "Error loading courses",
-                              style: TextStyle(fontSize: 16),
+                            Text(
+                              l10n?.errorLoadingCourses ??
+                                  "Error loading courses",
+                              style: const TextStyle(fontSize: 16),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -161,7 +164,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                             const SizedBox(height: 16),
                             SLCButton(
                               onPressed: () => setState(() {}),
-                              text: "Retry",
+                              text: l10n?.retry ?? "Retry",
                               backgroundColor: SLCColors.primaryColor,
                               foregroundColor: Colors.white,
                             )
@@ -177,9 +180,10 @@ class _CoursesScreenState extends State<CoursesScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
-                              "You haven't enrolled in any courses yet",
-                              style: TextStyle(fontSize: 16),
+                            Text(
+                              l10n?.noCoursesEnrolled ??
+                                  "You haven't enrolled in any courses yet",
+                              style: const TextStyle(fontSize: 16),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 20),
@@ -187,7 +191,7 @@ class _CoursesScreenState extends State<CoursesScreen>
                               onPressed: () {
                                 Navigator.pushNamed(context, "/addcourse");
                               },
-                              text: "Add Course",
+                              text: l10n?.addCourse ?? "Add Course",
                               backgroundColor: SLCColors.primaryColor,
                               foregroundColor: Colors.white,
                             )
@@ -207,9 +211,10 @@ class _CoursesScreenState extends State<CoursesScreen>
                       builder: (context, eventsSnapshot) {
                         if (eventsSnapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const Center(
-                            child:
-                                SLCLoadingIndicator(text: "Loading events..."),
+                          return Center(
+                            child: SLCLoadingIndicator(
+                                text:
+                                    l10n?.loadingEvents ?? "Loading events..."),
                           );
                         }
 

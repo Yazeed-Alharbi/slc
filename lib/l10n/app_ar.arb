@@ -26,6 +26,12 @@
   
   "home": "الرئيسية",
   "courses": "المقررات",
+  "loadingCourses": "جاري تحميل المقررات...",
+  "errorLoadingCourses": "حدث خطأ في تحميل المقررات",
+  "retry": "إعادة المحاولة",
+  "noCoursesEnrolled": "لم تقم بالتسجيل في أي مقرر بعد",
+  "addCourse": "إضافة مقرر",
+  "courseAddedSuccess": "تمت إضافة المقرر بنجاح!",
   "calendar": "التقويم",
   "events": "الفعاليات",
   "quickActions": "إجراءات سريعة",
@@ -122,8 +128,8 @@
   "emailVerified": "تم التحقق من البريد الإلكتروني بنجاح!",
   "verificationEmailResent": "تمت إعادة إرسال بريد التحقق.",
   
-  "startingUp": "جاري البدء...",
-  "loadingData": "جاري تحميل بياناتك...",
+  "startingUp": "جاري بدء التشغيل...",
+  "loadingYourData": "جاري تحميل بياناتك...",
   
   "googleSignInFailed": "فشل تسجيل الدخول بواسطة جوجل.",
   "failedToLoadUserData": "فشل تحميل بيانات المستخدم",
