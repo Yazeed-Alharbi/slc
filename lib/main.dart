@@ -66,8 +66,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize notifications
-  await NotificationsService().initialize();
+
+  // Initialize notifications service
+  await NotificationsService().init();
 
   runApp(
     MultiProvider(

@@ -32,11 +32,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-
+    final notificationService = NotificationsService();
+    
     setState(() {
-      _notificationsEnabled = prefs.getBool('notifications_enabled') ?? false;
-      // No need to load dark mode here
+      _notificationsEnabled = notificationService.isEnabled;
     });
   }
 
@@ -56,10 +55,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _handleNotificationToggle(bool value) async {
     final l10n = AppLocalizations.of(context);
+    final notificationService = NotificationsService();
 
     if (value) {
-      final permissionGranted =
-          await NotificationsService().requestNotificationPermissions();
+      final permissionGranted = await notificationService.requestNotificationPermissions();
       if (!permissionGranted) {
         if (mounted) {
           SLCFlushbar.show(
@@ -73,10 +72,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
 
+    // Update the notification service
+    await notificationService.setNotificationsEnabled(value);
+    
+    // Update the UI
     setState(() {
       _notificationsEnabled = value;
     });
-    _saveSettings();
+    
+    // Show success message
+    SLCFlushbar.show(
+      context: context,
+      message: l10n?.settingsSaved ?? "Settings saved successfully",
+      type: FlushbarType.success,
+    );
   }
 
   Future<void> _logoutUser() async {
