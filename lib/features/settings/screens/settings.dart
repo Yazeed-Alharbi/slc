@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:slc/common/providers/language_provider.dart';
 import 'package:slc/common/providers/theme_provider.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
@@ -222,6 +223,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               SizedBox(height: 24),
 
+              // Language section
+              Text(
+                l10n?.language ?? "Language",
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SizedBox(height: 16),
+              _buildSettingTile(
+                icon: Icons.language,
+                title: l10n?.selectLanguage ?? "Select Language",
+                subtitle: _getLanguageName(context),
+                onTap: _showLanguageSelector,
+              ),
+
+              SizedBox(height: 24),
+
               // About section
               Text(
                 l10n?.about ?? "About",
@@ -304,6 +320,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: onTap,
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
+    );
+  }
+
+  String _getLanguageName(BuildContext context) {
+    final String currentLanguage = Localizations.localeOf(context).languageCode;
+    switch (currentLanguage) {
+      case 'ar':
+        return 'العربية';
+      case 'en':
+      default:
+        return 'English';
+    }
+  }
+
+  void _showLanguageSelector() {
+    final languageProvider =
+        Provider.of<LanguageProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('English'),
+                trailing: Localizations.localeOf(context).languageCode == 'en'
+                    ? Icon(Icons.check, color: SLCColors.primaryColor)
+                    : null,
+                onTap: () {
+                  languageProvider.setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text('العربية'),
+                trailing: Localizations.localeOf(context).languageCode == 'ar'
+                    ? Icon(Icons.check, color: SLCColors.primaryColor)
+                    : null,
+                onTap: () {
+                  languageProvider.setLocale(const Locale('ar'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

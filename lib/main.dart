@@ -18,6 +18,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:slc/common/styles/locale_theme_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:slc/common/providers/theme_provider.dart';
+import 'package:slc/common/providers/language_provider.dart';
 
 // Create a session manager class to handle session checks
 class SessionManager {
@@ -72,6 +73,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
         // any other providers you have
       ],
       child: const MyApp(),
@@ -93,6 +95,7 @@ class MyApp extends StatelessWidget {
 
         // Get theme provider to access current theme mode
         final themeProvider = Provider.of<ThemeProvider>(context);
+        final languageProvider = Provider.of<LanguageProvider>(context);
 
         return MediaQuery(
           data: mediaQueryData.copyWith(textScaler: scale),
@@ -106,7 +109,7 @@ class MyApp extends StatelessWidget {
             navigatorObservers: [AppNavigationObserver()],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            locale: const Locale('ar'), // Force Arabic locale for testing
+            locale: languageProvider.locale, // Use the language provider's locale
             builder: (context, child) {
               // Get the current locale
               final isArabic =
