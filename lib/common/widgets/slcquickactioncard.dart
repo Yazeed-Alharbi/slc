@@ -22,11 +22,6 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
   Color _textColor = Colors.black;
   bool _isTapped = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _onTapDown(TapDownDetails details) {
     setState(() {
       _isTapped = true;
@@ -47,6 +42,9 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the text direction for proper RTL support
+    final textDirection = Directionality.of(context);
+
     _color = Theme.of(context).brightness == Brightness.dark
         ? Colors.black
         : Colors.white;
@@ -89,8 +87,11 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
             width: double.infinity,
             child: Stack(
               children: [
+                // Update the positioned decoration circle for RTL support
                 Positioned(
-                  right: -50,
+                  // Use right for LTR, left for RTL
+                  right: textDirection == TextDirection.ltr ? -50 : null,
+                  left: textDirection == TextDirection.rtl ? -50 : null,
                   top: -150,
                   child: Container(
                     width: 240,
@@ -111,11 +112,12 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // First element (title)
                           SizedBox(
                             width: MediaQuery.sizeOf(context).width * 0.25,
                             child: Text(
-                              textAlign: TextAlign.start,
                               widget.title,
+                              textAlign: TextAlign.start,
                               style: TextStyle(
                                 color: _textColor,
                                 fontSize: 18,
@@ -124,6 +126,7 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
                               ),
                             ),
                           ),
+                          // Middle element (chapter)
                           SizedBox(
                             width: MediaQuery.sizeOf(context).width * 0.2,
                             child: Text(
@@ -138,10 +141,12 @@ class _SLCQuickActionCardState extends State<SLCQuickActionCard> {
                               ),
                             ),
                           ),
+                          // Last element (play button) - use alignment.centerEnd instead of centerRight
                           SizedBox(
                             width: MediaQuery.sizeOf(context).width * 0.25,
                             child: Align(
-                              alignment: Alignment.centerRight,
+                              alignment: AlignmentDirectional
+                                  .centerEnd, // This respects text direction
                               child: Container(
                                 width: 40,
                                 height: 40,

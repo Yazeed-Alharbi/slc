@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import this
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 import 'package:slc/common/styles/colors.dart';
@@ -102,38 +103,52 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
   /// Periodically checks if the user has verified their email
   void _startVerificationCheck() {
-    _checkVerificationTimer = Timer.periodic(
-      const Duration(seconds: 3),
-      (timer) async {
-        if (await _authService.isEmailVerified()) {
-          timer.cancel();
-          if (mounted) {
+  _checkVerificationTimer = Timer.periodic(
+    const Duration(seconds: 3),
+    (timer) async {
+      // Check if user is signed in first, sign in if needed
+      if (_authService.getCurrentUser() == null) {
+        // Skip this check cycle if not signed in
+        return;
+      }
+      
+      // Force reload the user to get latest emailVerified status
+      await _authService.reloadCurrentUser();
+      
+      if (await _authService.isEmailVerified()) {
+        timer.cancel();
+        if (mounted) {
+          // Get localized success message
+          final l10n = AppLocalizations.of(context);
+          final successMessage = l10n?.emailVerified ?? "Email verified successfully!";
+
+          SLCFlushbar.show(
+            context: context,
+            message: successMessage,
+            type: FlushbarType.success,
+          );
+
+          // Use repository instead of direct FirestoreUtils access
+          Student? student = await _studentRepository.getOrCreateStudent();
+          if (student != null) {
+            Navigator.pushReplacementNamed(
+              context,
+              "/homescreen",
+              arguments: student,
+            );
+          } else {
+            final errorMessage = l10n?.failedToLoadUserData ?? "Failed to load user data";
             SLCFlushbar.show(
               context: context,
-              message: "Email verified successfully!",
-              type: FlushbarType.success,
+              message: errorMessage,
+              type: FlushbarType.error,
             );
-
-            // Use repository instead of direct FirestoreUtils access
-            Student? student = await _studentRepository.getOrCreateStudent();
-            if (student != null) {
-              Navigator.pushReplacementNamed(
-                context,
-                "/homescreen",
-                arguments: student,
-              );
-            } else {
-              SLCFlushbar.show(
-                context: context,
-                message: "Failed to load user data",
-                type: FlushbarType.error,
-              );
-            }
           }
         }
-      },
-    );
-  }
+      }
+    },
+  );
+}
 
   /// Manually resend the verification email
   void _resendVerificationEmail() async {
@@ -162,6 +177,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final email = ModalRoute.of(context)?.settings.arguments as String? ??
         'No email provided';
 
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
+    // Using localized strings with fallbacks
+    final checkEmailText = l10n?.checkEmail ?? "Check Your Email";
+    final sentVerificationLinkText =
+        l10n?.sentVerificationLink ?? "We sent a verification link to";
+    final clickVerificationLinkText = l10n?.clickVerificationLink ??
+        "Please click on the verification link in the email to verify your account. Once verified, you'll be automatically redirected to the home screen.";
+    final resendEmailText = l10n?.resendEmail ?? "Resend Email";
+    final resendInSecondsText = l10n?.resendInSeconds(_resendTimeout) ??
+        "Resend in $_resendTimeout seconds";
+    final backToLoginText = l10n?.backToLogin ?? "Back to login";
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -183,12 +212,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 ),
                 const SizedBox(height: 40),
                 Text(
-                  "Check Your Email",
+                  checkEmailText,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 15),
-                const Text(
-                  "We sent a verification link to",
+                Text(
+                  sentVerificationLinkText,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
@@ -199,9 +228,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       fontSize: 14, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  "Please click on the verification link in the email to verify your account. "
-                  "Once verified, you'll be automatically redirected to the home screen.",
+                Text(
+                  clickVerificationLinkText,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14),
                 ),
@@ -212,13 +240,32 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   ),
                   onPressed: _isResendEnabled ? _resendVerificationEmail : null,
                   child: Text(
-                    _isResendEnabled
-                        ? "Resend Email"
-                        : "Resend in $_resendTimeout seconds",
+                    _isResendEnabled ? resendEmailText : resendInSecondsText,
                     style: TextStyle(
                       color: _isResendEnabled
                           ? SLCColors.primaryColor
                           : Colors.grey,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+
+                // Add a Back to Login button
+                const SizedBox(height: 20),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    overlayColor: Colors.transparent,
+                  ),
+                  onPressed: () async {
+                    // Sign out the user and navigate back to login
+                    await _authService.signOut(context);
+                    Navigator.pushReplacementNamed(
+                        context, '/onboardingscreen');
+                  },
+                  child: Text(
+                    backToLoginText,
+                    style: TextStyle(
+                      color: SLCColors.primaryColor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
