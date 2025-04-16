@@ -66,7 +66,6 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-
   // Initialize notifications service
   await NotificationsService().init();
 
@@ -110,7 +109,8 @@ class MyApp extends StatelessWidget {
             navigatorObservers: [AppNavigationObserver()],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            locale: languageProvider.locale, // Use the language provider's locale
+            locale:
+                languageProvider.locale, // Use the language provider's locale
             builder: (context, child) {
               // Get the current locale
               final isArabic =

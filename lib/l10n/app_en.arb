@@ -322,5 +322,31 @@
   "loadingCourses": "Loading courses...",
   "errorLoadingCourses": "Error loading courses",
   "noCoursesEnrolled": "You haven't enrolled in any courses yet",
-  "courseAddedSuccess": "Course added successfully!"
+  "courseAddedSuccess": "Course added successfully!",
+  
+  "editProfile": "Edit Profile",
+  "fullName": "Full Name",
+  "email": "Email",
+  "currentPassword": "Current Password",
+  "newPassword": "New Password",
+  "confirmPassword": "Confirm Password",
+  "changePassword": "Change Password",
+  "saveChanges": "Save Changes",
+  "profileUpdated": "Profile updated successfully",
+  "errorUpdatingProfile": "Error updating profile",
+  "wrongPassword": "Current password is incorrect",
+  "weakPassword": "Password is too weak",
+  "nameRequired": "Name is required",
+  "currentPasswordRequired": "Current password is required",
+  "newPasswordRequired": "New password is required",
+  "passwordTooShort": "Password must be at least 6 characters long", 
+  "passwordsDontMatch": "Passwords don't match",
+  "emailCannotBeChanged": "Email cannot be changed",
+  "errorUpdatingPicture": "Error updating profile picture",
+
+  "personalInfo": "Personal Information",
+  "security": "Security",
+  
+  "savingChanges": "Saving changes..."
+
 }

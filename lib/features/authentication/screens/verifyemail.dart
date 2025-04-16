@@ -67,7 +67,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
   }
 
-  /// Send verification email only if cooldown has passed
+
   void _sendVerificationEmailIfNeeded() async {
     String? lastSentTimeString =
         await _secureStorage.read(key: 'last_verification_email');

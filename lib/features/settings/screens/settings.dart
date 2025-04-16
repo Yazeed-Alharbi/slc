@@ -12,6 +12,9 @@ import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
 import 'package:slc/services/notifications_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:slc/features/settings/screens/profile_edit_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:slc/models/student.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -29,11 +32,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadSettings();
+    _loadUserData();
   }
 
   Future<void> _loadSettings() async {
     final notificationService = NotificationsService();
-    
+
     setState(() {
       _notificationsEnabled = notificationService.isEnabled;
     });
@@ -58,7 +62,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final notificationService = NotificationsService();
 
     if (value) {
-      final permissionGranted = await notificationService.requestNotificationPermissions();
+      final permissionGranted =
+          await notificationService.requestNotificationPermissions();
       if (!permissionGranted) {
         if (mounted) {
           SLCFlushbar.show(
@@ -74,12 +79,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     // Update the notification service
     await notificationService.setNotificationsEnabled(value);
-    
+
     // Update the UI
     setState(() {
       _notificationsEnabled = value;
     });
-    
+
     // Show success message
     SLCFlushbar.show(
       context: context,
@@ -136,57 +141,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               // User profile section
               if (user != null)
-                Container(
-                  margin: EdgeInsets.only(bottom: 24),
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.light
-                        ? Colors.white
-                        : Colors.black,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      SLCAvatar(
-                        imageUrl: user.photoURL,
-                        size: 60,
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              user.displayName ?? (l10n?.user ?? "User"),
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              user.email ?? "",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.edit_outlined,
-                            color: SLCColors.primaryColor),
-                        onPressed: () {
-                          // Navigate to profile edit
-                        },
-                      ),
-                    ],
-                  ),
+                StreamBuilder<DocumentSnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('students')
+                      .doc(FirebaseAuth.instance.currentUser?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return _buildUserProfileSection(null); // Show loading state
+                    }
+                    
+                    // Create student object from Firestore data
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final student = Student.fromJson(data);
+                    
+                    // Build UI with latest data
+                    return _buildUserProfileSection(student);
+                  },
                 ),
 
               // App Settings
@@ -336,10 +307,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final String currentLanguage = Localizations.localeOf(context).languageCode;
     switch (currentLanguage) {
       case 'ar':
-        return 'العربية';
+        return 'العربية 🇸🇦';
       case 'en':
       default:
-        return 'English';
+        return 'English 🇺🇸';
     }
   }
 
@@ -358,7 +329,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: Text('English'),
+                title: Row(
+                  children: [
+                    Text("English"),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text("🇺🇸")
+                  ],
+                ),
                 trailing: Localizations.localeOf(context).languageCode == 'en'
                     ? Icon(Icons.check, color: SLCColors.primaryColor)
                     : null,
@@ -368,7 +347,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               ListTile(
-                title: Text('العربية'),
+                title: Row(
+                  children: [
+                    Text("العربية"),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text("🇸🇦")
+                  ],
+                ),
                 trailing: Localizations.localeOf(context).languageCode == 'ar'
                     ? Icon(Icons.check, color: SLCColors.primaryColor)
                     : null,
@@ -381,6 +368,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       },
+    );
+  }
+
+  // Add this method to manually refresh user data
+  void _loadUserData() {
+    setState(() {
+      // This forces a refresh of the user data
+    });
+  }
+
+  // Add this method to refresh user data
+  Future<void> _refreshUserData() async {
+    if (mounted) {
+      setState(() {
+        // Force refresh UI
+      });
+    }
+  }
+
+  Widget _buildUserProfileSection(Student? student) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = student?.name ?? user?.displayName ?? 'User';
+    final email = student?.email ?? user?.email ?? '';
+    final photoUrl = student?.photoUrl ?? user?.photoURL;
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 24),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Colors.black,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          SLCAvatar(
+            imageUrl: photoUrl,
+            size: 60,
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  email,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit_outlined,
+                color: SLCColors.primaryColor),
+            onPressed: () async {
+              // Navigate to profile edit and wait for result
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ProfileEditScreen()),
+              );
+
+              // If successfully edited, refresh the UI
+              if (result == true) {
+                await _refreshUserData();
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 }

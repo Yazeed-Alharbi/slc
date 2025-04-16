@@ -20,6 +20,9 @@ import 'package:firebase_auth/firebase_auth.dart'; // Add this import at the top
 import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
 import 'package:slc/features/focus%20sessions/widgets/active_session_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import for translations
+import 'package:slc/repositories/student_repository.dart';
+import 'package:slc/firebaseUtil/firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import for Firestore
 
 class HomeScreen extends StatefulWidget {
   final Student student;
@@ -216,16 +219,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         greeting,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                      Text(
-                        widget.student.name,
-                        style: Theme.of(context).textTheme.headlineMedium,
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('students')
+                            .doc(widget.student.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData && snapshot.data != null) {
+                            // Get latest student name from Firestore
+                            final studentData =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            final updatedName =
+                                studentData['name'] ?? widget.student.name;
+
+                            return Text(
+                              updatedName,
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            );
+                          }
+
+                          // Fallback to original name if stream not ready
+                          return Text(
+                            widget.student.name,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          );
+                        },
                       ),
                     ],
                   ),
                   PullDownButton(
                     itemBuilder: (context) => [
                       PullDownMenuItem(
-                        onTap: () => {},
+                        onTap: () => Navigator.pushNamed(
+                            context, '/settings'), // Fixed navigation
                         title: l10n?.settings ?? "Settings",
                         icon: Icons.settings,
                       ),
@@ -238,9 +264,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ],
                     buttonBuilder: (context, showMenu) => GestureDetector(
                       onTap: showMenu,
-                      child: SLCAvatar(
-                        imageUrl: widget.student.photoUrl,
-                        size: 55,
+                      // Replace with StreamBuilder to update avatar in real-time
+                      child: StreamBuilder<DocumentSnapshot>(
+                        stream: FirebaseFirestore.instance
+                            .collection('students')
+                            .doc(widget.student.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          String? updatedPhotoUrl;
+                          if (snapshot.hasData && snapshot.data != null) {
+                            final studentData =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            updatedPhotoUrl = studentData['photoUrl'];
+                          }
+
+                          return SLCAvatar(
+                            imageUrl:
+                                updatedPhotoUrl ?? widget.student.photoUrl,
+                            size: 55,
+                          );
+                        },
                       ),
                     ),
                   ),
