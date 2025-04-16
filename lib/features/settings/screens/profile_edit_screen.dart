@@ -361,7 +361,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         body: _isLoading
             ? Center(
                 child: SLCLoadingIndicator(
-                text: "Saving changes...",
+                text: l10n?.savingChanges ?? "Saving changes...",
               ))
             : SafeArea(
                 child: SingleChildScrollView(
