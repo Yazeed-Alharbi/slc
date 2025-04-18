@@ -9,6 +9,8 @@ import 'package:path/path.dart' as p;
 class QuizService {
   static final String _apiKey = dotenv.env['OPENAI_API_KEY'] ?? "";
   static const String _baseUrl = "https://api.openai.com/v1";
+  static String? _cachedVectorStoreId;
+  static String? _cachedAssistantId;
 
   // Helper to download material file as bytes
   static Future<Uint8List> _downloadMaterialBytes(
@@ -250,31 +252,21 @@ class QuizService {
       print('Processing ${materials.length} materials for quiz generation...');
 
       // Step 1: Download and upload all materials
-      List<String> fileIds = [];
-      // …inside getQuizForCourse, in your upload loop…
-      for (var material in materials) {
-        print('Downloading and uploading ${material.name}...');
-        final uri = Uri.parse(material.downloadUrl);
-        final filename = p.basename(uri.path); // ← strip off ?query
-        final fileId = await _uploadFile(
-          filename,
-          await _downloadMaterialBytes(material),
-          "assistants",
-        );
-        fileIds.add(fileId);
-      }
+      final fileIds = await Future.wait(materials.map((mat) async {
+        final uri = Uri.parse(mat.downloadUrl);
+        final filename = p.basename(uri.path);
+        final bytes = await _downloadMaterialBytes(mat);
+        return _uploadFile(filename, bytes, 'assistants');
+      }));
 
-      // ...after uploading files...
-      final vectorStoreId = await _createVectorStore(fileIds);
-      final assistantId = await _createAssistant(vectorStoreId);
-      // ...continue as before...
+      // Step 2: Create vector store once
+      _cachedVectorStoreId ??= await _createVectorStore(fileIds);
 
-      // Step 3: Create thread
-      print('Creating thread...');
+      // Step 3: Create assistant once
+      _cachedAssistantId ??= await _createAssistant(_cachedVectorStoreId!);
+
+      // Step 4: Now only do the lightweight per‐run steps:
       final threadId = await _createThread();
-
-      // Step 4: Add message
-      print('Adding message to thread...');
       await _addMessageToThread(
           threadId,
           'Create a comprehensive quiz that includes 10 multiple-choice questions. ' +
@@ -287,43 +279,11 @@ class QuizService {
               '{"questions": [{"questionText": "Question here", ' +
               '"options": [{"text": "Option 1"}, {"text": "Option 2"}, {"text": "Option 3"}, {"text": "Option 4"}], ' +
               '"correctOptionIndex": 0}]}');
-
-      // Step 5: Run assistant
-      print('Running assistant...');
-      final runId = await _runAssistant(threadId, assistantId);
-
-      // Step 6: Poll for completion
-      print('Waiting for assistant to complete...');
+      final runId = await _runAssistant(threadId, _cachedAssistantId!);
       await _pollRunStatus(threadId, runId);
-
-      // Step 7: Get messages
-      print('Getting messages...');
-      final response = await _getMessages(threadId);
-
-      // DEBUG: print the raw assistant response
-      print('Assistant raw response:\n$response');
-
-      // 1) try to pull out the JSON object only
-      String jsonStr;
-      try {
-        jsonStr = _extractJsonObject(response);
-      } catch (e) {
-        // fallback: preserve old code‐fence regex
-        final m =
-            RegExp(r'```json\s*(.*?)\s*```', dotAll: true).firstMatch(response);
-        if (m != null) {
-          jsonStr = m.group(1)!;
-        } else {
-          // last‐ditch: assume entire response is JSON
-          jsonStr = response;
-        }
-      }
-
-      print('Extracted JSON for quiz:\n$jsonStr');
-
-      // 2) now safely decode
-      final quizData = jsonDecode(jsonStr);
-      return Quiz.fromJson(quizData);
+      final raw = await _getMessages(threadId);
+      final jsonStr = _extractJsonObject(raw);
+      return Quiz.fromJson(jsonDecode(jsonStr));
     } catch (e) {
       rethrow;
     }
