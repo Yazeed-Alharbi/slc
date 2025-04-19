@@ -464,16 +464,22 @@ class _CourseScreenState extends State<CourseScreen>
           // Add regenerate button here
           TextButton(
             onPressed: () async {
-              // Store a reference to the BuildContext before any async operations
-              final BuildContext dialogContext = context;
+              // Store a reference to the BuildContext before closing the dialog
+              final BuildContext outerContext = context;
 
-              // Close current dialog BEFORE starting async operations
-              Navigator.of(dialogContext).pop();
+              // Close dialog first
+              Navigator.of(context).pop();
+
+              // Small delay to ensure dialog is fully closed
+              await Future.delayed(Duration(milliseconds: 50));
+
+              // Use Navigator's root context which is always valid
+              final rootContext =
+                  Navigator.of(outerContext, rootNavigator: true).context;
 
               // Show confirmation dialog
               final shouldRegen = await NativeAlertDialog.show(
-                context:
-                    this.context, // Use the widget's context, not the dialog's
+                context: rootContext,
                 title: l10n?.confirmRegenShareCode ?? "Regenerate Share Code?",
                 content: l10n?.confirmRegenShareCodeMessage ??
                     "This will invalidate the old share code. Continue?",
@@ -481,27 +487,36 @@ class _CourseScreenState extends State<CourseScreen>
                 cancelText: l10n?.cancel ?? "Cancel",
               );
 
-              if (shouldRegen && mounted) {
-                // Check if still mounted
+              if (shouldRegen) {
                 try {
+                  // Regenerate the code
                   final newCode =
                       await _courseRepository.regenerateShareCode(course.id);
 
-                  // Check again if still mounted before showing any UI
-                  if (mounted) {
-                    // Use a regular SnackBar instead of Flushbar
-                    ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                        content: Text(l10n?.shareCodeRegenerated ??
-                            "Share code regenerated")));
+                  // Use a delayed callback
+                  Future.delayed(Duration(milliseconds: 100), () {
+                    if (mounted) {
+                      // Show success message
+                      SLCFlushbar.show(
+                        context: rootContext,
+                        message: l10n?.shareCodeRegenerated ??
+                            "Share code regenerated",
+                        type: FlushbarType.success,
+                      );
 
-                    // Re-open with new code, but only if still mounted
-                    _showShareCode(course.copyWith(shareCode: newCode));
-                  }
+                      // Re-open dialog with new code
+                      _showShareCode(course.copyWith(shareCode: newCode));
+                    }
+                  });
                 } catch (e) {
+                  // Show error
                   if (mounted) {
-                    ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                        content: Text(l10n?.shareCodeRegenerateFailed ??
-                            "Failed to regenerate share code")));
+                    SLCFlushbar.show(
+                      context: rootContext,
+                      message: l10n?.shareCodeRegenerateFailed ??
+                          "Failed to regenerate share code",
+                      type: FlushbarType.error,
+                    );
                   }
                 }
               }
@@ -510,10 +525,27 @@ class _CourseScreenState extends State<CourseScreen>
           ),
           TextButton(
             onPressed: () {
+              // Capture the parent context before popping the dialog
+              final parentContext = this.context;
+
+              // Copy to clipboard
               Clipboard.setData(ClipboardData(text: course.shareCode));
+
+              // Pop the dialog
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(this.context)
-                  .showSnackBar(SnackBar(content: Text(copiedText)));
+
+              // Show flushbar AFTER dialog is closed using the parent context
+              // and delay to ensure widget tree has stabilized
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  SLCFlushbar.show(
+                    context:
+                        parentContext, // Use parentContext, not this.context
+                    message: copiedText,
+                    type: FlushbarType.success,
+                  );
+                }
+              });
             },
             child: Text(copyText),
           ),
