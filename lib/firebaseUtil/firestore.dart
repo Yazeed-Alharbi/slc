@@ -117,4 +117,11 @@ class FirestoreUtils {
       throw Exception('Failed to stream document: $e');
     }
   }
+
+// Add this method to your FirestoreUtils class after the other methods
+
+  String generateId() {
+    // Generate a unique Firestore document ID without creating an actual document
+    return _firestore.collection('temp').doc().id;
+  }
 }

@@ -173,6 +173,13 @@ class _CourseScreenState extends State<CourseScreen>
                                       ),
                                       PullDownMenuItem(
                                         onTap: () => _handleMenuSelection(
+                                            'share_code', course),
+                                        title: l10n?.showShareCode ??
+                                            "Show Share Code",
+                                        icon: Icons.ios_share,
+                                      ),
+                                      PullDownMenuItem(
+                                        onTap: () => _handleMenuSelection(
                                             'delete', course),
                                         title: deleteLabel,
                                         isDestructive: true,
@@ -402,9 +409,158 @@ class _CourseScreenState extends State<CourseScreen>
         );
         HapticFeedback.lightImpact();
         break;
+      case 'share_code':
+        _showShareCode(course);
+        break;
       case 'delete':
         _showDeleteConfirmation(course);
         break;
+    }
+  }
+
+  void _showShareCode(Course course) {
+    final l10n = AppLocalizations.of(context);
+    final shareCodeTitle = l10n?.shareCode ?? "Course Share Code";
+    final copyText = l10n?.copy ?? "Copy";
+    final closeText = l10n?.close ?? "Close";
+    final copiedText = l10n?.copied ?? "Copied to clipboard";
+    final regenerateText = l10n?.regenerate ?? "Regenerate Code";
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Colors.black,
+        title: Text(shareCodeTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n?.shareCodeExplanation ??
+                  "Others can use this code to import a copy of your course.",
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                course.shareCode,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Add regenerate button here
+          TextButton(
+            onPressed: () async {
+              // Store a reference to the BuildContext before any async operations
+              final BuildContext dialogContext = context;
+
+              // Close current dialog BEFORE starting async operations
+              Navigator.of(dialogContext).pop();
+
+              // Show confirmation dialog
+              final shouldRegen = await NativeAlertDialog.show(
+                context:
+                    this.context, // Use the widget's context, not the dialog's
+                title: l10n?.confirmRegenShareCode ?? "Regenerate Share Code?",
+                content: l10n?.confirmRegenShareCodeMessage ??
+                    "This will invalidate the old share code. Continue?",
+                confirmText: regenerateText,
+                cancelText: l10n?.cancel ?? "Cancel",
+              );
+
+              if (shouldRegen && mounted) {
+                // Check if still mounted
+                try {
+                  final newCode =
+                      await _courseRepository.regenerateShareCode(course.id);
+
+                  // Check again if still mounted before showing any UI
+                  if (mounted) {
+                    // Use a regular SnackBar instead of Flushbar
+                    ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                        content: Text(l10n?.shareCodeRegenerated ??
+                            "Share code regenerated")));
+
+                    // Re-open with new code, but only if still mounted
+                    _showShareCode(course.copyWith(shareCode: newCode));
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                        content: Text(l10n?.shareCodeRegenerateFailed ??
+                            "Failed to regenerate share code")));
+                  }
+                }
+              }
+            },
+            child: Text(regenerateText),
+          ),
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: course.shareCode));
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(this.context)
+                  .showSnackBar(SnackBar(content: Text(copiedText)));
+            },
+            child: Text(copyText),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(closeText),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _regenerateShareCode(Course course) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmRegenTitle =
+        l10n?.confirmRegenShareCode ?? "Regenerate Share Code?";
+    final confirmRegenMessage = l10n?.confirmRegenShareCodeMessage ??
+        "This will invalidate the old share code. Continue?";
+    final regenerateText = l10n?.regenerate ?? "Regenerate";
+    final cancelText = l10n?.cancel ?? "Cancel";
+
+    final bool shouldRegen = await NativeAlertDialog.show(
+      context: context,
+      title: confirmRegenTitle,
+      content: confirmRegenMessage,
+      confirmText: regenerateText,
+      cancelText: cancelText,
+    );
+
+    if (shouldRegen) {
+      try {
+        final newCode = await _courseRepository.regenerateShareCode(course.id);
+        _showShareCode(course.copyWith(shareCode: newCode));
+
+        SLCFlushbar.show(
+          context: context,
+          message: l10n?.shareCodeRegenerated ?? "Share code regenerated",
+          type: FlushbarType.success,
+        );
+      } catch (e) {
+        SLCFlushbar.show(
+          context: context,
+          message: l10n?.shareCodeRegenerateFailed ??
+              "Failed to regenerate share code",
+          type: FlushbarType.error,
+        );
+      }
     }
   }
 
@@ -412,19 +568,30 @@ class _CourseScreenState extends State<CourseScreen>
     // Get localized strings
     final l10n = AppLocalizations.of(context);
     final title = l10n?.deleteCourse ?? "Delete Course";
-    final content = l10n?.confirmDeleteCourse ??
-        "Are you sure you want to delete ${course.name} (${course.code})? This action cannot be undone.";
+
+    // Handle confirmDeleteCourse being a function or string
+    late final String content;
+    if (l10n?.confirmDeleteCourse is Function) {
+      // If it's a function, call it with the course name
+      content = l10n!.confirmDeleteCourse("${course.name} (${course.code})");
+    } else {
+      // Otherwise use default string with replacement
+      content =
+          "Are you sure you want to delete this course? This action cannot be undone."
+              .replaceAll("{courseName}", "${course.name} (${course.code})");
+    }
+
     final deleteButton = l10n?.delete ?? "Delete";
     final cancelButton = l10n?.cancel ?? "Cancel";
 
     bool confirmDelete = await NativeAlertDialog.show(
         context: context,
         title: title,
-        content: (content as String)
-            .replaceAll("{courseName}", "${course.name} (${course.code})"),
+        content: content,
         confirmText: deleteButton,
         cancelText: cancelButton,
         confirmTextColor: Colors.red);
+
     if (confirmDelete) {
       _deleteCourse(course.id);
     }
