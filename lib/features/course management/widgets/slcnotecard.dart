@@ -6,12 +6,14 @@ class SLCNoteCard extends StatelessWidget {
   final String title;
   final DateTime createdAt;
   final Future<void> Function() onPressed;
+  final Future<void> Function()? onDelete;
 
   SLCNoteCard({
     Key? key,
     required this.title,
     DateTime? createdAt,
     required this.onPressed,
+    this.onDelete,
   })  : createdAt = createdAt ?? DateTime.now(),
         super(key: key);
 
@@ -45,28 +47,57 @@ class SLCNoteCard extends StatelessWidget {
             const SizedBox(
               width: 15,
             ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title, // Dynamic file name
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title, // Dynamic file name
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                Text(
-                  "Created at: ${DateFormat.yMMMd().format(createdAt)}", // Format the
-                  // Using created date instead of fileSize
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: SLCColors.coolGray,
+                  Text(
+                    "Created at: ${DateFormat.yMMMd().format(createdAt)}", // Format the
+                    // Using created date instead of fileSize
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: SLCColors.coolGray,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  // Show confirmation dialog before deleting
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Delete Note"),
+                      content: Text("Are you sure you want to delete \"$title\"?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            onDelete!();
+                          },
+                          child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),
