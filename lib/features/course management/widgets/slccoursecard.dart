@@ -44,6 +44,8 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
 
   @override
   Widget build(BuildContext context) {
+
+    
     final Color backgroundColor = SLCColors.getCourseColor(widget.color);
     final Color textColor = Colors.white;
 
@@ -61,6 +63,10 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
       displayedNotifications.add(widget.notifications.first); // Show latest
       remainingNotificationCount = notificationCount - 1; // Remaining count
     }
+
+    // Get the current text direction
+    final textDirection = Directionality.of(context);
+    final isRTL = textDirection == TextDirection.rtl;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -176,22 +182,36 @@ class _SLCCourseCardState extends State<SLCCourseCard> {
                     // Bottom arrow button
                     Positioned(
                       bottom: 0,
-                      right: 0,
+                      // Use right for LTR, left for RTL
+                      right: isRTL ? null : 0,
+                      left: isRTL ? 0 : null,
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(40),
-                            bottomRight: Radius.circular(30),
+                          borderRadius: BorderRadius.only(
+                            // FIXED corner values for proper mirroring
+                            topLeft: isRTL
+                                ? Radius.circular(0)
+                                : Radius.circular(40),
+                            topRight: isRTL
+                                ? Radius.circular(40)
+                                : Radius.circular(0),
+                            bottomLeft: isRTL
+                                ? Radius.circular(30)
+                                : Radius.circular(0),
+                            bottomRight: isRTL
+                                ? Radius.circular(0)
+                                : Radius.circular(30),
                           ),
                         ),
                         width: 150,
                         height: 50,
                         child: Center(
                           child: Icon(
+                            // Use more pronounced directional arrows that look better in RTL
                             Icons.arrow_forward,
                             color: backgroundColor,
-                            size: 24,
+                            size: 28, // Slightly larger for better visibility
                           ),
                         ),
                       ),

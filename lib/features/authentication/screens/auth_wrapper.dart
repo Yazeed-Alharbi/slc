@@ -6,21 +6,25 @@ import 'package:slc/features/authentication/screens/verifyemail.dart';
 import 'package:slc/repositories/student_repository.dart';
 import 'package:slc/firebaseUtil/firestore.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+    
     // Listen to authentication state changes
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         // Show loading while waiting for auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
-              child: SLCLoadingIndicator(text: "Starting up..."),
+              child: SLCLoadingIndicator(text: l10n?.startingUp ?? "Starting up..."),
             ),
           );
         }
@@ -34,11 +38,10 @@ class AuthWrapper extends StatelessWidget {
               future: StudentRepository(firestoreUtils: FirestoreUtils())
                   .getOrCreateStudent(),
               builder: (context, studentSnapshot) {
-                if (studentSnapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Scaffold(
+                if (studentSnapshot.connectionState == ConnectionState.waiting) {
+                  return Scaffold(
                     body: Center(
-                      child: SLCLoadingIndicator(text: "Loading your data..."),
+                      child: SLCLoadingIndicator(text: l10n?.loadingYourData ?? "Loading your data..."),
                     ),
                   );
                 }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/features/course%20management/widgets/slccolorpicker.dart';
@@ -67,29 +68,32 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
   }
 
   void _validateAndSave() async {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     // Validate form input
     if (nameController.text.trim().isEmpty) {
-      _showError("Please enter the course code.");
+      _showError(l10n?.courseCodeRequired ?? "Please enter the course code.");
       return;
     }
 
     if (titleController.text.trim().isEmpty) {
-      _showError("Please enter the course title.");
+      _showError(l10n?.courseTitleRequired ?? "Please enter the course title.");
       return;
     }
 
     if (selectedDays.isEmpty) {
-      _showError("Please select at least one day.");
+      _showError(l10n?.selectDaysRequired ?? "Please select at least one day.");
       return;
     }
 
     if (startTime == null) {
-      _showError("Please select a start time.");
+      _showError(l10n?.startTimeRequired ?? "Please select a start time.");
       return;
     }
 
     if (endTime == null) {
-      _showError("Please select an end time.");
+      _showError(l10n?.endTimeRequired ?? "Please select an end time.");
       return;
     }
 
@@ -101,7 +105,8 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
         DateTime(now.year, now.month, now.day, endTime!.hour, endTime!.minute);
 
     if (endDateTime.isBefore(startDateTime)) {
-      _showError("End time must be after start time.");
+      _showError(
+          l10n?.endTimeAfterStartTime ?? "End time must be after start time.");
       return;
     }
 
@@ -138,8 +143,7 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
         final newCourse = await courseRepository.createCourse(
           name: titleController.text,
           code: nameController.text,
-          description:
-              "Course Description", // Consider adding description field
+          description: "Course Description", // Keep English as default
           color: selectedColor,
           days: selectedDays,
           startTime: startTime,
@@ -156,7 +160,10 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
       }
     } catch (e) {
       print("Error ${isEditing ? 'updating' : 'creating'} course: $e");
-      _showError("Failed to ${isEditing ? 'update' : 'create'} course: $e");
+      final errorMsg = l10n != null
+          ? (isEditing ? l10n.failedToUpdateCourse : l10n.failedToCreateCourse)
+          : "Failed to ${isEditing ? 'update' : 'create'} course: $e";
+      _showError(errorMsg);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -169,13 +176,16 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     double screenHeight = MediaQuery.sizeOf(context).height;
     double screenWidth = MediaQuery.sizeOf(context).width;
     Orientation screenOrientation = MediaQuery.orientationOf(context);
 
     return Scaffold(
       body: _isLoading
-          ? const SLCLoadingIndicator(text: "Saving course...")
+          ? SLCLoadingIndicator(text: l10n?.savingCourse ?? "Saving course...")
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
@@ -246,7 +256,8 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                                     children: [
                                       SLCHeaderTextField(
                                         controller: nameController,
-                                        hintText: "Enter course code",
+                                        hintText: l10n?.enterCourseCode ??
+                                            "Enter course code",
                                         fontSize: 35,
                                         key: const Key('course_name'),
                                         fontWeight: FontWeight.w800,
@@ -256,7 +267,8 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                                       ),
                                       SLCHeaderTextField(
                                         controller: titleController,
-                                        hintText: "Enter course title",
+                                        hintText: l10n?.enterCourseTitle ??
+                                            "Enter course title",
                                         fontSize: 20,
                                         key: const Key('course_title'),
                                         fontWeight: FontWeight.w700,
@@ -284,7 +296,7 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(height: screenHeight * 0.025),
-                          Text("Color",
+                          Text(l10n?.courseColor ?? "Color",
                               style: Theme.of(context).textTheme.headlineSmall),
                           SizedBox(height: 20),
                           SLCColorPicker(
@@ -295,7 +307,7 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                                 });
                               }),
                           SizedBox(height: screenHeight * 0.05),
-                          Text("Days",
+                          Text(l10n?.days ?? "Days",
                               style: Theme.of(context).textTheme.headlineSmall),
                           SizedBox(height: 20),
                           SLCDayPicker(
@@ -313,7 +325,7 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Text("Starts at",
+                                  Text(l10n?.startsAt ?? "Starts at",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall),
@@ -330,7 +342,7 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Text("Ends at",
+                                  Text(l10n?.endsAt ?? "Ends at",
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall),
@@ -350,14 +362,15 @@ class _CourseFormScreenState extends State<CourseFormScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text("Location",
+                              Text(l10n?.location ?? "Location",
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineSmall),
                               SizedBox(height: 20),
                               SLCTextField(
                                 controller: locationController,
-                                labelText: "Enter location",
+                                labelText:
+                                    l10n?.enterLocation ?? "Enter location",
                                 onChanged: (value) {
                                   // The controller handles the value
                                 },

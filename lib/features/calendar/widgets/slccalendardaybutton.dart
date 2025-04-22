@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:slc/common/styles/colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SLCCalendarDayButton extends StatelessWidget {
   final String dayNumber;
   final String dayOfWeek;
   final VoidCallback? onTap;
   final bool isSelected;
+  final bool isToday;
   final Color? backgroundColor;
   final Color? borderColor;
   final TextStyle? dayNumberStyle;
@@ -17,6 +19,7 @@ class SLCCalendarDayButton extends StatelessWidget {
     required this.dayOfWeek,
     this.onTap,
     this.isSelected = false,
+    this.isToday = false,
     this.backgroundColor,
     this.borderColor,
     this.dayNumberStyle,
@@ -25,6 +28,8 @@ class SLCCalendarDayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -33,13 +38,13 @@ class SLCCalendarDayButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? SLCColors.primaryColor
-              : MediaQuery.of(context).platformBrightness == Brightness.light
+              : Theme.of(context).brightness == Brightness.light
                   ? Colors.white
                   : Colors.black,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: SLCColors.coolGray,
-            width: 0.25,
+            color: isToday ? SLCColors.primaryColor : SLCColors.coolGray,
+            width: isToday ? 1.5 : 0.25,
           ),
         ),
         child: Column(
@@ -59,6 +64,18 @@ class SLCCalendarDayButton extends StatelessWidget {
                       fontSize: 16,
                       color: isSelected ? Colors.white : SLCColors.coolGray),
             ),
+            if (isToday && !isSelected)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  l10n?.today ?? "Today",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: SLCColors.primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

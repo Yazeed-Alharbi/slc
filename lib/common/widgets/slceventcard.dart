@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:slc/common/styles/colors.dart'; // Import SLCColors
+import 'package:slc/common/styles/colors.dart';
+import 'dart:ui' as ui; // Import SLCColors
 
 class SLCEventCard extends StatefulWidget {
   final String title;
@@ -33,7 +34,9 @@ class _SLCEventCardState extends State<SLCEventCard> {
     final now = DateTime.now();
     final dateTime =
         DateTime(now.year, now.month, now.day, time.hour, time.minute);
-    return DateFormat('hh:mm a').format(dateTime);
+
+    // Force the English locale for consistent time formatting
+    return DateFormat('hh:mm a', 'en').format(dateTime);
   }
 
   void _onTapDown(TapDownDetails details) {
@@ -162,6 +165,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
                                 Text(
                                   formatTimeOfDay(widget.startTime),
                                   textAlign: TextAlign.end,
+                                  textDirection: ui.TextDirection.ltr,
                                   style: TextStyle(
                                     color: textColor,
                                     fontSize: 16,
@@ -172,6 +176,7 @@ class _SLCEventCardState extends State<SLCEventCard> {
                                     ? Text(
                                         formatTimeOfDay(widget.endTime!),
                                         textAlign: TextAlign.end,
+                                        textDirection: ui.TextDirection.ltr,
                                         style: TextStyle(
                                           color: textColor,
                                           fontSize: 16,

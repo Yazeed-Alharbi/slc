@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -32,6 +33,9 @@ class _NotesTabState extends State<NotesTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     return SingleChildScrollView(
       child: Padding(
         padding: SpacingStyles(context).defaultPadding,
@@ -49,7 +53,7 @@ class _NotesTabState extends State<NotesTab> {
                     Icons.add,
                     color: Colors.white,
                   ),
-                  text: "Create note",
+                  text: l10n?.createNote ?? "Create note",
                   backgroundColor: SLCColors.primaryColor,
                   foregroundColor: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -74,7 +78,9 @@ class _NotesTabState extends State<NotesTab> {
                     return Center(
                         child: Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: Text('Error loading notes: ${snapshot.error}'),
+                      child: Text(
+                          l10n?.errorLoadingNotes(snapshot.error.toString()) ??
+                              'Error loading notes: ${snapshot.error}'),
                     ));
                   }
 
@@ -94,7 +100,7 @@ class _NotesTabState extends State<NotesTab> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "No notes added yet",
+                              l10n?.noNotesAdded ?? "No notes added yet",
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 16,
@@ -102,7 +108,8 @@ class _NotesTabState extends State<NotesTab> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              "Create notes using the button above",
+                              l10n?.createNotesHint ??
+                                  "Create notes using the button above",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.grey[400],
@@ -167,24 +174,27 @@ class _NotesTabState extends State<NotesTab> {
   }
 
   void _showCreateNoteDialog(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     final titleController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Create New Note"),
+        title: Text(l10n?.createNewNote ?? "Create New Note"),
         content: TextField(
           controller: titleController,
-          decoration: const InputDecoration(
-            hintText: "Enter note title",
-            labelText: "Title",
+          decoration: InputDecoration(
+            hintText: l10n?.enterNoteTitle ?? "Enter note title",
+            labelText: l10n?.title ?? "Title",
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(l10n?.cancel ?? "Cancel"),
           ),
           TextButton(
             onPressed: () async {
@@ -206,12 +216,14 @@ class _NotesTabState extends State<NotesTab> {
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error creating note: $e')),
+                    SnackBar(
+                        content: Text(l10n?.errorCreatingNote(e.toString()) ??
+                            'Error creating note: $e')),
                   );
                 }
               }
             },
-            child: const Text("Create"),
+            child: Text(l10n?.create ?? "Create"),
           ),
         ],
       ),

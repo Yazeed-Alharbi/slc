@@ -7,6 +7,7 @@ import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
 import 'package:slc/models/Material.dart';
 import 'package:slc/services/notifications_service.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // Update the class declaration to include WidgetsBindingObserver
 class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
@@ -16,6 +17,14 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
   FocusSessionManager._internal() {
     // Register this manager as a lifecycle observer when created
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  // Store localization instance
+  AppLocalizations? _l10n;
+
+  // Method to update localizations when context is available
+  void updateLocalizations(BuildContext context) {
+    _l10n = AppLocalizations.of(context);
   }
 
   // Add a safeguard for listeners
@@ -73,6 +82,11 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
   bool get hasSession =>
       _isSessionCreated; // Use this for checking if ANY session exists
 
+  // Determine if the current break should be a long break
+  // Typically a long break occurs after a set number of pomodoros (e.g., every 4th pomodoro)
+  bool get _isLongBreak =>
+      (_completedPomodoros > 0) && (_completedPomodoros % 4 == 0);
+
   // Calculate remaining time
   int get remainingSeconds {
     if (!_isSessionActive) return 0;
@@ -85,11 +99,14 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
 
   // Update the timeRemainingFormatted getter to ensure it always returns the most current value
   String get timeRemainingFormatted {
-    // Get the most current remaining seconds for consistency between screens
-    int secs = remainingSeconds;
-    final minutes = (secs ~/ 60).toString().padLeft(2, '0');
-    final seconds = (secs % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    if (!isSessionActive) return "00:00";
+
+    // Always format with digits 0-9 regardless of locale
+    final int minutes = (remainingSeconds ~/ 60);
+    final int seconds = remainingSeconds % 60;
+
+    // Use standard digits that won't change with locale
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   // Override ChangeNotifier methods for safer listener management
@@ -137,15 +154,16 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
   void startSession({
     required Course course,
     required CourseEnrollment enrollment,
-    List<CourseMaterial> selectedMaterials = const [],
+    required List<CourseMaterial> selectedMaterials,
   }) {
+    _isSessionActive = false; // Only mark as active when timer starts
+    _isPlaying = false;
+    _currentMode = _l10n?.focusTime ?? "Focus Time";
+    _isBreakTime = false;
     _course = course;
     _enrollment = enrollment;
     _selectedMaterials = selectedMaterials;
     _isSessionCreated = true; // Mark as created but not active
-    _isSessionActive = false; // Only mark as active when timer starts
-    _isPlaying = false;
-    _currentMode = "Focus Time";
     _isBreakTime = false;
     _completedPomodoros = 0;
     _sessionCompleted = false;
@@ -158,9 +176,9 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
     notifyListeners();
   }
 
-  // Update the startTimer method to ensure timer is synchronized
+  // Update in startTimer method
   void startTimer() {
-    if (_isPlaying || !_isSessionCreated) return; // <-- Fixed condition
+    if (_isPlaying || !_isSessionCreated) return;
 
     _isPlaying = true;
     _isSessionActive = true;
@@ -182,6 +200,7 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
           scheduledTime: timerEndTime,
           courseName: _course?.code ?? "Focus Session",
           totalPomodoros: _totalPomodoros,
+          locale: _currentLocale, // Pass current locale
         );
       } else {
         // Not the last pomodoro - schedule break notification
@@ -189,6 +208,7 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
           scheduledTime: timerEndTime,
           breakType: "Short Break",
           breakDuration: _shortBreakSeconds,
+          locale: _currentLocale, // Pass current locale
         );
       }
     } else {
@@ -198,6 +218,7 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
         courseName: _course?.code ?? "Focus Session",
         pomodoro: _completedPomodoros + 1,
         totalPomodoros: _totalPomodoros,
+        locale: _currentLocale, // Pass current locale
       );
     }
 
@@ -271,57 +292,65 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
     _timer = null;
     _isPlaying = false;
 
+    // Print the current locale to debug
+    print("Current locale in timer completed: $_currentLocale"); // Add this
+
     if (!_isBreakTime) {
       // Transitioning from focus to break
       _completedPomodoros++;
 
       if (_completedPomodoros >= _totalPomodoros) {
-        // Last pomodoro completed: mark session as completed and send quiz notification
+        // Last pomodoro completed: mark session as completed
         _sessionCompleted = true;
 
-        if (_course != null) {
-          NotificationsService().showPomodoroCompletedNotification(
-            courseName: _course!.code,
-            totalPomodoros: _totalPomodoros,
-          );
-        }
-
-        _saveSessionState();
-        notifyListeners();
-        return;
+        // Send notification in the correct language
+        final notificationsService = NotificationsService();
+        notificationsService.showPomodoroCompletedNotification(
+          courseName: _course?.name ?? "Unknown",
+          totalPomodoros: _completedPomodoros,
+          locale: _currentLocale, // This should be 'ar' for Arabic
+        );
       } else {
         // Not the last pomodoro—switch to break mode
         _isBreakTime = true;
-        _currentMode = "Short Break";
-        _currentDuration = _shortBreakSeconds;
 
-        // IMPORTANT: Reset session start time when transitioning to break
-        _sessionStartTime = null;
-        _elapsedSeconds = 0;
+        if (_isLongBreak) {
+          _currentMode = "Long Break"; // This will be shown in the UI
+          _currentDuration = _longBreakSeconds;
+        } else {
+          _currentMode = "Short Break"; // This will be shown in the UI
+          _currentDuration = _shortBreakSeconds;
+        }
 
-        NotificationsService().showBreakNotification(
-          breakType: "Short Break",
-          breakDuration: _shortBreakSeconds,
+        // Send break notification in correct language
+        final notificationsService = NotificationsService();
+        notificationsService.showBreakNotification(
+          breakType: _isLongBreak ? "Long Break" : "Short Break",
+          breakDuration: _currentDuration,
+          locale: _currentLocale, // This should be 'ar' for Arabic
         );
       }
     } else {
       // Transitioning from break to focus
       _isBreakTime = false;
-      _currentMode = "Focus Time";
+      _currentMode = "Focus Time"; // This will be shown in the UI
       _currentDuration = _pomodoroFocusSeconds;
 
-      // IMPORTANT: Reset session start time when transitioning back to focus
-      _sessionStartTime = null;
-      _elapsedSeconds = 0;
-
-      // ADD THIS: Show notification when break ends
-      NotificationsService().showFocusTimeNotification(
-        courseName: _course?.code ?? "Focus Session",
+      // Send focus notification in correct language
+      final notificationsService = NotificationsService();
+      notificationsService.showFocusTimeNotification(
+        courseName: _course?.name ?? "Unknown",
         pomodoro: _completedPomodoros + 1,
         totalPomodoros: _totalPomodoros,
+        locale: _currentLocale, // This should be 'ar' for Arabic
       );
     }
 
+    // Always reset elapsed time and session start time when changing modes
+    _sessionStartTime = null;
+    _elapsedSeconds = 0;
+
+    // Always save the session state when timer completes
     _saveSessionState();
     notifyListeners();
   }
@@ -588,4 +617,28 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
     }
     // If paused, we leave it as is
   }
+
+  // Add a method to get localized mode strings
+  String getLocalizedMode(BuildContext context,
+      {bool isBreakTime = false, bool isLongBreak = false}) {
+    final l10n = AppLocalizations.of(context);
+
+    if (isBreakTime) {
+      return isLongBreak
+          ? (l10n?.longBreak ?? "Long Break")
+          : (l10n?.shortBreak ?? "Short Break");
+    } else {
+      return l10n?.focusTime ?? "Focus Time";
+    }
+  }
+
+  // Use this method when setting mode in UI components
+  // For internal storage, keep using the English strings
+  String _currentLocale = 'en';
+
+  void setLocale(String locale) {
+    _currentLocale = locale;
+  }
+
+  String get currentLocale => _currentLocale;
 }

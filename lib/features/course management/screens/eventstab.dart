@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -37,11 +38,15 @@ class _EventsTabState extends State<EventsTab> {
   @override
   Widget build(BuildContext context) {
     final themeColor = SLCColors.primaryColor;
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: SpacingStyles(context).defaultPadding,
       child: _isLoading
-          ? const Center(child: SLCLoadingIndicator(text: "Loading events..."))
+          ? Center(
+              child: SLCLoadingIndicator(
+                  text: l10n?.loadingEvents ?? "Loading events..."))
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +62,7 @@ class _EventsTabState extends State<EventsTab> {
                           Icons.add,
                           color: Colors.white,
                         ),
-                        text: "Add Event",
+                        text: l10n?.addEvent ?? "Add Event",
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -72,9 +77,10 @@ class _EventsTabState extends State<EventsTab> {
                         _eventRepository.streamCourseEvents(widget.course.id),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                            child:
-                                SLCLoadingIndicator(text: "Loading events..."));
+                        return Center(
+                          child: SLCLoadingIndicator(
+                              text: l10n?.loadingEvents ?? "Loading events..."),
+                        );
                       }
 
                       if (snapshot.hasError) {
@@ -82,11 +88,12 @@ class _EventsTabState extends State<EventsTab> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text("Error loading events"),
+                              Text(l10n?.errorLoadingEvents ??
+                                  "Error loading events"),
                               const SizedBox(height: 8),
                               TextButton(
                                 onPressed: () => setState(() {}),
-                                child: const Text("Retry"),
+                                child: Text(l10n?.retry ?? "Retry"),
                               ),
                             ],
                           ),
@@ -109,7 +116,8 @@ class _EventsTabState extends State<EventsTab> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  "No events scheduled",
+                                  l10n?.noEventsScheduled ??
+                                      "No events scheduled",
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineSmall
@@ -119,7 +127,8 @@ class _EventsTabState extends State<EventsTab> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  "Add a new event using the button above",
+                                  l10n?.addEventUsingButton ??
+                                      "Add a new event using the button above",
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: Colors.grey[500],
@@ -150,7 +159,7 @@ class _EventsTabState extends State<EventsTab> {
                                   padding: const EdgeInsets.only(
                                       top: 12.0, bottom: 8.0),
                                   child: Text(
-                                    _formatDateHeader(event.dateTime),
+                                    _getLocalizedDateHeader(event.dateTime),
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
@@ -201,10 +210,37 @@ class _EventsTabState extends State<EventsTab> {
     }
   }
 
+  // New method to get localized date headers
+  String _getLocalizedDateHeader(DateTime date) {
+    final l10n = AppLocalizations.of(context);
+    final now = DateTime.now();
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+
+    if (_isSameDay(date, now)) {
+      return l10n?.today ?? "Today";
+    } else if (_isSameDay(date, tomorrow)) {
+      return l10n?.tomorrow ?? "Tomorrow";
+    } else if (_isSameDay(date, yesterday)) {
+      return l10n?.yesterday ?? "Yesterday";
+    } else {
+      // Use intl's DateFormat with the current locale
+      final locale = Localizations.localeOf(context).languageCode;
+      if (date.difference(now).inDays < 7 && date.isAfter(now)) {
+        return DateFormat('EEEE', locale)
+            .format(date); // e.g. "Monday"/"الاثنين"
+      } else {
+        return DateFormat('EEEE, MMM d', locale)
+            .format(date); // e.g. "Monday, Jan 15"/"الاثنين، يناير ١٥"
+      }
+    }
+  }
+
   Future<void> _showAddEventDialog() async {
+    final l10n = AppLocalizations.of(context);
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
-    final locationController = TextEditingController(); // Add this line
+    final locationController = TextEditingController();
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = TimeOfDay.now();
 
@@ -214,7 +250,7 @@ class _EventsTabState extends State<EventsTab> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Add New Event"),
+              title: Text(l10n?.addNewEvent ?? "Add New Event"),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -222,32 +258,32 @@ class _EventsTabState extends State<EventsTab> {
                   children: [
                     TextField(
                       controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Title",
+                      decoration: InputDecoration(
+                        labelText: l10n?.title ?? "Title",
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
+                      decoration: InputDecoration(
+                        labelText: l10n?.description ?? "Description",
                       ),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
-                    // Add location field here
                     TextField(
                       controller: locationController,
-                      decoration: const InputDecoration(
-                        labelText: "Location",
-                        hintText: "Enter event location (optional)"
-                      ),
+                      decoration: InputDecoration(
+                          labelText: l10n?.location ?? "Location",
+                          hintText: l10n?.enterEventLocation ??
+                              "Enter event location (optional)"),
                     ),
                     const SizedBox(height: 16),
                     ListTile(
-                      title: const Text("Date"),
-                      subtitle: Text(
-                          DateFormat('EEE, MMM d, yyyy').format(selectedDate)),
+                      title: Text(l10n?.date ?? "Date"),
+                      subtitle: Text(DateFormat('EEE, MMM d, yyyy',
+                              Localizations.localeOf(context).languageCode)
+                          .format(selectedDate)),
                       trailing: const Icon(Icons.calendar_today),
                       onTap: () async {
                         final picked = await showDatePicker(
@@ -265,14 +301,13 @@ class _EventsTabState extends State<EventsTab> {
                       },
                     ),
                     ListTile(
-                      title: const Text("Time"),
+                      title: Text(l10n?.time ?? "Time"),
                       subtitle: Text(selectedTime.format(context)),
                       trailing: const Icon(Icons.access_time),
                       onTap: () async {
                         final picked = await showTimePicker(
                           context: context,
                           initialTime: selectedTime,
-                          initialEntryMode: TimePickerEntryMode.input,
                         );
                         if (picked != null && picked != selectedTime) {
                           setState(() {
@@ -288,7 +323,7 @@ class _EventsTabState extends State<EventsTab> {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    "Cancel",
+                    l10n?.cancel ?? "Cancel",
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                 ),
@@ -296,21 +331,22 @@ class _EventsTabState extends State<EventsTab> {
                   onPressed: () {
                     if (titleController.text.trim().isEmpty) {
                       SLCFlushbar.show(
-                          context: context,
-                          message: "Please enter a title",
-                          type: FlushbarType.error);
+                        context: context,
+                        message: l10n?.titleRequired ?? "Please enter a title",
+                        type: FlushbarType.error,
+                      );
                       return;
                     }
 
                     Navigator.of(context).pop({
                       'title': titleController.text,
                       'description': descriptionController.text,
-                      'location': locationController.text, // Add this line
+                      'location': locationController.text,
                       'date': selectedDate,
                       'time': selectedTime,
                     });
                   },
-                  child: Text("Save",
+                  child: Text(l10n?.save ?? "Save",
                       style: TextStyle(
                         color: SLCColors.primaryColor,
                       )),
@@ -326,7 +362,7 @@ class _EventsTabState extends State<EventsTab> {
       await _createEvent(
         title: result['title'],
         description: result['description'],
-        location: result['location'], // Add this line
+        location: result['location'],
         date: result['date'],
         time: result['time'],
       );
@@ -334,11 +370,12 @@ class _EventsTabState extends State<EventsTab> {
   }
 
   Future<void> _showEditEventDialog(Event event) async {
+    final l10n = AppLocalizations.of(context);
     final titleController = TextEditingController(text: event.title);
     final descriptionController =
         TextEditingController(text: event.description);
-    // Add location controller initialized with event location
-    final locationController = TextEditingController(text: event.location ?? "");
+    final locationController =
+        TextEditingController(text: event.location ?? "");
     DateTime selectedDate = event.dateTime;
     TimeOfDay selectedTime =
         TimeOfDay(hour: event.dateTime.hour, minute: event.dateTime.minute);
@@ -349,7 +386,7 @@ class _EventsTabState extends State<EventsTab> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Edit Event"),
+              title: Text(l10n?.editEvent ?? "Edit Event"),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -357,40 +394,38 @@ class _EventsTabState extends State<EventsTab> {
                   children: [
                     TextField(
                       controller: titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Title",
+                      decoration: InputDecoration(
+                        labelText: l10n?.title ?? "Title",
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: "Description",
+                      decoration: InputDecoration(
+                        labelText: l10n?.description ?? "Description",
                       ),
                       maxLines: 3,
                     ),
                     const SizedBox(height: 16),
-                    // Add location field here
                     TextField(
                       controller: locationController,
-                      decoration: const InputDecoration(
-                        labelText: "Location",
-                        hintText: "Enter event location (optional)"
-                      ),
+                      decoration: InputDecoration(
+                          labelText: l10n?.location ?? "Location",
+                          hintText: l10n?.enterEventLocation ??
+                              "Enter event location (optional)"),
                     ),
                     const SizedBox(height: 16),
-                    // Existing fields follow
                     ListTile(
-                      title: const Text("Date"),
-                      subtitle: Text(
-                          DateFormat('EEE, MMM d, yyyy').format(selectedDate)),
+                      title: Text(l10n?.date ?? "Date"),
+                      subtitle: Text(DateFormat('EEE, MMM d, yyyy',
+                              Localizations.localeOf(context).languageCode)
+                          .format(selectedDate)),
                       trailing: const Icon(Icons.calendar_today),
                       onTap: () async {
                         final picked = await showDatePicker(
                           context: context,
                           initialDate: selectedDate,
-                          firstDate: DateTime.now()
-                              .subtract(const Duration(days: 365)),
+                          firstDate: DateTime.now(),
                           lastDate:
                               DateTime.now().add(const Duration(days: 365)),
                         );
@@ -402,14 +437,13 @@ class _EventsTabState extends State<EventsTab> {
                       },
                     ),
                     ListTile(
-                      title: const Text("Time"),
+                      title: Text(l10n?.time ?? "Time"),
                       subtitle: Text(selectedTime.format(context)),
                       trailing: const Icon(Icons.access_time),
                       onTap: () async {
                         final picked = await showTimePicker(
                           context: context,
                           initialTime: selectedTime,
-                          initialEntryMode: TimePickerEntryMode.input,
                         );
                         if (picked != null && picked != selectedTime) {
                           setState(() {
@@ -425,15 +459,17 @@ class _EventsTabState extends State<EventsTab> {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    "Cancel",
+                    l10n?.cancel ?? "Cancel",
                     style: TextStyle(color: Colors.grey[700]),
                   ),
                 ),
                 TextButton(
                   onPressed: () {
                     if (titleController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please enter a title")),
+                      SLCFlushbar.show(
+                        context: context,
+                        message: l10n?.titleRequired ?? "Please enter a title",
+                        type: FlushbarType.error,
                       );
                       return;
                     }
@@ -441,13 +477,13 @@ class _EventsTabState extends State<EventsTab> {
                     Navigator.of(context).pop({
                       'title': titleController.text,
                       'description': descriptionController.text,
-                      'location': locationController.text, // Add this line
+                      'location': locationController.text,
                       'date': selectedDate,
                       'time': selectedTime,
                     });
                   },
                   child: Text(
-                    "Save",
+                    l10n?.save ?? "Save",
                     style: TextStyle(color: SLCColors.primaryColor),
                   ),
                 ),
@@ -463,7 +499,7 @@ class _EventsTabState extends State<EventsTab> {
         eventId: event.id,
         title: result['title'],
         description: result['description'],
-        location: result['location'], // Add this line
+        location: result['location'],
         date: result['date'],
         time: result['time'],
       );
@@ -471,13 +507,16 @@ class _EventsTabState extends State<EventsTab> {
   }
 
   Future<void> _confirmDeleteEvent(Event event) async {
+    final l10n = AppLocalizations.of(context);
     bool confirm = await NativeAlertDialog.show(
       context: context,
-      title: "Delete Event",
-      content: "Are you sure you want to delete '${event.title}'?",
-      confirmText: "Delete",
+      title: l10n?.deleteEvent ?? "Delete Event",
+      content: (l10n?.confirmDeleteEvent != null
+          ? l10n!.confirmDeleteEvent(event.title)
+          : "Are you sure you want to delete '${event.title}'?"),
+      confirmText: l10n?.delete ?? "Delete",
       confirmTextColor: Colors.red,
-      cancelText: "Cancel",
+      cancelText: l10n?.cancel ?? "Cancel",
     );
 
     if (confirm) {
@@ -488,10 +527,11 @@ class _EventsTabState extends State<EventsTab> {
   Future<void> _createEvent({
     required String title,
     required String description,
-    required String location, // Add this line
+    required String location,
     required DateTime date,
     required TimeOfDay time,
   }) async {
+    final l10n = AppLocalizations.of(context);
     try {
       setState(() => _isLoading = true);
 
@@ -507,20 +547,21 @@ class _EventsTabState extends State<EventsTab> {
         courseId: widget.course.id,
         title: title,
         description: description,
-        location: location, // Add this line
+        location: location,
         dateTime: dateTime,
         createdBy: widget.enrollment.studentId,
       );
 
       SLCFlushbar.show(
         context: context,
-        message: "Event created successfully",
+        message: l10n?.eventCreatedSuccess ?? "Event created successfully",
         type: FlushbarType.success,
       );
     } catch (e) {
       SLCFlushbar.show(
         context: context,
-        message: "Error creating event: $e",
+        message: l10n?.errorCreatingEvent(e.toString()) ??
+            "Error creating event: $e",
         type: FlushbarType.error,
       );
     } finally {
@@ -534,10 +575,11 @@ class _EventsTabState extends State<EventsTab> {
     required String eventId,
     required String title,
     required String description,
-    required String location, // Add this line
+    required String location,
     required DateTime date,
     required TimeOfDay time,
   }) async {
+    final l10n = AppLocalizations.of(context);
     try {
       setState(() => _isLoading = true);
 
@@ -553,19 +595,20 @@ class _EventsTabState extends State<EventsTab> {
         eventId: eventId,
         title: title,
         description: description,
-        location: location, // Add this line
+        location: location,
         dateTime: dateTime,
       );
 
       SLCFlushbar.show(
         context: context,
-        message: "Event updated successfully",
+        message: l10n?.eventUpdatedSuccess ?? "Event updated successfully",
         type: FlushbarType.success,
       );
     } catch (e) {
       SLCFlushbar.show(
         context: context,
-        message: "Error updating event: $e",
+        message: l10n?.errorUpdatingEvent(e.toString()) ??
+            "Error updating event: $e",
         type: FlushbarType.error,
       );
     } finally {
@@ -576,6 +619,7 @@ class _EventsTabState extends State<EventsTab> {
   }
 
   Future<void> _deleteEvent(String eventId) async {
+    final l10n = AppLocalizations.of(context);
     try {
       setState(() => _isLoading = true);
 
@@ -583,13 +627,14 @@ class _EventsTabState extends State<EventsTab> {
 
       SLCFlushbar.show(
         context: context,
-        message: "Event deleted successfully",
+        message: l10n?.eventDeletedSuccess ?? "Event deleted successfully",
         type: FlushbarType.success,
       );
     } catch (e) {
       SLCFlushbar.show(
         context: context,
-        message: "Error deleting event: $e",
+        message: l10n?.errorDeletingEvent(e.toString()) ??
+            "Error deleting event: $e",
         type: FlushbarType.error,
       );
     } finally {

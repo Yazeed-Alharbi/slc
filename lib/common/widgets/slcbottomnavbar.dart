@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
@@ -15,6 +18,9 @@ class SLCBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       decoration: BoxDecoration(
         border: const Border(
@@ -39,11 +45,14 @@ class SLCBottomNavBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             duration: const Duration(milliseconds: 300),
             tabBackgroundColor: SLCColors.primaryColor,
-            tabs: const [
-              GButton(icon: Icons.home, text: 'Home'),
-              GButton(icon: Icons.library_books, text: 'Courses'),
-              GButton(icon: Icons.people_alt, text: 'Page 3'),
-              GButton(icon: Icons.calendar_month_rounded, text: 'Calendar'),
+            tabs: [
+              GButton(icon: Icons.home, text: l10n?.home ?? "Home"),
+              GButton(
+                  icon: Icons.library_books, text: l10n?.courses ?? 'Courses'),
+              GButton(
+                  icon: Icons.calendar_month_rounded,
+                  text: l10n?.calendar ?? 'Calendar'),
+              GButton(icon: Icons.settings, text: l10n?.settings ?? 'Settings'),
             ],
             selectedIndex: selectedIndex,
             onTabChange: onTabChange,

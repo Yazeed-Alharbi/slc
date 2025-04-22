@@ -1,290 +1,382 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_init;
 
 class NotificationsService {
   static final NotificationsService _instance =
       NotificationsService._internal();
-  factory NotificationsService() => _instance;
+
+  factory NotificationsService() {
+    return _instance;
+  }
+
   NotificationsService._internal();
 
-  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  bool _initialized = false;
 
-  Future<void> initialize() async {
+  bool _initialized = false;
+  bool _notificationsEnabled = false;
+
+  bool get isEnabled => _notificationsEnabled;
+
+  // Channel IDs for different notification types
+  static const String _defaultChannelId = 'slc_channel';
+  static const String _focusSessionChannelId = 'focus_session_channel';
+
+  /// Initialize the notification service
+  Future<void> init() async {
     if (_initialized) return;
 
-    // Initialize timezone data
-    tz.initializeTimeZones();
+    tz_init.initializeTimeZones();
 
-    // Define app icon as notification icon
+    // Initialize notification settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    final DarwinInitializationSettings initializationSettingsIOS =
+    const DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
 
-    await _notificationsPlugin.initialize(
+    await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+
+    // Load saved notification preference
+    final prefs = await SharedPreferences.getInstance();
+    _notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
+
+    if (_notificationsEnabled) {
+      // If notifications were enabled before, request permissions again
+      final permissionGranted = await requestNotificationPermissions();
+      if (!permissionGranted) {
+        // If permissions were denied, update the saved preference
+        _notificationsEnabled = false;
+        await prefs.setBool('notifications_enabled', false);
+      }
+    }
 
     _initialized = true;
   }
 
+  void _onNotificationTapped(NotificationResponse response) {
+    // Handle notification taps here
+    // You can navigate to specific screens based on the notification payload
+  }
+
+  /// Request notification permissions from the user
   Future<bool> requestNotificationPermissions() async {
-    // Request iOS permissions
-    final ios = await _notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
 
-    // For Android, permissions are managed differently.
-    // Since the method requestPermission() is not available,
-    // you may simply assume permissions are granted for older versions.
-    // Alternatively, use a package like permission_handler for Android 13+.
-    bool android = true;
+    // Android permissions are assumed to be granted (or handled externally)
+    final bool permissionGranted = true;
 
-    return ios ?? android;
+    final IOSFlutterLocalNotificationsPlugin? iosPlugin =
+        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>();
+
+    final bool? iosPermissionGranted = await iosPlugin?.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    return permissionGranted ?? iosPermissionGranted ?? false;
   }
 
-  Future<void> showPomodoroCompletedNotification({
-    required String courseName,
-    required int totalPomodoros,
+  /// Enable or disable notifications
+  Future<void> setNotificationsEnabled(bool enabled) async {
+    if (enabled == _notificationsEnabled) return;
+
+    if (enabled) {
+      final permissionGranted = await requestNotificationPermissions();
+      if (!permissionGranted) {
+        return; // Don't enable if permissions not granted
+      }
+    }
+
+    _notificationsEnabled = enabled;
+
+    // Save the setting
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('notifications_enabled', enabled);
+  }
+
+  /// Schedule a notification for a specific time
+  Future<void> scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    String? payload,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'focus_session_channel',
-      'Focus Session Notifications',
-      channelDescription: 'Notifies when focus sessions are completed',
-      importance: Importance.high,
-      priority: Priority.high,
-      ticker: 'Focus session completed',
-    );
-
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.show(
-      0,
-      'Focus Session Completed!',
-      'You\'ve completed $totalPomodoros pomodoros for $courseName. Time for a quiz!',
-      details,
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(scheduledDate, tz.local),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _defaultChannelId,
+          'SLC Notifications',
+          channelDescription: 'Notifications for SLC app',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
     );
   }
 
-  Future<void> showBreakNotification({
-    required String breakType, // e.g., "Short Break" or "Long Break"
-    required int breakDuration, // in seconds
+  /// Show an immediate notification
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'break_channel',
-      'Break Notifications',
-      channelDescription: 'Notifies when it is time for a break',
-      importance: Importance.high,
-      priority: Priority.high,
-      ticker: 'Break Time!',
-    );
-
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails();
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.show(
-      1, // Use a unique ID for break notifications
-      '$breakType Time!',
-      'Take a break for ${breakDuration ~/ 60} minutes.',
-      details,
+    await _flutterLocalNotificationsPlugin.show(
+      id,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _defaultChannelId,
+          'SLC Notifications',
+          channelDescription: 'Notifications for SLC app',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: payload,
     );
   }
 
+  /// Cancel a specific notification
+  Future<void> cancelNotification(int id) async {
+    await _flutterLocalNotificationsPlugin.cancel(id);
+  }
+
+  /// Cancel all notifications
+  Future<void> cancelAllNotifications() async {
+    await _flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  // Focus Session Specific Methods
+
+  /// Schedule notification for when a focus session is complete
   Future<void> scheduleSessionCompletionNotification({
     required DateTime scheduledTime,
     required String courseName,
     required int totalPomodoros,
+    required String locale,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    // Use exactScheduleMode to ensure precise timing, even when app is backgrounded
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'session_completion_channel',
-      'Session Completion Notifications',
-      channelDescription: 'Notifies when a focus session is complete',
-      importance: Importance.high,
-      priority: Priority.high,
-      fullScreenIntent: true, // Will pop up even if device is locked
-      category: AndroidNotificationCategory
-          .alarm, // Uses the alarm category for higher priority
-    );
+    final title =
+        locale == 'ar' ? "تم إكمال جلسة التركيز!" : "Focus Session Complete!";
+    final body = locale == 'ar'
+        ? "لقد أكملت $totalPomodoros بوموردورو في $courseName"
+        : "You completed $totalPomodoros pomodoros in $courseName";
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentSound: true,
-      presentBadge: true,
-      interruptionLevel:
-          InterruptionLevel.timeSensitive, // Higher priority on iOS
-    );
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    // Schedule for exact time, allowing it to wake device if needed
-    await _notificationsPlugin.zonedSchedule(
-      0,
-      'Focus Session Completed',
-      'You\'ve completed $totalPomodoros pomodoros for $courseName. Time for a quiz!',
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      1, // Use unique ID
+      title,
+      body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      details,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method for break notifications
+  /// Schedule a break time notification
   Future<void> scheduleBreakNotification({
     required DateTime scheduledTime,
     required String breakType,
     required int breakDuration,
+    required String locale,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'break_channel',
-      'Break Notifications',
-      channelDescription: 'Notifies when it is time for a break',
-      importance: Importance.high,
-      priority: Priority.high,
-      fullScreenIntent: true,
-    );
+    final title = locale == 'ar' ? "وقت الاستراحة!" : "Break Time!";
+    final minutes = breakDuration ~/ 60;
+    final body = locale == 'ar'
+        ? "حان وقت $breakType لمدة $minutes دقائق"
+        : "Time for a $breakType for $minutes minutes";
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentSound: true,
-      presentBadge: true,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.zonedSchedule(
-      1, // Use a different ID for break notifications
-      'Time for a $breakType!',
-      'Take a break for ${breakDuration ~/ 60} minutes.',
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      2, // Use unique ID
+      title,
+      body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      details,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method for resume focus notifications
+  /// Schedule a focus time notification
   Future<void> scheduleFocusTimeNotification({
     required DateTime scheduledTime,
     required String courseName,
     required int pomodoro,
     required int totalPomodoros,
+    required String locale,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'focus_channel',
-      'Focus Time Notifications',
-      channelDescription: 'Notifies when it is time to focus again',
-      importance: Importance.high,
-      priority: Priority.high,
-      fullScreenIntent: true,
-    );
+    final title = locale == 'ar' ? "وقت التركيز!" : "Focus Time!";
+    final body = locale == 'ar'
+        ? "حان وقت البدء في بومودورو $pomodoro من $totalPomodoros لـ $courseName"
+        : "Time to start pomodoro $pomodoro of $totalPomodoros for $courseName";
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentSound: true,
-      presentBadge: true,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.zonedSchedule(
-      2, // Use a different ID for focus notifications
-      'Break time over!',
-      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      3, // Use unique ID
+      title,
+      body,
       tz.TZDateTime.from(scheduledTime, tz.local),
-      details,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
-  // Add this method to NotificationsService class
+  /// Show a notification for completed pomodoro session
+  Future<void> showPomodoroCompletedNotification({
+    required String courseName,
+    required int totalPomodoros,
+    required String locale,
+  }) async {
+    if (!_notificationsEnabled) return;
+
+    final title =
+        locale == 'ar' ? "تم إكمال جلسة التركيز!" : "Focus Session Complete!";
+    final body = locale == 'ar'
+        ? "لقد أكملت $totalPomodoros بوموردورو في $courseName"
+        : "You completed $totalPomodoros pomodoros in $courseName";
+
+    await _flutterLocalNotificationsPlugin.show(
+      4, // Use unique ID
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  /// Show a break notification
+  Future<void> showBreakNotification({
+    required String breakType,
+    required int breakDuration,
+    required String locale,
+  }) async {
+    if (!_notificationsEnabled) return;
+
+    final title = locale == 'ar' ? "وقت الاستراحة!" : "Break Time!";
+    final minutes = breakDuration ~/ 60;
+    final body = locale == 'ar'
+        ? "حان وقت $breakType لمدة $minutes دقائق"
+        : "Time for a $breakType for $minutes minutes";
+
+    await _flutterLocalNotificationsPlugin.show(
+      5, // Use unique ID
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
+
+  /// Show a focus time notification
   Future<void> showFocusTimeNotification({
     required String courseName,
     required int pomodoro,
     required int totalPomodoros,
+    required String locale,
   }) async {
-    await initialize();
+    if (!_notificationsEnabled) return;
 
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-      'focus_channel',
-      'Focus Time Notifications',
-      channelDescription: 'Notifies when it is time to focus again',
-      importance: Importance.high,
-      priority: Priority.high,
-      fullScreenIntent: true,
-      category: AndroidNotificationCategory.alarm,
-    );
+    final title = locale == 'ar' ? "وقت التركيز!" : "Focus Time!";
+    final body = locale == 'ar'
+        ? "حان وقت البدء في بومودورو $pomodoro من $totalPomodoros لـ $courseName"
+        : "Time to start pomodoro $pomodoro of $totalPomodoros for $courseName";
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentSound: true,
-      presentBadge: true,
-      interruptionLevel: InterruptionLevel.timeSensitive,
-    );
-
-    const NotificationDetails details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.show(
-      2, // Use a different ID for focus notifications
-      'Break Time Over!',
-      'Time to focus on $courseName (Pomodoro $pomodoro of $totalPomodoros)',
-      details,
+    await _flutterLocalNotificationsPlugin.show(
+      6, // Use unique ID
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _focusSessionChannelId,
+          'Focus Session Notifications',
+          channelDescription: 'Notifications for focus sessions',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
     );
   }
 }

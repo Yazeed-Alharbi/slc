@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:scribble/scribble.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/nativealertdialog.dart';
@@ -10,13 +11,13 @@ import 'package:slc/features/course%20management/screens/note_service.dart';
 class NoteEditorPage extends StatefulWidget {
   final String noteId;
   final String noteTitle;
-  final String courseId; // Add courseId parameter
+  final String courseId;
 
   const NoteEditorPage({
     Key? key,
     required this.noteId,
     required this.noteTitle,
-    required this.courseId, // Add this parameter
+    required this.courseId,
   }) : super(key: key);
 
   @override
@@ -31,12 +32,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
   int _currentPageIndex = 0;
   bool _isTypingMode = false;
   bool _showPageSelector = false;
-  bool _isLoading = true; // Add loading state
+  bool _isLoading = true;
 
   late AnimationController _drawerAnimController;
   late Animation<double> _drawerAnimation;
 
-  late NoteService _noteService; // Update initialization of NoteService
+  late NoteService _noteService;
 
   @override
   void initState() {
@@ -55,10 +56,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       curve: Curves.easeInOut,
     );
 
-    _noteService = NoteService(
-        courseId: widget.courseId); // Initialize NoteService with courseId
-
-    // Load note data from Firestore instead of adding first page directly
+    _noteService = NoteService(courseId: widget.courseId);
     _loadNoteData();
   }
 
@@ -87,7 +85,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               if (sketchJson != null) {
                 _scribbleNotifier.setSketch(
                     sketch:
-                        Sketch.fromJson(Map<String, dynamic>.from(sketchJson)));
+                        Sketch.fromJson(jsonDecode(jsonEncode(sketchJson))));
               }
             } catch (e) {
               // Error restoring initial sketch
@@ -193,8 +191,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             final sketchJson = _pages[index]['sketch'];
             if (sketchJson != null) {
               _scribbleNotifier.setSketch(
-                  sketch:
-                      Sketch.fromJson(Map<String, dynamic>.from(sketchJson)));
+                  sketch: Sketch.fromJson(jsonDecode(jsonEncode(sketchJson))));
             }
           } catch (e) {
             // Error restoring sketch
@@ -221,6 +218,24 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
+
+    // Localized strings with English fallbacks
+    final pageText = l10n?.page ?? "Page";
+    final pagesText = l10n?.pages ?? "Pages";
+    final notesSavedText = l10n?.notesSaved ?? "Note saved!";
+    final cannotDeleteOnlyPageText =
+        l10n?.cannotDeleteOnlyPage ?? "Cannot delete the only page";
+    final deletePageTitle = l10n?.deletePage ?? "Delete Page";
+    final confirmDeletePageText = l10n?.confirmDeletePage ??
+        "Are you sure you want to delete Page ${_currentPageIndex + 1}?";
+    final deleteText = l10n?.delete ?? "Delete";
+    final cancelText = l10n?.cancel ?? "Cancel";
+    final pageDeletedText = l10n?.pageDeleted ?? "Page deleted";
+    final typeNotesHereText = l10n?.typeNotesHere ?? "Type your notes here...";
+
     // Add loading indicator
     if (_isLoading) {
       return Scaffold(
@@ -246,10 +261,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
       child: Scaffold(
         appBar: AppBar(
           title: Text(widget.noteTitle),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-          // Back button in the standard leading position
-          // In the leading back button in build method:
+          backgroundColor: Theme.of(context).colorScheme.surface,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () async {
@@ -260,7 +272,6 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 print('Error saving before navigation: $e');
               }
               if (mounted) {
-                // Add this check
                 Navigator.of(context).pop();
               }
             },
@@ -271,7 +282,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
-                  'Page ${_currentPageIndex + 1}',
+                  '$pageText ${_currentPageIndex + 1}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -283,27 +294,29 @@ class _NoteEditorPageState extends State<NoteEditorPage>
             IconButton(
               icon: const Icon(Icons.menu),
               onPressed: _togglePageMenu,
-              tooltip: 'Pages menu',
+              tooltip: pagesText,
             ),
             // Text/Draw toggle
             IconButton(
               icon: Icon(_isTypingMode ? Icons.draw : Icons.text_fields),
               onPressed: _toggleInputMode,
-              tooltip: _isTypingMode ? 'Switch to Drawing' : 'Switch to Typing',
+              tooltip: _isTypingMode
+                  ? l10n?.switchToDrawing ?? 'Switch to Drawing'
+                  : l10n?.switchToTyping ?? 'Switch to Typing',
             ),
             // Save button
             IconButton(
               icon: const Icon(Icons.save),
               onPressed: () async {
                 await _saveCurrentPage();
-                await _saveToFirestore(); // Add Firestore save
+                await _saveToFirestore();
                 SLCFlushbar.show(
                   context: context,
-                  message: "Note saved!",
+                  message: notesSavedText,
                   type: FlushbarType.success,
                 );
               },
-              tooltip: 'Save',
+              tooltip: l10n?.save ?? 'Save',
             ),
           ],
         ),
@@ -319,10 +332,12 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                           controller: _textControllers[_currentPageIndex],
                           maxLines: null,
                           expands: true,
-                          decoration: const InputDecoration(
-                            contentPadding: EdgeInsets.all(16),
+                          textDirection:
+                              isRTL ? TextDirection.rtl : TextDirection.ltr,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.all(16),
                             border: InputBorder.none,
-                            hintText: 'Type your notes here...',
+                            hintText: typeNotesHereText,
                           ),
                         )
                       : Container(
@@ -346,7 +361,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 if (!_isTypingMode)
                   Material(
                     elevation: 4,
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                    color: Theme.of(context).colorScheme.surface,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 16.0, horizontal: 16.0),
@@ -379,12 +394,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                               IconButton(
                                 icon: const Icon(Icons.add_circle_outline),
                                 onPressed: _addNewPage,
-                                tooltip: 'Add new page',
+                                tooltip: l10n?.addNewPage ?? 'Add new page',
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
                                 onPressed: _deletePage,
-                                tooltip: 'Delete current page',
+                                tooltip: l10n?.deleteCurrentPage ??
+                                    'Delete current page',
                               ),
                             ],
                           ),
@@ -415,7 +431,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
               ],
             ),
 
-            // Page selector overlay
+            // Page selector overlay - FIXED for RTL
             if (_showPageSelector)
               Positioned.fill(
                 child: Material(
@@ -427,195 +443,124 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                       color: Colors.black.withOpacity(0.5),
                       child: Stack(
                         children: [
-                          // Side panel for pages - positioned with proper padding
-                          AnimatedBuilder(
-                            animation: _drawerAnimation,
-                            builder: (context, child) {
-                              // Calculate position based on animation value
-                              // -220 (fully off-screen) to 0 (fully visible)
-                              final slidePosition =
-                                  -220 * (1 - _drawerAnimation.value);
+                          // Position the drawer correctly based on text direction
+                          Positioned(
+                            top: 0,
+                            bottom: 0,
+                            // Use the appropriate side based on text direction
+                            right: isRTL ? 0 : null,
+                            left: isRTL ? null : 0,
+                            child: AnimatedBuilder(
+                              animation: _drawerAnimation,
+                              builder: (context, child) {
+                                // Calculate position based on animation value and text direction
+                                // For RTL: slide from +220 to 0
+                                // For LTR: slide from -220 to 0
+                                final slidePosition = isRTL
+                                    ? 220 * (1 - _drawerAnimation.value)
+                                    : -220 * (1 - _drawerAnimation.value);
 
-                              return Transform.translate(
-                                offset: Offset(slidePosition, 0),
-                                child: child,
-                              );
-                            },
-                            child: Container(
-                              width: 280,
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                color:
-                                    Theme.of(context).scaffoldBackgroundColor,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black26,
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: SafeArea(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            'Pages',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Spacer(),
-                                          IconButton(
-                                            icon: Icon(Icons.add),
-                                            onPressed: () {
-                                              _togglePageMenu();
-                                              _addNewPage();
-                                            },
-                                            tooltip: 'Add new page',
-                                          ),
-                                        ],
-                                      ),
+                                return Transform.translate(
+                                  offset: Offset(slidePosition, 0),
+                                  child: child,
+                                );
+                              },
+                              child: Container(
+                                width: 280,
+                                height: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
                                     ),
-                                    Divider(),
-                                    Expanded(
-                                      child: ListView.builder(
-                                        padding: const EdgeInsets.only(
-                                            top: 8, bottom: 8),
-                                        itemCount: _pages.length,
-                                        itemBuilder: (context, index) {
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 8, vertical: 4),
-                                            child: Material(
-                                              color: index == _currentPageIndex
-                                                  ? SLCColors.primaryColor
-                                                      .withOpacity(0.15)
-                                                  : Theme.of(context)
-                                                      .scaffoldBackgroundColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              clipBehavior: Clip.antiAlias,
-                                              child: InkWell(
-                                                onTap: () {
-                                                  _loadPage(index);
-                                                  _togglePageMenu();
-                                                },
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(
-                                                      12.0),
-                                                  child: Row(
-                                                    children: [
-                                                      Container(
-                                                        width: 36,
-                                                        height: 36,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: index ==
-                                                                  _currentPageIndex
-                                                              ? SLCColors
-                                                                  .primaryColor
-                                                              : Theme.of(context)
-                                                                          .brightness ==
-                                                                      Brightness
-                                                                          .light
-                                                                  ? Colors
-                                                                      .grey[200]
-                                                                  : Colors.grey[
-                                                                      800],
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(20),
-                                                        ),
-                                                        child: Center(
+                                  ],
+                                ),
+                                child: SafeArea(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              pagesText,
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Spacer(),
+                                            IconButton(
+                                              icon: const Icon(Icons.add),
+                                              onPressed: () {
+                                                _addNewPage();
+                                                _togglePageMenu();
+                                              },
+                                              tooltip: l10n?.addNewPage ??
+                                                  'Add new page',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Divider(),
+                                      Expanded(
+                                        child: ListView.builder(
+                                          padding: const EdgeInsets.only(
+                                              top: 8, bottom: 8),
+                                          itemCount: _pages.length,
+                                          itemBuilder: (context, index) {
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                              child: Material(
+                                                color:
+                                                    index == _currentPageIndex
+                                                        ? Colors.blue
+                                                            .withOpacity(0.1)
+                                                        : null,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: InkWell(
+                                                  onTap: () {
+                                                    _loadPage(index);
+                                                  },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12.0),
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(
                                                           child: Text(
-                                                            '${index + 1}',
+                                                            '$pageText ${index + 1}',
                                                             style: TextStyle(
-                                                              color: index ==
+                                                              fontWeight: index ==
                                                                       _currentPageIndex
-                                                                  ? Colors.white
-                                                                  : Theme.of(context)
-                                                                              .brightness ==
-                                                                          Brightness
-                                                                              .light
-                                                                      ? Colors
-                                                                          .black
-                                                                      : Colors
-                                                                          .white,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
+                                                                  ? FontWeight
+                                                                      .bold
+                                                                  : FontWeight
+                                                                      .normal,
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              'Page ${index + 1}',
-                                                              style: TextStyle(
-                                                                fontWeight: index ==
-                                                                        _currentPageIndex
-                                                                    ? FontWeight
-                                                                        .bold
-                                                                    : FontWeight
-                                                                        .normal,
-                                                              ),
-                                                            ),
-                                                            if (_pages[index]
-                                                                        ['text']
-                                                                    ?.isNotEmpty ??
-                                                                false)
-                                                              Text(
-                                                                _pages[index]['text']
-                                                                            .toString()
-                                                                            .length >
-                                                                        20
-                                                                    ? _pages[index]['text']
-                                                                            .toString()
-                                                                            .substring(0,
-                                                                                20) +
-                                                                        "..."
-                                                                    : _pages[index]
-                                                                            [
-                                                                            'text']
-                                                                        .toString(),
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 12,
-                                                                  color: Colors
-                                                                          .grey[
-                                                                      600],
-                                                                ),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
+                                                      ],
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                            );
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -641,6 +586,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   // Replace _buildColorButton with this dropdown color selector
   Widget _buildColorSelector() {
+    final l10n = AppLocalizations.of(context);
+    final colorsText = l10n?.colors ?? "Colors";
+    final selectColorText = l10n?.selectColor ?? "Select color";
+
     final colors = [
       Colors.black,
       Colors.red,
@@ -660,7 +609,7 @@ class _NoteEditorPageState extends State<NoteEditorPage>
         }
 
         return PopupMenuButton<Color>(
-          tooltip: 'Select color',
+          tooltip: selectColorText,
           offset: const Offset(0, 45),
           onSelected: (Color color) {
             _scribbleNotifier.setColor(color);
@@ -671,9 +620,14 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 enabled: false,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
-                  children: const [
-                    Text('Select Color',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  children: [
+                    Text(
+                      colorsText,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -684,35 +638,35 @@ class _NoteEditorPageState extends State<NoteEditorPage>
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: colors
-                      .map((color) => GestureDetector(
-                            onTap: () {
-                              _scribbleNotifier.setColor(color);
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              width: 35,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: color == currentColor
-                                      ? Colors.white
-                                      : Colors.grey[300]!,
-                                  width: 2,
-                                ),
-                                boxShadow: color == currentColor
-                                    ? [
-                                        BoxShadow(
-                                            color: color.withOpacity(0.4),
-                                            blurRadius: 4)
-                                      ]
-                                    : null,
-                              ),
+                  children: colors.map((color) {
+                    return InkWell(
+                      onTap: () {
+                        _scribbleNotifier.setColor(color);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: currentColor == color
+                                ? Colors.white
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
                             ),
-                          ))
-                      .toList(),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ];
@@ -755,11 +709,21 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
   // First, add this method to handle page deletion
   void _deletePage() {
+    final l10n = AppLocalizations.of(context);
+    final cannotDeleteOnlyPageText =
+        l10n?.cannotDeleteOnlyPage ?? "Cannot delete the only page";
+    final deletePageTitle = l10n?.deletePage ?? "Delete Page";
+    final confirmDeletePageText =
+        l10n?.confirmDeletePage ?? "Are you sure you want to delete this page?";
+    final deleteText = l10n?.delete ?? "Delete";
+    final cancelText = l10n?.cancel ?? "Cancel";
+    final pageDeletedText = l10n?.pageDeleted ?? "Page deleted";
+
     // Don't allow deleting if there's only one page
     if (_pages.length <= 1) {
       SLCFlushbar.show(
         context: context,
-        message: "Cannot delete the only page",
+        message: cannotDeleteOnlyPageText,
         type: FlushbarType.error,
       );
       return;
@@ -768,12 +732,13 @@ class _NoteEditorPageState extends State<NoteEditorPage>
     // Use NativeAlertDialog.show instead
     NativeAlertDialog.show(
       context: context,
-      title: 'Delete Page',
-      content: 'Are you sure you want to delete Page ${_currentPageIndex + 1}?',
-      confirmText: "Delete",
+      title: deletePageTitle,
+      content: '$confirmDeletePageText ${_currentPageIndex + 1}?',
+      confirmText: deleteText,
       confirmTextColor: Colors.red,
-      cancelText: "Cancel",
-      onConfirm: () async {
+      cancelText: cancelText,
+    ).then((confirmed) {
+      if (confirmed) {
         setState(() {
           // Remove the page data
           _pages.removeAt(_currentPageIndex);
@@ -793,7 +758,16 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
             // Load the saved drawing if it exists
             if (_pages[_currentPageIndex]['sketch'] != null) {
-              // Would restore the sketch here
+              try {
+                final sketchJson = _pages[_currentPageIndex]['sketch'];
+                if (sketchJson != null) {
+                  _scribbleNotifier.setSketch(
+                      sketch:
+                          Sketch.fromJson(jsonDecode(jsonEncode(sketchJson))));
+                }
+              } catch (e) {
+                // Handle error
+              }
             }
           }
         });
@@ -803,10 +777,10 @@ class _NoteEditorPageState extends State<NoteEditorPage>
 
         SLCFlushbar.show(
           context: context,
-          message: "Page deleted",
+          message: pageDeletedText,
           type: FlushbarType.error,
         );
-      },
-    );
+      }
+    });
   }
 }

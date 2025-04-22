@@ -4,65 +4,40 @@ import 'package:slc/features/calendar/widgets/slccalendareventcard.dart';
 
 class SLCCalendarEntryWidget extends StatelessWidget {
   final List<SLCProcessedCalendarEntry> entries;
+  final double timeColumnWidth;
+  final bool isRTL;
 
   const SLCCalendarEntryWidget({
     Key? key,
     required this.entries,
+    required this.timeColumnWidth,
+    this.isRTL = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (entries.isEmpty) return Container();
+    if (entries.isEmpty) return SizedBox.shrink();
 
-    // All entries in this group share the same time slot
-    final firstEntry = entries.first.entry;
-
-    // Calculate position based on start time (accurate to the minute)
-    final startHour =
-        firstEntry.startTime.hour + (firstEntry.startTime.minute / 60);
-
-    // Calculate height - handle events that might cross midnight
-    final endHour = firstEntry.endTime.hour + (firstEntry.endTime.minute / 60);
-
-    // For events near midnight (11:45 PM or later), add special handling
-    final isLateNightEvent = (startHour >= 23.75);
-
-    // Calculate position from top (pixels)
-    final top = startHour * 100; // Each hour is 100px tall
-
-    // Calculate height with enhanced visibility for late night events
-    double height;
-
-    if (isLateNightEvent) {
-      height = 80.0; // Fixed larger height for very late events
-    } else {
-      // Normal height calculation for regular events
-      height = (endHour - startHour) * 100;
-
-      // Minimum height for regular events
-      if (height < 40) {
-        height = 40;
-      }
-    }
-
-    // Make sure we don't go off the bottom of our calendar
-    if (top + height > 2380) {
-      return Positioned(
-        top: 2380 - height,
-        left: 85,
-        right: 16,
-        height: height,
-        child: entries.length == 1
-            ? _buildSingleCalendarEntry(entries.first)
-            : _buildScrollableCalendarEntries(entries),
-      );
-    }
-
-    // Regular positioning for other events
+    final entry = entries.first;
+    final startHour = entry.entry.startTime.hour;
+    final startMinute = entry.entry.startTime.minute;
+    
+    final endTime = entry.entry.endTime;
+    final durationMinutes = endTime.difference(entry.entry.startTime).inMinutes;
+    final height = (durationMinutes / 60) * 100; // 100px per hour
+    
+    // Calculate top position
+    final topPosition = (startHour * 100) + ((startMinute / 60) * 100);
+    
+    // Calculate horizontal positioning based on RTL
+    final padding = 16.0;
+    
     return Positioned(
-      top: top,
-      left: 85,
-      right: 16,
+      top: topPosition,
+      // In RTL mode, position from right edge at timeColumnWidth
+      // In LTR mode, position from left edge at timeColumnWidth
+      left: isRTL ? padding : timeColumnWidth,
+      right: isRTL ? timeColumnWidth : padding,
       height: height,
       child: entries.length == 1
           ? _buildSingleCalendarEntry(entries.first)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -84,6 +85,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.sizeOf(context).height;
+    final l10n = AppLocalizations.of(context);
 
     return WillPopScope(
       onWillPop: () async {
@@ -97,9 +99,9 @@ class _QuizScreenState extends State<QuizScreen> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting ||
                   _isLoading) {
-                return const Center(
+                return Center(
                   child: SLCLoadingIndicator(
-                    text: "Generating quiz",
+                    text: l10n?.generatingQuiz ?? "Generating quiz",
                   ),
                 );
               }
@@ -111,7 +113,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Error generating quiz. Please try again.',
+                        l10n?.errorGeneratingQuiz ?? 'Error generating quiz. Please try again.',
                       ),
                     ),
                   );
@@ -138,11 +140,11 @@ class _QuizScreenState extends State<QuizScreen> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        "Question ${_currentQuestionIndex + 1}",
+                        l10n?.question(_currentQuestionIndex + 1) ?? "Question ${_currentQuestionIndex + 1}",
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       Text(
-                        "out of ${quiz.questions.length}",
+                        l10n?.outOf(quiz.questions.length) ?? "out of ${quiz.questions.length}",
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       SizedBox(height: screenHeight * 0.1),
@@ -173,8 +175,8 @@ class _QuizScreenState extends State<QuizScreen> {
                             ? () => _nextQuestion(quiz)
                             : null,
                         text: _currentQuestionIndex < quiz.questions.length - 1
-                            ? "Next"
-                            : "Finish",
+                            ? (l10n?.next ?? "Next")
+                            : (l10n?.finish ?? "Finish"),
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       )

@@ -3,6 +3,7 @@ import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/Material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MaterialSelectionDialog extends StatefulWidget {
   final Course course;
@@ -34,6 +35,8 @@ class _MaterialSelectionDialogState extends State<MaterialSelectionDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -50,6 +53,7 @@ class _MaterialSelectionDialogState extends State<MaterialSelectionDialog> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
+                l10n?.selectMaterials(_tempSelectedMaterials.length, widget.maxMaterials) ?? 
                 'Select Materials (${_tempSelectedMaterials.length}/${widget.maxMaterials})',
                 style: TextStyle(
                   fontSize: 18,
@@ -102,7 +106,7 @@ class _MaterialSelectionDialogState extends State<MaterialSelectionDialog> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  'You can select up to ${widget.maxMaterials} materials'),
+                                  l10n?.maxMaterialsLimit(widget.maxMaterials) ?? 'You can select up to ${widget.maxMaterials} materials'),
                             ),
                           );
                         }
@@ -127,7 +131,7 @@ class _MaterialSelectionDialogState extends State<MaterialSelectionDialog> {
               },
               backgroundColor: SLCColors.primaryColor,
               foregroundColor: Colors.white,
-              text: "Done",
+              text: l10n?.done ?? "Done",
               width: 150,
             ),
           ),

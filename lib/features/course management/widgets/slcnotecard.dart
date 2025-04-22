@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:slc/common/styles/colors.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 
 class SLCNoteCard extends StatelessWidget {
   final String title;
@@ -19,6 +20,16 @@ class SLCNoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
+    // Get the appropriate date formatter based on current locale
+    final locale = Localizations.localeOf(context).languageCode;
+    final dateFormat = DateFormat.yMMMd(locale);
+
+    // Translated "Created at:" with English fallback
+    final createdAtLabel = l10n?.createdAt ?? "Created at:";
+
     return GestureDetector(
       onTap: onPressed, // Connect the onPressed callback here
       child: Container(
@@ -80,7 +91,8 @@ class SLCNoteCard extends StatelessWidget {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Delete Note"),
-                      content: Text("Are you sure you want to delete \"$title\"?"),
+                      content:
+                          Text("Are you sure you want to delete \"$title\"?"),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -91,7 +103,8 @@ class SLCNoteCard extends StatelessWidget {
                             Navigator.pop(context);
                             onDelete!();
                           },
-                          child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                          child: const Text("Delete",
+                              style: TextStyle(color: Colors.red)),
                         ),
                       ],
                     ),

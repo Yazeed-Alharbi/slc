@@ -5,6 +5,7 @@ import 'package:slc/features/focus%20sessions/screens/focussession.dart';
 import 'package:slc/features/focus%20sessions/services/focus_session_manager.dart';
 import 'package:slc/models/Course.dart';
 import 'package:slc/models/course_enrollment.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ActiveSessionCard extends StatefulWidget {
   final Course course;
@@ -22,7 +23,8 @@ class ActiveSessionCard extends StatefulWidget {
   State<ActiveSessionCard> createState() => _ActiveSessionCardState();
 }
 
-class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindingObserver {
+class _ActiveSessionCardState extends State<ActiveSessionCard>
+    with WidgetsBindingObserver {
   final FocusSessionManager _sessionManager = FocusSessionManager();
 
   // For efficient UI updates
@@ -34,7 +36,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
   @override
   void initState() {
     super.initState();
-    
+
     // Register as lifecycle observer to detect app resuming
     WidgetsBinding.instance.addObserver(this);
 
@@ -64,7 +66,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
     _sessionManager.removeListener(_updateSessionState);
     super.dispose();
   }
-  
+
   // Add this method to handle app lifecycle changes
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -72,7 +74,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
       // App has come back to foreground - recalculate elapsed time
       if (_sessionManager.isSessionActive && _sessionManager.isPlaying) {
         _sessionManager.recalculateElapsedTimeOnResume();
-        
+
         // Update UI immediately
         if (mounted) {
           setState(() {
@@ -104,6 +106,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
   @override
   Widget build(BuildContext context) {
     final Color courseColor = SLCColors.getCourseColor(widget.course.color);
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: widget.onTap ??
@@ -119,8 +122,8 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
             );
           },
       child: Container(
-        margin: EdgeInsets.only(bottom: 20),
-        padding: EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
@@ -128,7 +131,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -142,21 +145,21 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _sessionManager.isSessionActive
-                        ? "Active Focus Session"
-                        : "Focus Session Ready",
-                    style: TextStyle(
+                        ? (l10n?.activeFocusSession ?? "Active Focus Session")
+                        : (l10n?.focusSessionReady ?? "Focus Session Ready"),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     widget.course.code,
                     style: TextStyle(
@@ -164,7 +167,7 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
                       color: Colors.grey[600],
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(
@@ -172,11 +175,13 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
                         size: 16,
                         color: _isBreakTime ? SLCColors.green : courseColor,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         _sessionManager.isSessionActive
-                            ? "$_currentMode: $_timeRemaining"
-                            : "Tap to start session",
+                            // Use this to get translated mode instead of directly using _currentMode
+                            ? "${_getLocalizedMode(context)}: $_timeRemaining"
+                            : (l10n?.tapToStartSession ??
+                                "Tap to start session"),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -197,5 +202,16 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> with WidgetsBindi
         ),
       ),
     );
+  }
+
+  // Add this helper method to get translated mode
+  String _getLocalizedMode(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    if (_isBreakTime) {
+      return l10n?.shortBreak ?? "Short Break";
+    } else {
+      return l10n?.focusTime ?? "Focus Time";
+    }
   }
 }

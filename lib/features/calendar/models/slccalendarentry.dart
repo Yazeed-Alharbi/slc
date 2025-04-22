@@ -13,7 +13,7 @@ class SLCCalendarEntry {
   final CourseColor color;
   final bool isClassSession;
   final String? courseId;
-  final bool hasDefinedEndTime; // Add this property
+  final bool hasDefinedEndTime; 
   final VoidCallback? onTap;
 
   SLCCalendarEntry({
@@ -25,11 +25,11 @@ class SLCCalendarEntry {
     required this.color,
     this.isClassSession = false,
     this.courseId,
-    this.hasDefinedEndTime = true, // Default to true
+    this.hasDefinedEndTime = true,
     this.onTap,
   });
 
-  // Factory to create from Course schedule
+
   static SLCCalendarEntry? fromCourseSchedule({
     required Course course,
     required DateTime date,
