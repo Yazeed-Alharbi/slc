@@ -134,6 +134,25 @@ class _NotesTabState extends State<NotesTab> {
                                 ),
                               );
                             },
+                            onDelete: () async {
+                              try {
+                                await _noteService.deleteNote(note.id);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'Note "${note.title}" deleted successfully'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error deleting note: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
                           ),
                           const SizedBox(height: 10),
                         ],
