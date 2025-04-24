@@ -229,7 +229,10 @@
   "errorOpeningFile": "خطأ في فتح الملف: {error}",
   "deleteFile": "حذف الملف",
   "confirmDeleteFile": "هل أنت متأكد أنك تريد حذف '{fileName}'؟",
-  "createdAt": "تاريخ الإنشاء:",
+  "createdAt": "تم الإنشاء في:",
+  "delete": "حذف",
+  "confirmDelete": "تأكيد الحذف",
+  "areYouSureDelete": "هل أنت متأكد أنك تريد حذف",
   
   "createNote": "إنشاء ملاحظة",
   "createNewNote": "إنشاء ملاحظة جديدة",
@@ -240,6 +243,8 @@
   "createNotesHint": "قم بإنشاء ملاحظات باستخدام الزر أعلاه",
   "errorLoadingNotes": "خطأ في تحميل الملاحظات: {error}",
   "errorCreatingNote": "خطأ في إنشاء الملاحظة: {error}",
+  "noteDeletedSuccess": "تم حذف الملاحظة \"{title}\" بنجاح",
+  "errorDeletingNote": "خطأ في حذف الملاحظة: {error}",
   
   "page": "صفحة",
   "pages": "الصفحات",

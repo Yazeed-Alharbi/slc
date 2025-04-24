@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:slc/common/styles/colors.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:slc/common/widgets/nativealertdialog.dart';
 
 class SLCNoteCard extends StatelessWidget {
   final String title;
@@ -22,97 +23,111 @@ class SLCNoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get localized strings
     final l10n = AppLocalizations.of(context);
-
-    // Get the appropriate date formatter based on current locale
     final locale = Localizations.localeOf(context).languageCode;
     final dateFormat = DateFormat.yMMMd(locale);
-
-    // Translated "Created at:" with English fallback
     final createdAtLabel = l10n?.createdAt ?? "Created at:";
+    final deleteLabel = l10n?.delete ?? "Delete";
+    final confirmDeleteLabel = l10n?.confirmDelete ?? "Confirm Delete";
+    final areYouSureDeleteLabel =
+        l10n?.areYouSureDelete ?? "Are you sure you want to delete";
+    final cancelLabel = l10n?.cancel ?? "Cancel";
 
-    return GestureDetector(
-      onTap: onPressed, // Connect the onPressed callback here
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        height: 60,
+    // Base card content
+    final cardContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      height: 60,
+      decoration: BoxDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.white
+            : Colors.black,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(25, 0, 0, 0),
+            spreadRadius: 0,
+            blurRadius: 5,
+            offset: Offset(0, 0),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            "assets/NoteIcon.png",
+            width: 35,
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  "$createdAtLabel ${dateFormat.format(createdAt)}",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: SLCColors.coolGray,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // If onDelete is provided, wrap in Dismissible, otherwise just return the GestureDetector
+    if (onDelete == null) {
+      return GestureDetector(
+        onTap: onPressed,
+        child: cardContent,
+      );
+    }
+
+    // Use Dismissible for swipe-to-delete functionality
+    return Dismissible(
+      key: Key(title + createdAt.toString()), // Unique key for this note
+      direction: DismissDirection.endToStart, // Right to left swipe only
+      confirmDismiss: (direction) async {
+        // Show confirmation dialog AND RETURN ITS RESULT
+        return await NativeAlertDialog.show(
+          context: context,
+          title: confirmDeleteLabel,
+          content: "$areYouSureDeleteLabel \"$title\"?",
+          confirmText: deleteLabel,
+          confirmTextColor: Colors.red,
+          cancelText: cancelLabel,
+        );
+      },
+      onDismissed: (direction) {
+        // Execute the delete function
+        onDelete!();
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.light
-              ? Colors.white
-              : Colors.black,
+          color: Colors.red,
           borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromARGB(25, 0, 0, 0),
-              spreadRadius: 0,
-              blurRadius: 5,
-              offset: Offset(0, 0),
-            ),
-          ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              "assets/NoteIcon.png",
-              width: 35,
-            ),
-            const SizedBox(
-              width: 15,
-            ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title, // Dynamic file name
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    "Created at: ${DateFormat.yMMMd().format(createdAt)}", // Format the
-                    // Using created date instead of fileSize
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: SLCColors.coolGray,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (onDelete != null)
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  // Show confirmation dialog before deleting
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text("Delete Note"),
-                      content:
-                          Text("Are you sure you want to delete \"$title\"?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            onDelete!();
-                          },
-                          child: const Text("Delete",
-                              style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+            Icon(Icons.delete, color: Colors.white),
           ],
         ),
+      ),
+      child: GestureDetector(
+        onTap: onPressed,
+        child: cardContent,
       ),
     );
   }
