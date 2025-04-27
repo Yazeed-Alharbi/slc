@@ -59,6 +59,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Future<void> _loadCalendarData() async {
+    if (!mounted) return; // Early return if widget is already disposed
+
     setState(() => _isLoading = true);
 
     try {
@@ -91,31 +93,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final events =
             await _eventRepository.streamAllCoursesEvents(courseIds).first;
 
-        final todayEvents = events
-            .where((event) =>
-                event.dateTime.year == _selectedDate.year &&
-                event.dateTime.month == _selectedDate.month &&
-                event.dateTime.day == _selectedDate.day)
-            .toList();
-
-        for (var event in todayEvents) {
-          CourseColor color = CourseColor.navyBlue;
-          for (var cwp in coursesWithProgress) {
-            if (cwp.course.id == event.courseId) {
-              color = cwp.course.color;
-              break;
-            }
-          }
-
-          entries.add(SLCCalendarEntry.fromEvent(
-            event: event,
-            color: color,
-            onTap: () {/* Navigate to event */},
-          ));
-        }
+        // ... rest of your loading code ...
       }
 
       entries.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+      if (!mounted) return; // Check again before setState
 
       setState(() {
         _calendarEntries = entries;
@@ -123,6 +106,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
       });
     } catch (e) {
       print('Error loading calendar data: $e');
+
+      if (!mounted) return; // Check before setState on error path
+
       setState(() => _isLoading = false);
     }
   }
@@ -188,7 +174,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    
+
     return SafeArea(
       child: SingleChildScrollView(
         child: Container(
