@@ -54,11 +54,54 @@ class QuizService {
     return data["id"] as String;
   }
 
-  // Step 2: Create an assistant (vector_store attached via tool_resources)
+  // Step 2: Create assistant properly with file search capability
   static Future<String> _createAssistant(String vectorStoreId) async {
+    final quizSchema = {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "properties": {
+              "questionText": {
+                "type": "string",
+                "description": "The text of the question"
+              },
+              "options": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "text": {"type": "string"}
+                  },
+                  "required": ["text"]
+                }
+              },
+              "correctOptionIndex": {"type": "integer"}
+            },
+            "required": ["questionText", "options", "correctOptionIndex"]
+          }
+        }
+      },
+      "required": ["questions"]
+    };
+
     final payload = {
       "instructions":
-          "You are an expert educator who creates multiple-choice quizzes. Based on the provided materials, generate a quiz with engaging, challenging questions. Each question should have exactly four plausible options and one correct answer.",
+          "You are an expert educator who creates multiple-choice quizzes EXCLUSIVELY from provided materials. "
+              "CRITICAL: You MUST follow this EXACT process:\n"
+              "1. Begin by using the file_search tool to search for key terms and read the content\n"
+              "2. Include DIRECT QUOTES from materials in your questions\n"
+              "3. Generate EXACTLY 10 questions, each with 4 options\n"
+              "4. ONLY use facts and information that appear in the materials\n"
+              "5. If materials have limited content, reuse concepts to create all 10 questions\n"
+              "6. Each question must reference specific content from materials\n"
+              "IMPORTANT: If you cannot access files, explain the error clearly",
       "name": "Quiz Generator",
       "model": "gpt-4.1-nano-2025-04-14",
       "tools": [
@@ -66,11 +109,18 @@ class QuizService {
       ],
       "tool_resources": {
         "file_search": {
-          "vector_store_ids": [vectorStoreId]
+          "vector_store_ids": [
+            vectorStoreId
+          ] // Connect to the vector store with materials
         }
+      },
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {"name": "quiz_schema", "schema": quizSchema}
       }
     };
 
+    // Rest of your method remains the same
     final response = await http.post(
       Uri.parse("$_baseUrl/assistants"),
       headers: {
@@ -180,7 +230,7 @@ class QuizService {
       Uri.parse('$_baseUrl/threads/$threadId/messages'),
       headers: {
         'Authorization': 'Bearer $_apiKey',
-        'OpenAI-Beta': 'assistants=v2', // Add this header
+        'OpenAI-Beta': 'assistants=v2',
       },
     );
 
@@ -189,10 +239,17 @@ class QuizService {
     }
 
     var data = jsonDecode(response.body);
+    print("Raw response: ${response.body.substring(0, 500)}...");
+
     // Get the assistant's last message
     for (var message in data['data']) {
       if (message['role'] == 'assistant') {
-        return message['content'][0]['text']['value'];
+        // For structured responses
+        if (message['content'][0]['type'] == 'text') {
+          final content = message['content'][0]['text']['value'];
+          print("Found assistant message: $content");
+          return content;
+        }
       }
     }
 
@@ -256,34 +313,52 @@ class QuizService {
         final uri = Uri.parse(mat.downloadUrl);
         final filename = p.basename(uri.path);
         final bytes = await _downloadMaterialBytes(mat);
-        return _uploadFile(filename, bytes, 'assistants');
+        print(
+            "Preparing to upload ${mat.name}, file size: ${bytes.length} bytes");
+        final fileId = await _uploadFile(filename, bytes, 'assistants');
+        print(
+            "Successfully uploaded ${mat.name} (${bytes.length} bytes) → ID: $fileId");
+        return fileId;
       }));
 
-      // Step 2: Create vector store once
-      _cachedVectorStoreId ??= await _createVectorStore(fileIds);
+      // Step 2: Create a fresh vector store for each quiz generation
+      final vectorStoreId = await _createVectorStore(fileIds);
+      print(
+          "Created vector store with ID: $vectorStoreId for ${fileIds.length} files");
 
       // Step 3: Create assistant once
-      _cachedAssistantId ??= await _createAssistant(_cachedVectorStoreId!);
+      final assistantId = await _createAssistant(vectorStoreId);
+      print("Created new assistant with ID: $assistantId for this quiz");
 
       // Step 4: Now only do the lightweight per‐run steps:
       final threadId = await _createThread();
       await _addMessageToThread(
           threadId,
-          'Create a comprehensive quiz that includes 10 multiple-choice questions. ' +
-              'Ensure the quiz is challenging, avoiding overly straightforward questions. ' +
-              'The questions should be based on the provided materials ONLY.' +
-              'Each question should have exactly 4 options. ' +
-              'Randomize the correct answers without following any predictable pattern. ' +
-              'Makr sure that your response does not include and invalid characters that could potentially break the code' +
-              'Return your response as a valid JSON object with this structure: ' +
-              '{"questions": [{"questionText": "Question here", ' +
-              '"options": [{"text": "Option 1"}, {"text": "Option 2"}, {"text": "Option 3"}, {"text": "Option 4"}], ' +
-              '"correctOptionIndex": 0}]}');
-      final runId = await _runAssistant(threadId, _cachedAssistantId!);
+          'First, CHECK what materials are available by searching for common terms like "the", "and", "introduction".\n\n' +
+              'VERIFY you can read the content by quoting a few sentences from them.\n\n' +
+              'Then create EXACTLY 10 multiple-choice questions ONLY from these materials.\n\n' +
+              'Each question must include specific facts, concepts or information found in the materials.\n\n' +
+              'IMPORTANT: If you cannot access the materials properly, indicate this clearly.');
+      final runId = await _runAssistant(threadId, assistantId);
       await _pollRunStatus(threadId, runId);
       final raw = await _getMessages(threadId);
-      final jsonStr = _extractJsonObject(raw);
-      return Quiz.fromJson(jsonDecode(jsonStr));
+      print("Quiz generation completed. Response length: ${raw.length}");
+      try {
+        final parsedJson = jsonDecode(raw);
+
+        // Check if questions array is empty and handle accordingly
+        if (parsedJson["questions"] == null ||
+            parsedJson["questions"].isEmpty) {
+          throw Exception(
+              "Quiz generation failed: No questions were created from the materials.");
+        }
+
+        return Quiz.fromJson(parsedJson);
+      } catch (e) {
+        print("Failed to parse JSON response: $e");
+        print("Raw response: $raw");
+        rethrow;
+      }
     } catch (e) {
       rethrow;
     }
