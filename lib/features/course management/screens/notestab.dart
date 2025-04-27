@@ -8,7 +8,7 @@ import 'package:slc/features/course%20management/screens/note_editor_page.dart';
 import 'package:slc/features/course%20management/screens/note_service.dart'
     as service;
 import 'package:slc/models/note.dart';
-// Add or use your course provider
+import 'package:slc/common/widgets/slcflushbar.dart'; // Add this import
 
 class NotesTab extends StatefulWidget {
   final String courseId;
@@ -144,19 +144,21 @@ class _NotesTabState extends State<NotesTab> {
                             onDelete: () async {
                               try {
                                 await _noteService.deleteNote(note.id);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        'Note "${note.title}" deleted successfully'),
-                                    backgroundColor: Colors.green,
-                                  ),
+                                
+                                // Using SLCFlushbar instead of ScaffoldMessenger
+                                SLCFlushbar.show(
+                                  context: context,
+                                  message: l10n?.noteDeletedSuccess(note.title) ?? 
+                                      'Note "${note.title}" deleted successfully',
+                                  type: FlushbarType.success,
                                 );
                               } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error deleting note: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
+                                // Using SLCFlushbar for error message
+                                SLCFlushbar.show(
+                                  context: context,
+                                  message: l10n?.errorDeletingNote(e.toString()) ?? 
+                                      'Error deleting note: $e',
+                                  type: FlushbarType.error,
                                 );
                               }
                             },
@@ -215,10 +217,12 @@ class _NotesTabState extends State<NotesTab> {
                     ),
                   );
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(l10n?.errorCreatingNote(e.toString()) ??
-                            'Error creating note: $e')),
+                  // Using SLCFlushbar instead of ScaffoldMessenger
+                  SLCFlushbar.show(
+                    context: context,
+                    message: l10n?.errorCreatingNote(e.toString()) ?? 
+                        'Error creating note: $e',
+                    type: FlushbarType.error,
                   );
                 }
               }
