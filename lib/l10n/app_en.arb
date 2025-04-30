@@ -361,6 +361,36 @@
   "personalInfo": "Personal Information",
   "security": "Security",
   
-  "savingChanges": "Saving changes..."
-
+  "savingChanges": "Saving changes...",
+  
+  "shareCode": "Course Share Code",
+  "showShareCode": "Show Share Code",
+  "regenerateShareCode": "Regenerate Code",
+  "shareCodeExplanation": "Others can use this code to import a copy of your course.",
+  "copy": "Copy",
+  "close": "Close",
+  "copied": "Copied to clipboard",
+  "confirmRegenShareCode": "Regenerate Share Code?",
+  "confirmRegenShareCodeMessage": "This will invalidate the old share code. Continue?",
+  "regenerate": "Regenerate",
+  "shareCodeRegenerated": "Share code regenerated successfully",
+  "shareCodeRegenerateFailed": "Failed to regenerate share code",
+  "importCourse": "Import Course",
+  "enterShareCodePrompt": "Enter a 6-digit share code to import a course",
+  "shareCodeRequired": "Share code is required",
+  "shareCodeLength": "Share code must be 6 characters",
+  "verifyShareCode": "Verify Share Code",
+  "courseNotFound": "Course not found with this share code",
+  "importFailed": "Import failed",
+  "verifyingCode": "Verifying code...",
+  "importingCourse": "Importing course...",
+  "importingCourseExplanation": "This may take a moment if the course has many materials.",
+  "verify": "Verify",
+  
+  "addCourseOptions": "Add Course",
+  "createNewCourse": "Create New Course",
+  "createNewCourseDescription": "Create a course from scratch",
+  "importCourseDescription": "Import a course using a share code",
+  "courseImportedSuccess": "Course imported successfully!",
+  "courseAlreadyImported": "You already have this course in your library"
 }
