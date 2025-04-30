@@ -93,7 +93,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final events =
             await _eventRepository.streamAllCoursesEvents(courseIds).first;
 
-        // ... rest of your loading code ...
+        final todayEvents = events
+            .where((event) =>
+                event.dateTime.year == _selectedDate.year &&
+                event.dateTime.month == _selectedDate.month &&
+                event.dateTime.day == _selectedDate.day)
+            .toList();
+
+        for (var event in todayEvents) {
+          CourseColor color = CourseColor.navyBlue;
+          for (var cwp in coursesWithProgress) {
+            if (cwp.course.id == event.courseId) {
+              color = cwp.course.color;
+              break;
+            }
+          }
+
+          entries.add(SLCCalendarEntry.fromEvent(
+            event: event,
+            color: color,
+            onTap: () {/* Navigate to event */},
+          ));
+        }
       }
 
       entries.sort((a, b) => a.startTime.compareTo(b.startTime));
