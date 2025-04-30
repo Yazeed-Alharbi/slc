@@ -392,19 +392,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           .textTheme
                                           .headlineSmall,
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => CoursesScreen(
-                                              student: widget.student,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(l10n?.seeAll ?? "See All"),
-                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 20),
