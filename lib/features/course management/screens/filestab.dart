@@ -61,9 +61,21 @@ class _FilesTabState extends State<FilesTab> {
   String _formatFileSize(int bytes) {
     if (bytes <= 0) return "0 B";
 
-    const suffixes = ["B", "KB", "MB", "GB", "TB"];
-    int i = (log(bytes) / log(1024)).floor();
-    return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
+    try {
+      const suffixes = ["B", "KB", "MB", "GB", "TB"];
+
+      // Apply bounds checking to prevent NaN/Infinity
+      var i = (log(bytes) / log(1024)).floor();
+
+      // Validate index to prevent array out of bounds
+      i = i.isNaN || i.isInfinite ? 0 : i;
+      i = i < 0 ? 0 : (i >= suffixes.length ? suffixes.length - 1 : i);
+
+      return '${(bytes / pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
+    } catch (e) {
+      // Fallback for any math errors
+      return '$bytes B';
+    }
   }
 
   // Helper to determine FileType from Material
@@ -195,10 +207,14 @@ class _FilesTabState extends State<FilesTab> {
           file: file,
           courseId: widget.course.id,
           onProgress: (progress) {
-            // Important: Update the UI when progress changes
+            // Important: Sanitize the progress value
+            final safeProgress = progress.isNaN || progress.isInfinite
+                ? 0.0
+                : progress.clamp(0.0, 1.0);
+
             if (mounted) {
               setState(() {
-                _uploadProgress = progress;
+                _uploadProgress = safeProgress;
               });
             }
           },
