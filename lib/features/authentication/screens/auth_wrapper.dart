@@ -50,18 +50,25 @@ class AuthWrapper extends StatelessWidget {
                   );
                 }
 
-                if (studentSnapshot.hasData && studentSnapshot.data != null) {
-                  // After successful authentication
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MainLayout(
-                              initialTab: 0,
-                              student: studentSnapshot.data!,
-                            )),
-                    (route) => false,
-                  );
-                  return const SizedBox(); // Placeholder since we're navigating away
+                if (studentSnapshot.connectionState == ConnectionState.done &&
+                    studentSnapshot.hasData) {
+                  // Instead of navigating directly:
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MainLayout(
+                                  initialTab: 0,
+                                  student: studentSnapshot.data!,
+                                )),
+                        (route) => false,
+                      );
+                    }
+                  });
+
+                  // Return a temporary loading widget while waiting for navigation
+                  return Center(child: CircularProgressIndicator());
                 } else {
                   // Something went wrong with loading the student data
                   return const Onborading();
