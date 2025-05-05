@@ -39,6 +39,8 @@
 	<string>245961985733-52etpki5iaecfgrtdrmordme29pqphrv.apps.googleusercontent.com</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SLC needs access to your photo library to allow you to select images for course materials, assignments, and profile pictures.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
