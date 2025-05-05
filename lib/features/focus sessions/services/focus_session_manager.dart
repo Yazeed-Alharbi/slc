@@ -519,60 +519,57 @@ class FocusSessionManager with ChangeNotifier, WidgetsBindingObserver {
 
   // Restore session from saved state (called at app startup)
   Future<bool> restoreSessionIfActive() async {
-    // Add timeout to prevent infinite loading
-    return Future.delayed(Duration(seconds: 2), () async {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final isActive = prefs.getBool('focus_session_active') ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isActive = prefs.getBool('focus_session_active') ?? false;
 
-        if (!isActive) return false;
+      if (!isActive) return false;
 
-        // Restore course and enrollment objects from serialized data
-        final courseJson = prefs.getString('focus_session_course_json');
-        final enrollmentJson = prefs.getString('focus_session_enrollment_json');
+      // Restore course and enrollment objects from serialized data
+      final courseJson = prefs.getString('focus_session_course_json');
+      final enrollmentJson = prefs.getString('focus_session_enrollment_json');
 
-        if (courseJson == null || enrollmentJson == null) {
-          // Missing data, can't restore
-          _clearSessionState();
-          return false;
-        }
-
-        _course = courseFromJson(courseJson);
-        _enrollment = enrollmentFromJson(enrollmentJson);
-
-        // Restore session details with safeguards
-        _isSessionActive = true;
-        _isSessionCreated =
-            true; // Add this to ensure session is properly marked as created
-        _isPlaying = prefs.getBool('focus_session_is_playing') ?? false;
-        _currentMode =
-            prefs.getString('focus_session_current_mode') ?? "Focus Time";
-        _isBreakTime = prefs.getBool('focus_session_is_break') ?? false;
-
-        // Rest of your restoration logic...
-
-        // CRITICAL FIX: After a break, ensure the state is consistent
-        if (_isBreakTime) {
-          // Make sure we have the correct duration set
-          _currentDuration = _shortBreakSeconds;
-        } else {
-          _currentDuration = _pomodoroFocusSeconds;
-        }
-
-        // Don't auto-handle timer completion during restoration - just update the UI
-        if (_isPlaying && _elapsedSeconds >= _currentDuration) {
-          _isPlaying = false; // Just pause the timer instead of completing it
-        }
-
-        notifyListeners();
-        return true;
-      } catch (e) {
-        print("Error restoring session: $e");
-        // Always clear session state on error to avoid getting stuck
-        await _clearSessionState();
+      if (courseJson == null || enrollmentJson == null) {
+        // Missing data, can't restore
+        _clearSessionState();
         return false;
       }
-    });
+
+      _course = courseFromJson(courseJson);
+      _enrollment = enrollmentFromJson(enrollmentJson);
+
+      // Restore session details with safeguards
+      _isSessionActive = true;
+      _isSessionCreated =
+          true; // Add this to ensure session is properly marked as created
+      _isPlaying = prefs.getBool('focus_session_is_playing') ?? false;
+      _currentMode =
+          prefs.getString('focus_session_current_mode') ?? "Focus Time";
+      _isBreakTime = prefs.getBool('focus_session_is_break') ?? false;
+
+      // Rest of your restoration logic...
+
+      // CRITICAL FIX: After a break, ensure the state is consistent
+      if (_isBreakTime) {
+        // Make sure we have the correct duration set
+        _currentDuration = _shortBreakSeconds;
+      } else {
+        _currentDuration = _pomodoroFocusSeconds;
+      }
+
+      // Don't auto-handle timer completion during restoration - just update the UI
+      if (_isPlaying && _elapsedSeconds >= _currentDuration) {
+        _isPlaying = false; // Just pause the timer instead of completing it
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print("Error restoring session: $e");
+      // Always clear session state on error to avoid getting stuck
+      await _clearSessionState();
+      return false;
+    }
   }
 
   @override
