@@ -17,6 +17,7 @@ class SLCTextField extends StatelessWidget {
   final TextAlign? textAlign;
   final String? hintText;
   final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onFieldSubmitted;
   final String? Function(String?)? validator;
@@ -24,6 +25,7 @@ class SLCTextField extends StatelessWidget {
   const SLCTextField({
     Key? key,
     this.obscureText = false,
+    this.textCapitalization = TextCapitalization.none,
     this.labelText,
     this.controller,
     this.onTapOutside,
@@ -45,6 +47,7 @@ class SLCTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      textCapitalization: textCapitalization,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       obscureText: obscureText,
       controller: controller,

@@ -1,0 +1,64 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:slc/common/styles/colors.dart';
+import 'package:slc/common/styles/spcaing_styles.dart';
+
+class SLCBottomNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final Function(int) onTabChange;
+
+  const SLCBottomNavBar({
+    Key? key,
+    required this.selectedIndex,
+    required this.onTabChange,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: const Border(
+          top: BorderSide(
+            width: 0.25,
+            color: Color.fromARGB(147, 127, 127, 127),
+          ),
+        ),
+        color: Theme.of(context).colorScheme.surface,
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+            horizontal: SpacingStyles(context).defaultPadding.right,
+            vertical: 15.0),
+        child: SafeArea(
+          child: GNav(
+            gap: 8,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            activeColor: Colors.white,
+            color: const Color.fromARGB(147, 127, 127, 127),
+            iconSize: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            duration: const Duration(milliseconds: 300),
+            tabBackgroundColor: SLCColors.primaryColor,
+            tabs: [
+              GButton(icon: Icons.home, text: l10n?.home ?? "Home"),
+              GButton(
+                  icon: Icons.library_books, text: l10n?.courses ?? 'Courses'),
+              GButton(
+                  icon: Icons.calendar_month_rounded,
+                  text: l10n?.calendar ?? 'Calendar'),
+              GButton(icon: Icons.settings, text: l10n?.settings ?? 'Settings'),
+            ],
+            selectedIndex: selectedIndex,
+            onTabChange: onTabChange,
+          ),
+        ),
+      ),
+    );
+  }
+}

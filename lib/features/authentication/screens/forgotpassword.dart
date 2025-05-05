@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
 import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
-import 'package:slc/firebaseUtil/auth_services.dart'; // ✅ Import AuthenticationService
+import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/dartUtil/validators.dart'; // Add this for localized validators
 
 class ForgotPasswordScreen extends StatefulWidget {
   ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -18,15 +20,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   bool _isFormValid = false;
-  bool _isLoading = false; // ✅ Loading state
+  bool _isLoading = false;
 
-  /// ✅ Calls Firebase to send reset password email
+  /// Calls Firebase to send reset password email
   void _resetPassword() async {
+    // Get localized text for error message
+    final l10n = AppLocalizations.of(context);
+    final pleaseFixErrors =
+        l10n?.pleaseFixErrors ?? "Please fix the errors in red.";
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       SLCFlushbar.show(
         context: context,
-        message: "Please fix the errors in red.",
+        message: pleaseFixErrors,
         type: FlushbarType.error,
       );
       return;
@@ -48,21 +55,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     emailController.clear();
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Email is required.";
-    }
-    final emailRegex =
-        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    if (!emailRegex.hasMatch(value.trim())) {
-      return "Please enter a valid email.";
-    }
-    return null;
-  }
-
   void _validateForm() {
+    // Use localized validators
+    final validators = Validators.of(context);
+
     setState(() {
-      _isFormValid = _validateEmail(emailController.text) == null;
+      _isFormValid = validators.validateEmail(emailController.text) == null;
     });
   }
 
@@ -74,11 +72,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+    final validators = Validators.of(context);
+
+    // Use localized strings with fallbacks
+    final forgotPasswordText =
+        l10n?.forgotPasswordQuestion ?? "Forgot Password?";
+    final resetInstructions = l10n?.resetInstructions ??
+        "No worries, we'll send you reset instructions.";
+    final emailLabel = l10n?.email ?? "Email";
+    final resetPasswordButton = l10n?.resetPassword ?? "Reset Password";
+    final backToLogin = l10n?.backToLogin ?? "Back to login";
+    final sendingInstructions =
+        l10n?.sendingResetInstructions ?? "Sending reset instructions...";
+
     return Scaffold(
-      body: SafeArea(child:Padding(
+      body: SafeArea(
+          child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
-            ? SLCLoadingIndicator(text: "Sending reset instructions...")
+            ? SLCLoadingIndicator(text: sendingInstructions)
             : SingleChildScrollView(
                 reverse: true,
                 physics: const BouncingScrollPhysics(),
@@ -97,28 +111,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Forgot Password?",
+                        forgotPasswordText,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 15),
-                      const Text(
-                        "No worries, we'll send you reset instructions.",
+                      Text(
+                        resetInstructions,
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.03),
                       SLCTextField(
-                        labelText: "Email",
+                        labelText: emailLabel,
                         obscureText: false,
                         controller: emailController,
-                        validator: _validateEmail,
+                        validator: validators.validateEmail,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 30),
                       SLCButton(
                         onPressed: _isFormValid ? _resetPassword : null,
-                        text: "Reset Password",
+                        text: resetPasswordButton,
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       ),
@@ -130,7 +145,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           Navigator.pop(context);
                         },
                         child: Text(
-                          "Back to login",
+                          backToLogin,
                           style: TextStyle(
                               color: SLCColors.primaryColor,
                               fontWeight: FontWeight.w700),

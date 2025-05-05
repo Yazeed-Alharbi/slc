@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:another_flushbar/flushbar.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Add this import
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -8,6 +8,8 @@ import 'package:slc/common/widgets/slcloadingindicator.dart';
 import 'package:slc/common/widgets/slctextfield.dart';
 import 'package:slc/common/widgets/slcflushbar.dart';
 import 'package:slc/firebaseUtil/auth_services.dart';
+import 'package:slc/dartUtil/validators.dart'; // Import validators
+import 'package:slc/models/Student.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -33,27 +35,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  void _setLoading(bool loading) {
+    setState(() {
+      _isLoading = loading;
+    });
+  }
+
   void _validateAndRegister() async {
+    final l10n = AppLocalizations.of(context);
+    final pleaseFixErrors =
+        l10n?.pleaseFixErrors ?? "Please fix the errors in red.";
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
-      _showFlushbar("Please fix the errors in red.", FlushbarType.error);
+      _showFlushbar(pleaseFixErrors, FlushbarType.error);
       return;
     }
+    _setLoading(true);
 
-    setState(() {
-      _isLoading = true;
-    });
+    // First, create the user account (BUT DON'T SIGN OUT)
     bool success = await AuthenticationService().signup(
       context: context,
       email: emailController.text,
       password: passwordController.text,
+      fullName: nameController.text,
     );
-    setState(() {
-      _isLoading = false;
-    });
 
+    _setLoading(false);
+
+    // Now go to verification screen (user remains signed in)
     if (success) {
-      Navigator.pushNamed(
+      Navigator.pushReplacementNamed(
         context,
         "/verifyemailscreen",
         arguments: emailController.text,
@@ -61,74 +73,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  String? _validateName(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Name is required.";
-    }
-    return null;
-  }
+  void _handleGoogleSignInSuccess(Student? student) {
+    // Get localized string for error
+    final l10n = AppLocalizations.of(context);
+    final googleSignInFailed =
+        l10n?.googleSignInFailed ?? "Google sign-in failed.";
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Email is required.";
+    if (student != null) {
+      Navigator.pushReplacementNamed(
+        context,
+        "/homescreen",
+        arguments: student,
+      );
+    } else {
+      _showFlushbar(googleSignInFailed, FlushbarType.error);
     }
-    final emailRegex =
-        RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
-    if (!emailRegex.hasMatch(value.trim())) {
-      return "Please enter a valid email address.";
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Password is required.";
-    }
-    if (value.trim().length < 8) {
-      return "Password must be at least 8 characters long.";
-    }
-    if (!RegExp(r'[A-Z]').hasMatch(value)) {
-      return "Password must contain at least one uppercase letter.";
-    }
-    if (!RegExp(r'[a-z]').hasMatch(value)) {
-      return "Password must contain at least one lowercase letter.";
-    }
-    if (!RegExp(r'[0-9]').hasMatch(value)) {
-      return "Password must contain at least one number.";
-    }
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) {
-      return "Password must contain at least one special character.";
-    }
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return "Confirm Password is required.";
-    }
-    if (value.trim() != passwordController.text.trim()) {
-      return "Passwords do not match.";
-    }
-    return null;
   }
 
   void _validateForm() {
+    // Use localized validators
+    final validators = Validators.of(context);
+
     setState(() {
-      _isFormValid = _validateEmail(emailController.text) == null &&
-          _validatePassword(passwordController.text) == null &&
-          _validateConfirmPassword(confirmPasswordController.text) == null &&
-          _validateName(nameController.text) == null;
+      _isFormValid = validators.validateEmail(emailController.text) == null &&
+          validators.validatePassword(passwordController.text) == null &&
+          validators.validateConfirmPassword(
+                  confirmPasswordController.text, passwordController.text) ==
+              null &&
+          validators.validateName(nameController.text) == null;
     });
   }
 
   @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Get localized strings
+    final l10n = AppLocalizations.of(context);
+    final validators = Validators.of(context);
+
+    // Use localized strings with fallbacks
+    final createAccount = l10n?.createAccount ?? "Create Account";
+    final nameLabel = l10n?.name ?? "Name";
+    final emailLabel = l10n?.email ?? "Email";
+    final passwordLabel = l10n?.password ?? "Password";
+    final confirmPasswordLabel = l10n?.confirmPassword ?? "Confirm Password";
+    final signUp = l10n?.signUp ?? "Sign Up";
+    final alreadyHaveAccount =
+        l10n?.alreadyHaveAccount ?? "Already have an account?";
+    final creatingAccount = l10n?.creatingAccount ?? "Creating Account...";
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(child:Padding(
+      body: SafeArea(
+          child: Padding(
         padding: SpacingStyles(context).defaultPadding,
         child: _isLoading
-            ? const SLCLoadingIndicator(text: "Creating Account...")
+            ? SLCLoadingIndicator(text: creatingAccount)
             : SingleChildScrollView(
                 reverse: true,
                 physics: const BouncingScrollPhysics(),
@@ -142,58 +150,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         height: 200, // Fixed height
                         child: Image.asset(
                           "assets/RegisterIllustration.png",
-                          fit: BoxFit
-                              .contain, // Ensures it scales uniformly inside the container
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "Create Account",
+                        createAccount,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(
                           height: MediaQuery.of(context).size.height * 0.03),
                       SLCTextField(
-                        labelText: "Name",
+                        labelText: nameLabel,
                         obscureText: false,
                         controller: nameController,
-                        validator: _validateName,
+                        validator: validators.validateName,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
                       SLCTextField(
-                        labelText: "Email",
+                        labelText: emailLabel,
                         obscureText: false,
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        validator: _validateEmail,
+                        validator: validators.validateEmail,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
                       SLCTextField(
-                        labelText: "Password",
+                        labelText: passwordLabel,
                         obscureText: true,
                         controller: passwordController,
-                        validator: _validatePassword,
+                        validator: validators.validatePassword,
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 15),
                       SLCTextField(
-                        labelText: "Confirm Password",
+                        labelText: confirmPasswordLabel,
                         obscureText: true,
                         controller: confirmPasswordController,
-                        validator: _validateConfirmPassword,
+                        validator: (value) =>
+                            validators.validateConfirmPassword(
+                                value, passwordController.text),
                         onChanged: (_) => _validateForm(),
                       ),
                       const SizedBox(height: 30),
                       SLCButton(
                         onPressed: _isFormValid ? _validateAndRegister : null,
-                        text: "Sign Up",
+                        text: signUp,
                         backgroundColor: SLCColors.primaryColor,
                         foregroundColor: Colors.white,
                       ),
                       const SizedBox(height: 10),
-                      SLCGoogleSignInButton(),
+                      SLCGoogleSignInButton(
+                        setLoading: _setLoading,
+                        onGoogleSignInSuccess: _handleGoogleSignInSuccess,
+                      ),
                       const SizedBox(height: 10),
                       TextButton(
                         style: TextButton.styleFrom(
@@ -204,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               context, "/loginscreen");
                         },
                         child: Text(
-                          "Already have an account",
+                          alreadyHaveAccount,
                           style: TextStyle(
                             color: SLCColors.primaryColor,
                             fontWeight: FontWeight.w700,

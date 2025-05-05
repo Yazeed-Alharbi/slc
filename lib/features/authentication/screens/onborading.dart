@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:slc/common/styles/colors.dart';
 import 'package:slc/common/styles/spcaing_styles.dart';
 import 'package:slc/common/widgets/slcbutton.dart';
@@ -10,6 +9,14 @@ class Onborading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    // Safe way to access localized strings with fallbacks
+    final personalAssistant = l10n?.personalStudyAssistant ?? 'Your Personal Study Assistant';
+    final unlockLearning = l10n?.unlockLearning ?? 'Unlock a new approach to learning';
+    final signIn = l10n?.signIn ?? 'Sign In';
+    final signUp = l10n?.signUp ?? 'Sign Up';
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -30,7 +37,7 @@ class Onborading extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  "Your Personal Study Assistant",
+                  personalAssistant,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
@@ -38,8 +45,7 @@ class Onborading extends StatelessWidget {
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.03,
               ),
-              Text(
-                  "Unlock a new approach to learning. Whether you’re preparing for exams or mastering new concepts, we’re here to help you stay organized and focused.",
+              Text(unlockLearning,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall),
               SizedBox(
@@ -52,7 +58,7 @@ class Onborading extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushReplacementNamed(context, "/loginscreen");
                     },
-                    text: "Sign In",
+                    text: signIn,
                     backgroundColor: SLCColors.primaryColor,
                     foregroundColor: Colors.white,
                     width: MediaQuery.of(context).size.width * 0.35,
@@ -62,8 +68,8 @@ class Onborading extends StatelessWidget {
                       Navigator.pushReplacementNamed(
                           context, "/registerscreen");
                     },
-                    text: "Sign Up",
-                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    text: signUp,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                     foregroundColor: SLCColors.primaryColor,
                     width: MediaQuery.of(context).size.width * 0.35,
                   )

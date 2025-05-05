@@ -6,6 +6,15 @@ final TextStyle commonSmallBodyTextStyle = GoogleFonts.poppins(
   fontSize: 16,
   fontWeight: FontWeight.normal,
 );
+final TextStyle commonSmallHeadlineTextStyle = GoogleFonts.poppins(
+  fontSize: 18,
+  fontWeight: FontWeight.w500,
+);
+
+final TextStyle commonMediumHeadlineTextStyle = GoogleFonts.poppins(
+  fontSize: 20,
+  fontWeight: FontWeight.w700,
+);
 
 final TextStyle commonLargeTitleTextStyle = GoogleFonts.poppins(
   color: SLCColors.primaryColor,
@@ -14,37 +23,67 @@ final TextStyle commonLargeTitleTextStyle = GoogleFonts.poppins(
 );
 
 ThemeData lightMode = ThemeData(
-    textTheme: TextTheme(
-      bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.black),
-      titleLarge: commonLargeTitleTextStyle,
+  scaffoldBackgroundColor: Color(0xFFF9F9F9),
+  textTheme: TextTheme(
+    bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.black),
+    headlineSmall: commonSmallHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(130, 0, 0, 0)),
+    headlineMedium: commonMediumHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(255, 0, 0, 0)),
+    titleLarge: commonLargeTitleTextStyle,
+  ),
+  brightness: Brightness.light,
+  colorScheme: const ColorScheme.light(
+    primary: SLCColors.primaryColor,
+    surface: Color.fromARGB(255, 255, 255, 255),
+    surfaceTint: Color.fromARGB(255, 239, 242, 255),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      disabledBackgroundColor: SLCColors.disabledColor,
     ),
-    brightness: Brightness.light,
-    colorScheme: const ColorScheme.light(
-      primary: SLCColors.primaryColor,
-      surface: Color.fromARGB(255, 251, 253, 255),
-      surfaceTint: Color.fromARGB(255, 239, 242, 255),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        disabledBackgroundColor: SLCColors.disabledColor,
-      ),
-    ),
-    );
+  ),
+  timePickerTheme: TimePickerThemeData(
+    dayPeriodColor: SLCColors.primaryColor,
+  ),
+);
 
 ThemeData darkMode = ThemeData(
-    textTheme: TextTheme(
-      bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.white),
-      titleLarge: commonLargeTitleTextStyle,
+  timePickerTheme: TimePickerThemeData(
+    dayPeriodColor: SLCColors.primaryColor,
+    backgroundColor: const Color.fromARGB(255, 23, 23, 23),
+  ),
+  scaffoldBackgroundColor: Color.fromARGB(255, 23, 23, 23),
+  textTheme: TextTheme(
+    bodySmall: commonSmallBodyTextStyle.copyWith(color: Colors.white),
+    headlineSmall: commonSmallHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(130, 255, 255, 255)),
+    headlineMedium: commonMediumHeadlineTextStyle.copyWith(
+        color: const Color.fromARGB(255, 255, 255, 255)),
+    titleLarge: commonLargeTitleTextStyle,
+  ),
+  brightness: Brightness.dark,
+  colorScheme: const ColorScheme.dark(
+    primary: SLCColors.primaryColor,
+    surface: Color.fromARGB(255, 12, 12, 12),
+    surfaceTint: Color.fromARGB(255, 41, 41, 41),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      disabledBackgroundColor: const Color.fromARGB(255, 58, 58, 58),
     ),
-    brightness: Brightness.dark,
-    colorScheme: const ColorScheme.dark(
-      primary: SLCColors.primaryColor,
-      surface: Color.fromARGB(255, 23, 23, 23),
-      surfaceTint: Color.fromARGB(255, 41, 41, 41),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        disabledBackgroundColor: const Color.fromARGB(255, 58, 58, 58),
-      ),
-    ),
+  ),
+);
+
+ThemeData getThemeForLocale(ThemeData baseTheme, bool isArabic) {
+  // If Arabic, apply Cairo font to the text theme
+  if (isArabic) {
+    return baseTheme.copyWith(
+      textTheme: GoogleFonts.cairoTextTheme(baseTheme.textTheme),
+      primaryTextTheme: GoogleFonts.cairoTextTheme(baseTheme.primaryTextTheme),
     );
+  }
+  
+  // For English, keep the existing fonts (Poppins from your setup)
+  return baseTheme;
+}
