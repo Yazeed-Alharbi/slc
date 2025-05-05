@@ -148,13 +148,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return _buildUserProfileSection(null); // Show loading state
+                      return _buildUserProfileSection(
+                          null); // Show loading state
                     }
-                    
+
                     // Create student object from Firestore data
                     final data = snapshot.data!.data() as Map<String, dynamic>;
                     final student = Student.fromJson(data);
-                    
+
                     // Build UI with latest data
                     return _buildUserProfileSection(student);
                   },
@@ -235,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSettingTile(
                 icon: Icons.info_outline,
                 title: l10n?.aboutSLC ?? "About SLC",
-                subtitle: l10n?.version ?? "Version 1.0.0",
+                subtitle: l10n?.version ?? "Version 1.0.1",
                 onTap: () {
                   // Navigate to about screen
                 },
@@ -392,7 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final displayName = student?.name ?? user?.displayName ?? 'User';
     final email = student?.email ?? user?.email ?? '';
     final photoUrl = student?.photoUrl ?? user?.photoURL;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 24),
       padding: EdgeInsets.all(16),
@@ -436,14 +437,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit_outlined,
-                color: SLCColors.primaryColor),
+            icon: Icon(Icons.edit_outlined, color: SLCColors.primaryColor),
             onPressed: () async {
               // Navigate to profile edit and wait for result
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => ProfileEditScreen()),
+                MaterialPageRoute(builder: (context) => ProfileEditScreen()),
               );
 
               // If successfully edited, refresh the UI
