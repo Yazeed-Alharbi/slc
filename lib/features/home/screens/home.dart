@@ -247,45 +247,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       ),
                     ],
                   ),
-                  PullDownButton(
-                    itemBuilder: (context) => [
-                      PullDownMenuItem(
-                        onTap: () => Navigator.pushNamed(
-                            context, '/settings'), // Fixed navigation
-                        title: l10n?.settings ?? "Settings",
-                        icon: Icons.settings,
-                      ),
-                      PullDownMenuItem(
-                        onTap: () => _handleMenuSelection('logout'),
-                        title: l10n?.logOut ?? "Logout",
-                        isDestructive: true,
-                        icon: Icons.logout,
-                      ),
-                    ],
-                    buttonBuilder: (context, showMenu) => GestureDetector(
-                      onTap: showMenu,
-                      // Replace with StreamBuilder to update avatar in real-time
-                      child: StreamBuilder<DocumentSnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('students')
-                            .doc(widget.student.uid)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          String? updatedPhotoUrl;
-                          if (snapshot.hasData && snapshot.data != null) {
-                            final studentData =
-                                snapshot.data!.data() as Map<String, dynamic>;
-                            updatedPhotoUrl = studentData['photoUrl'];
-                          }
+                  // Replace the PullDownButton with just the StreamBuilder for the avatar
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('students')
+                        .doc(widget.student.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      String? updatedPhotoUrl;
+                      if (snapshot.hasData && snapshot.data != null) {
+                        final studentData =
+                            snapshot.data!.data() as Map<String, dynamic>;
+                        updatedPhotoUrl = studentData['photoUrl'];
+                      }
 
-                          return SLCAvatar(
-                            imageUrl:
-                                updatedPhotoUrl ?? widget.student.photoUrl,
-                            size: 55,
-                          );
-                        },
-                      ),
-                    ),
+                      return SLCAvatar(
+                        imageUrl: updatedPhotoUrl ?? widget.student.photoUrl,
+                        size: 55,
+                      );
+                    },
                   ),
                 ],
               ),
