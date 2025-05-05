@@ -532,7 +532,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                     bottom: 20),
                                                 child: SLCQuickActionCard(
                                                   title: course.code,
-                                                  chapter: material.name,
+                                                  // Remove file extensions from material name
+                                                  chapter: _removeFileExtension(
+                                                      material.name),
                                                   onTap: () {
                                                     Navigator.push(
                                                       context,
@@ -607,4 +609,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         .where((cwp) => _isClassToday(cwp.course.schedule))
         .toList();
   }
+
+  // Add this method to remove file extensions
+  String _removeFileExtension(String fileName) {
+    return fileName.split('.').first;
+  }
+}
+
+// Helper method to remove file extensions
+String _removeFileExtension(String filename) {
+  final lastDotIndex = filename.lastIndexOf('.');
+  if (lastDotIndex != -1) {
+    return filename.substring(0, lastDotIndex);
+  }
+  return filename;
 }
