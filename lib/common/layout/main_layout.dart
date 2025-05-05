@@ -11,11 +11,14 @@ import 'package:slc/main.dart';
 class MainLayout extends StatefulWidget {
   final Student student;
   final int initialIndex;
+  // Add a parameter to force home tab
+  final int initialTab;
 
   const MainLayout({
     Key? key,
     required this.student,
     this.initialIndex = 0,
+    this.initialTab = 0,
   }) : super(key: key);
 
   @override
@@ -33,6 +36,8 @@ class _MainLayoutState extends State<MainLayout> {
     // Use the persisted index or the provided initialIndex
     _selectedIndex =
         _persistedIndex != 0 ? _persistedIndex : widget.initialIndex;
+    // Use the provided initial tab index
+    _selectedIndex = widget.initialTab;
   }
 
   void _onItemTapped(int index) {

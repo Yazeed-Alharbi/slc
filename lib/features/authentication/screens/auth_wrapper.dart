@@ -15,7 +15,7 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get localized strings
     final l10n = AppLocalizations.of(context);
-    
+
     // Listen to authentication state changes
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -24,7 +24,8 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             body: Center(
-              child: SLCLoadingIndicator(text: l10n?.startingUp ?? "Starting up..."),
+              child: SLCLoadingIndicator(
+                  text: l10n?.startingUp ?? "Starting up..."),
             ),
           );
         }
@@ -38,16 +39,29 @@ class AuthWrapper extends StatelessWidget {
               future: StudentRepository(firestoreUtils: FirestoreUtils())
                   .getOrCreateStudent(),
               builder: (context, studentSnapshot) {
-                if (studentSnapshot.connectionState == ConnectionState.waiting) {
+                if (studentSnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return Scaffold(
                     body: Center(
-                      child: SLCLoadingIndicator(text: l10n?.loadingYourData ?? "Loading your data..."),
+                      child: SLCLoadingIndicator(
+                          text:
+                              l10n?.loadingYourData ?? "Loading your data..."),
                     ),
                   );
                 }
 
                 if (studentSnapshot.hasData && studentSnapshot.data != null) {
-                  return MainLayout(student: studentSnapshot.data!);
+                  // After successful authentication
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MainLayout(
+                              initialTab: 0,
+                              student: studentSnapshot.data!,
+                            )),
+                    (route) => false,
+                  );
+                  return const SizedBox(); // Placeholder since we're navigating away
                 } else {
                   // Something went wrong with loading the student data
                   return const Onborading();
